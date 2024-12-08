@@ -2,10 +2,10 @@ import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from '../auth/auth.jwt.guard';
 import { RegisterUserDTO } from '../auth/dto/auth.dto';
 
 import { UserService } from './user.service';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 @ApiTags('users')
 @Controller('/users')
@@ -13,7 +13,7 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AdminGuard)
   @ApiQuery({
     name: 'page',
     required: false,
@@ -43,11 +43,4 @@ export class UserController {
     return { data, total, page: parsedPage, limit: parsedLimit };
   }
 
-  @Post('user')
-  @ApiBody({ type: RegisterUserDTO })
-  async signupUser(
-    @Body() userData: { name?: string; email: string; password: string },
-  ): Promise<User> {
-    return this.userService.createUser(userData);
-  }
 }

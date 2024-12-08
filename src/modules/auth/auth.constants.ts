@@ -1,2 +1,2 @@
-export const ADMIN_ROLE = 'admin';
-export const USER_ROLE = 'user';
+export const ADMIN_ROLE = 'ADMIN';
+export const USER_ROLE = 'USER';

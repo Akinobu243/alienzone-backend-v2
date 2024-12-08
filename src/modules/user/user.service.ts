@@ -2,7 +2,7 @@ import { Prisma, User } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { EMAIL_ALREADY_EXISTS } from 'src/shared/constants/strings';
+import { WALLETADDRESS_ALREADY_EXISTS } from 'src/shared/constants/strings';
 
 @Injectable()
 export class UserService {
@@ -49,13 +49,13 @@ export class UserService {
   }
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    const { email } = data;
-    const userExists = await this.findUser({ email });
+    const { walletAddress } = data;
+    const userExists = await this.findUser({ walletAddress });
 
     if (userExists) {
       throw new BadRequestException({
         success: false,
-        message: EMAIL_ALREADY_EXISTS,
+        message: WALLETADDRESS_ALREADY_EXISTS,
       });
     }
     return this.prisma.user.create({
