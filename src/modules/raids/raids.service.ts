@@ -129,7 +129,9 @@ export class RaidsService {
               }
             }
           });
-      }
+
+          // TODO: Handle level ups based on experience rewarded.
+        }
 
       }
     }
