@@ -7,19 +7,85 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  authorId  Int?
-  User      User?    @relation(fields: [authorId], references: [id])
+enum Role {
+  ADMIN
+  USER
+}
+
+enum RewardType {
+  STARS
+  XP
+  REP
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  password  String
-  name      String?
-  Post      Post[]
+  id            Int           @id @default(autoincrement())
+  walletAddress String        @unique
+  name          String
+  country       String
+  twitterId     String
+  enterprise    String
+  image         String
+  level         Int
+  experience    Int
+  reputation    Int
+  stars         Int
+  RaidHistory   RaidHistory[]
+  aliens        Alien[]
+  role          Role          @default(USER)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Raid {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String
+  duration    Int
+  rewards     RaidReward[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  RaidHistory RaidHistory[]
+}
+
+model RaidReward {
+  id        Int          @id @default(autoincrement())
+  raid      Raid         @relation(fields: [raidId], references: [id])
+  raidId    Int
+  type      RewardType
+  amount    Int
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([raidId])
+}
+
+model Alien {
+  id                Int           @id @default(autoincrement())
+  name              String
+  element           String
+  hair              String
+  face              String
+  eyes              String
+  strengthPoints    Int
+  user              User          @relation(fields: [userId], references: [id])
+  userId            Int
+  inRaid            Boolean
+  raidHistory       RaidHistory[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model RaidHistory {
+  id          Int      @id @default(autoincrement())
+  raid        Raid     @relation(fields: [raidId], references: [id])
+  raidId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  aliens      Alien[]
+  inProgress  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([raidId, userId])
 }

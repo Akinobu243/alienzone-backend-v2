@@ -10,6 +10,9 @@ import { LoggerModule } from '../logger/logger.module';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from '../../middlewares/logger.middleware';
+import { ProfileModule } from '../profile/profile.module';
+import { RaidsModule } from '../raids/raids.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { LoggerMiddleware } from '../../middlewares/logger.middleware';
     PrismaModule,
     AuthModule,
     UserModule,
+    ProfileModule,
+    RaidsModule,
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [() => GLOBAL_CONFIG] }),
   ],
   controllers: [AppController],
