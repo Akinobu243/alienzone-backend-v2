@@ -30,6 +30,27 @@ export class CreateRaidDTO {
 
 }
 
+export class EditRaidDTO {
+  @ApiProperty()
+  @IsNumber()
+  raidId: number;
+  
+  @ApiProperty()
+  @IsString()
+  title: string;
+
+  @ApiProperty()
+  @IsString()
+  description: string;
+
+  @ApiProperty()
+  @IsNumber()
+  duration: number;
+  
+  @ApiProperty()
+  rewards: RaidReward[];
+}
+
 export class LaunchRaidDTO {
   @ApiProperty()
   @IsNumber()
@@ -37,4 +58,7 @@ export class LaunchRaidDTO {
 
   @ApiProperty()
   alienIds: number[];
+
+  @ApiProperty()
+  characterIds: number[];
 }

@@ -5,7 +5,7 @@ import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RaidsService } from './raids.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { CreateRaidDTO, LaunchRaidDTO } from './dto/raids.dto';
+import { CreateRaidDTO, EditRaidDTO, LaunchRaidDTO } from './dto/raids.dto';
 
 @ApiTags('raids')
 @Controller('/raids')
@@ -33,6 +33,22 @@ export class RaidsController {
     );
   }
 
+  @UseGuards(AdminGuard)
+  @Post('/edit-raid')
+  @ApiBody({ type: EditRaidDTO })
+  async editRaid(
+    @Body() editRaidDto: EditRaidDTO,
+    @Request() req,
+  ) {
+    return this.raidsService.editRaid(
+      editRaidDto.raidId,
+      editRaidDto.title,
+      editRaidDto.description,
+      editRaidDto.duration,
+      editRaidDto.rewards,
+    );
+  }
+
   @UseGuards(AuthGuard)
   @Post('/launch-raid')
   @ApiBody({ type: LaunchRaidDTO })
@@ -43,6 +59,7 @@ export class RaidsController {
     return this.raidsService.launchRaid(
       launchRaidDTO.raidId,
       launchRaidDTO.alienIds,
+      launchRaidDTO.characterIds,
       req.walletAddress,
     );
   }

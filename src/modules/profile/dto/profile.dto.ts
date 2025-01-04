@@ -12,15 +12,7 @@ export class CreateAlienDTO {
 
     @IsString()
     @ApiProperty()
-    hair: string;
-
-    @IsString()
-    @ApiProperty()
-    face: string;
-
-    @IsString()
-    @ApiProperty()
-    eyes: string;
+    image: string
 
     @IsNumber()
     @ApiProperty()

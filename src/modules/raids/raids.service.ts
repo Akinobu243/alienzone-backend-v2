@@ -13,7 +13,12 @@ export class RaidsService {
     return await this.prisma.raid.findMany();
   }
 
-  public async createRaid(title: string, description: string, duration: number, rewards: RaidReward[]) {
+  public async createRaid(
+    title: string,
+    description: string,
+    duration: number,
+    rewards: RaidReward[]
+  ) {
     const data: Prisma.RaidCreateInput = {
       title,
       description,
@@ -25,7 +30,34 @@ export class RaidsService {
     await this.prisma.raid.create({ data });
   }
 
-  public async launchRaid(raidId: number, alienIds: number[], userWalletAddress: string) {
+  public async editRaid(
+    raidId: number,
+    title: string,
+    description: string,
+    duration: number,
+    rewards: RaidReward[]
+  ) {
+    const data: Prisma.RaidUpdateInput = {
+      title,
+      description,
+      duration,
+      rewards: {
+        deleteMany: {},
+        create: rewards,
+      },
+    };
+    await this.prisma.raid.update({
+      where: { id: raidId },
+      data,
+    });
+  }
+
+  public async launchRaid(
+    raidId: number,
+    alienIds: number[],
+    characterIds: number[],
+    userWalletAddress: string
+  ) {
     const raid = await this.prisma.raid.findUnique({
       where: { id: raidId }
     });
@@ -56,6 +88,22 @@ export class RaidsService {
       }
     }
 
+    const characters = await this.prisma.userCharacter.findMany({
+      where: {
+        userId: user.id,
+        characterId: { in: characterIds },
+      }
+    });
+    if (characters.length !== characterIds.length) {
+      throw new BadRequestException('Characters not found');
+    }
+
+    for (const character of characters) {
+      if (character.inRaid) {
+        throw new BadRequestException('A character is already in raid');
+      }
+    }
+
     const data: Prisma.RaidHistoryCreateInput = {
       raid: {
         connect: { id: raidId },
@@ -65,6 +113,9 @@ export class RaidsService {
       },
       aliens: {
         connect: alienIds.map((id) => ({ id })),
+      },
+      characters: {
+        connect: characterIds.map((id) => ({ id })),
       },
     };
     await this.prisma.raidHistory.create({ data });

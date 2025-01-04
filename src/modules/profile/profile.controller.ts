@@ -34,9 +34,27 @@ export class ProfileController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('/get-characters')
+  async getCharacters(@Request() req) {
+    return this.profileService.getCharacters(req.walletAddress.toLowerCase());
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/get-items')
+  async getItems(@Request() req) {
+    return this.profileService.getItems(req.walletAddress.toLowerCase());
+  }
+
+  @UseGuards(AuthGuard)
   @Get('/get-leaderboard')
   async getLeaderboard() {
     return this.profileService.getLeaderboard();
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/award-daily-rewards')
+  async awardDailyRewards(@Request() req) {
+    return this.profileService.awardDailyRewards(req.walletAddress);
   }
 
   @Post('/update-star-balance-from-v1')
@@ -44,11 +62,11 @@ export class ProfileController {
     @Body('password') password: string,
     @Body('walletAddress') walletAddress: string,
     @Body('amount') amount: number,
-    @Body('increment') increment: boolean = true,
   ) {
     if (password !== process.env.V1_SYNC_PASSWORD) {
       throw new UnauthorizedException('Invalid password');
     }
-    return this.profileService.updateStarBalance(walletAddress, amount, increment);
+    amount = parseInt(amount.toString());
+    return this.profileService.updateStarBalance(walletAddress, amount);
   }
 }

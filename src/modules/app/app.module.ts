@@ -13,6 +13,8 @@ import { LoggerMiddleware } from '../../middlewares/logger.middleware';
 import { ProfileModule } from '../profile/profile.module';
 import { RaidsModule } from '../raids/raids.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CharacterModule } from '../character/character.module';
+import { ItemsModule } from '../items/items.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     AuthModule,
     UserModule,
     ProfileModule,
+    CharacterModule,
+    ItemsModule,
     RaidsModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [() => GLOBAL_CONFIG] }),
