@@ -8,6 +8,13 @@ import { WALLETADDRESS_ALREADY_EXISTS } from 'src/shared/constants/strings';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
+  public async checkExists(walletAddress: string) {
+    const user = await this.findUser({
+      walletAddress: walletAddress.toLowerCase(),
+    });
+    return user ? true : false;
+  }
+
   async findUser(
     userWhereUniqueInput: Prisma.UserWhereUniqueInput,
   ): Promise<User | null> {

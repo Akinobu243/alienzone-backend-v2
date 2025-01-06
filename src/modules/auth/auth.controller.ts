@@ -20,7 +20,11 @@ export class AuthController {
     @Body() user: AuthUserDTO,
     @Response() res,
   ): Promise<AuthResponseDTO> {
-    const authData = await this.authService.authenticate(user);
+    const authData = await this.authService.authenticate(
+      user,
+      false,
+      user.register,
+    );
 
     res.cookie('accessToken', authData.accessToken, {
       expires: new Date(new Date().getTime() + JWT_EXPIRY_SECONDS * 1000),
@@ -31,5 +35,4 @@ export class AuthController {
 
     return res.status(200).send(authData);
   }
-  
 }

@@ -1,7 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 
-import { UserListener } from '../user/user.listener';
 
 import { PRISMA_CLIENT_OPTIONS } from './prisma.config';
 
@@ -20,7 +19,6 @@ export class PrismaService
       // Do something
     });
 
-    this.$use(UserListener.onCreated);
   }
 
   async onModuleDestroy() {

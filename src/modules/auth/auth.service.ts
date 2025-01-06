@@ -1,14 +1,22 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 
 import { UserService } from '../user/user.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthHelpers } from '../../shared/helpers/auth.helpers';
 import { GLOBAL_CONFIG } from '../../configs/global.config';
 
 import { AuthResponseDTO, AuthUserDTO, RegisterUserDTO } from './dto/auth.dto';
-import { INVALID_ACCESS_TOKEN, INVALID_WALLET_ADDRESS, MISSING_SIGNED_MESSAGE_OR_SIGNATURE, UNAUTHORIZED } from 'src/shared/constants/strings';
+import {
+  INVALID_ACCESS_TOKEN,
+  INVALID_WALLET_ADDRESS,
+  MISSING_SIGNED_MESSAGE_OR_SIGNATURE,
+  UNAUTHORIZED,
+} from 'src/shared/constants/strings';
 import { ADMIN_ROLE, USER_ROLE } from './auth.constants';
 import { ethers } from 'ethers';
 
@@ -70,15 +78,15 @@ export class AuthService {
     var user = await this.userService.findUser({
       walletAddress: userWalletAddress,
     });
-    
+
     if (!user) {
       user = await this.userService.createUser({
         walletAddress: userWalletAddress,
         name: registerUser.name,
         country: registerUser.country,
-        twitterId: registerUser.twitterId,
-        enterprise: registerUser.enterprise,
-        image: registerUser.image,
+        twitterId: registerUser.twitterId || '',
+        enterprise: registerUser.enterprise || '',
+        image: registerUser.image || '',
         level: 0,
         experience: 0,
         reputation: 0,
