@@ -13,7 +13,6 @@ export class ProfileService {
 
 
   public async getProfile(walletAddress: string) {
-    console.log(walletAddress);
     const user = await this.prisma.user.findUnique({
       where: {
         walletAddress: walletAddress.toLowerCase(),

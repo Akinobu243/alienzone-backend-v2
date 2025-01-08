@@ -24,17 +24,16 @@ export class CreateRaidDTO {
   @ApiProperty()
   @IsNumber()
   duration: number;
-  
+
   @ApiProperty()
   rewards: RaidReward[];
-
 }
 
 export class EditRaidDTO {
   @ApiProperty()
   @IsNumber()
   raidId: number;
-  
+
   @ApiProperty()
   @IsString()
   title: string;
@@ -46,7 +45,7 @@ export class EditRaidDTO {
   @ApiProperty()
   @IsNumber()
   duration: number;
-  
+
   @ApiProperty()
   rewards: RaidReward[];
 }
