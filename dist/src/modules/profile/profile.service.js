@@ -1,0 +1,199 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProfileService = void 0;
+const client_1 = require("@prisma/client");
+const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../prisma/prisma.service");
+let ProfileService = class ProfileService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async getProfile(walletAddress) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress: walletAddress.toLowerCase(),
+            },
+        });
+        return {
+            walletAddress: user.walletAddress,
+            name: user.name,
+            country: user.country,
+            twitterId: user.twitterId,
+            image: user.image,
+            level: user.level,
+            experience: user.experience,
+            reputation: user.reputation,
+            stars: user.stars,
+        };
+    }
+    async createAlien(walletAddress, createAlienDTO) {
+        await this.prisma.alien.create({
+            data: Object.assign(Object.assign({}, createAlienDTO), { inRaid: false, user: {
+                    connect: { walletAddress },
+                } }),
+        });
+    }
+    async getAliens(walletAddress) {
+        const aliens = await this.prisma.alien.findMany({
+            where: {
+                user: {
+                    walletAddress: walletAddress,
+                },
+            },
+        });
+        return aliens;
+    }
+    async getCharacters(walletAddress) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress,
+            },
+        });
+        const characters = await this.prisma.userCharacter.findMany({
+            where: {
+                userId: user.id,
+            },
+        });
+        return characters;
+    }
+    async getItems(walletAddress) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress,
+            },
+        });
+        const items = await this.prisma.userItem.findMany({
+            where: {
+                userId: user.id,
+            },
+        });
+        return items;
+    }
+    async getLeaderboard() {
+        const users = await this.prisma.user.findMany({
+            orderBy: {
+                reputation: 'desc',
+            },
+            take: 10,
+        });
+        return users.map((user) => {
+            return {
+                name: user.name,
+                country: user.country,
+                enterprise: user.enterprise,
+                image: user.image,
+                level: user.level,
+                experience: user.experience,
+                reputation: user.reputation,
+            };
+        });
+    }
+    async awardDailyRewards(walletAddress) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress,
+            },
+        });
+        if (!user) {
+            throw new common_1.BadRequestException('User not found');
+        }
+        const dailyRewards = await this.prisma.dailyReward.findMany();
+        dailyRewards.sort((a, b) => a.id - b.id);
+        let reward;
+        const hours24 = 24 * 60 * 60 * 1000;
+        const hours48 = 48 * 60 * 60 * 1000;
+        const currentTime = new Date().getTime();
+        const lastClaimedTime = user.lastDailyClaimed.getTime();
+        const timeSinceLastClaim = currentTime - lastClaimedTime;
+        if (timeSinceLastClaim < hours24) {
+            throw new common_1.BadRequestException('No daily rewards available yet.');
+        }
+        else if (timeSinceLastClaim >= hours24 && timeSinceLastClaim < hours48) {
+            reward = dailyRewards[user.dailyStreak];
+            await this.prisma.user.update({
+                where: {
+                    walletAddress,
+                },
+                data: {
+                    dailyStreak: user.dailyStreak + 1,
+                    lastDailyClaimed: new Date(),
+                },
+            });
+        }
+        else {
+            reward = dailyRewards[0];
+            await this.prisma.user.update({
+                where: {
+                    walletAddress,
+                },
+                data: {
+                    dailyStreak: 1,
+                    lastDailyClaimed: new Date(),
+                },
+            });
+        }
+        if (reward.type === client_1.DailyRewardType.ITEM) {
+            await this.prisma.userItem.create({
+                data: {
+                    user: {
+                        connect: {
+                            id: user.id,
+                        },
+                    },
+                    item: {
+                        connect: {
+                            id: reward.itemId,
+                        },
+                    },
+                    quantity: reward.amount,
+                },
+            });
+        }
+        else {
+            await this.prisma.user.update({
+                where: {
+                    walletAddress,
+                },
+                data: {
+                    stars: {
+                        increment: reward.amount,
+                    },
+                },
+            });
+        }
+    }
+    async updateStarBalance(walletAddress, amount) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress,
+            },
+        });
+        if (!user) {
+            throw new common_1.BadRequestException('User not found');
+        }
+        const newBalance = user.stars + amount;
+        await this.prisma.user.update({
+            where: {
+                walletAddress,
+            },
+            data: {
+                stars: newBalance,
+            },
+        });
+    }
+};
+ProfileService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+], ProfileService);
+exports.ProfileService = ProfileService;
+//# sourceMappingURL=profile.service.js.map
