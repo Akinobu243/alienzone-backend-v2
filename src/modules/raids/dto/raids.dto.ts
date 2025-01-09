@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { RewardType } from "@prisma/client";
-import { IsNumber, IsString } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { RewardType } from '@prisma/client';
+import { IsNumber, IsString } from 'class-validator';
 
 export class RaidReward {
   @ApiProperty()
@@ -16,6 +16,14 @@ export class CreateRaidDTO {
   @ApiProperty()
   @IsString()
   title: string;
+
+  @ApiProperty()
+  @IsString()
+  icon: string;
+
+  @ApiProperty()
+  @IsString()
+  image: string;
 
   @ApiProperty()
   @IsString()
@@ -37,6 +45,14 @@ export class EditRaidDTO {
   @ApiProperty()
   @IsString()
   title: string;
+
+  @ApiProperty()
+  @IsString()
+  icon: string;
+
+  @ApiProperty()
+  @IsString()
+  image: string;
 
   @ApiProperty()
   @IsString()

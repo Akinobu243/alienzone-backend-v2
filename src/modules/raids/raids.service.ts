@@ -4,6 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRaidDTO, LaunchRaidDTO, RaidReward } from './dto/raids.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { levelRequirements } from 'src/configs/global.config';
 
 @Injectable()
 export class RaidsService {
@@ -21,12 +22,16 @@ export class RaidsService {
     title: string,
     description: string,
     duration: number,
+    icon: string,
+    image: string,
     rewards: RaidReward[],
   ) {
     const data: Prisma.RaidCreateInput = {
       title,
       description,
       duration,
+      icon,
+      image,
       rewards: {
         create: rewards,
       },
@@ -194,7 +199,18 @@ export class RaidsService {
             },
           });
           console.log('Reward processed:', reward.type, reward.amount);
-          // TODO: Handle level ups based on experience rewarded.
+          const user = await this.prisma.user.findUnique({
+            where: { id: raidUserId },
+          });
+          const userLevel = user.level;
+          const levelRequirement = levelRequirements[userLevel];
+          if (user.experience >= levelRequirement.requiredPoints) {
+            console.log('User level up:', userLevel + 1);
+            await this.prisma.user.update({
+              where: { id: raidUserId },
+              data: { level: userLevel + 1 },
+            });
+          }
         }
       }
     }

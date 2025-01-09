@@ -87,7 +87,7 @@ export class AuthService {
         twitterId: registerUser.twitterId || '',
         enterprise: registerUser.enterprise || '',
         image: registerUser.image || '',
-        level: 0,
+        level: 1,
         experience: 0,
         reputation: 0,
         stars: 0,

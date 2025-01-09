@@ -32,7 +32,7 @@ model User {
   twitterId        String
   enterprise       String
   image            String
-  level            Int
+  level            Int             @default(1)
   experience       Int
   reputation       Int
   stars            Int
@@ -52,6 +52,8 @@ model Raid {
   title       String
   description String
   duration    Int
+  icon        String
+  image       String
   rewards     RaidReward[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -60,14 +62,11 @@ model Raid {
 
 model RaidReward {
   id        Int        @id @default(autoincrement())
-  raid      Raid       @relation(fields: [raidId], references: [id])
-  raidId    Int
   type      RewardType
   amount    Int
+  raids     Raid[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-
-  @@index([raidId])
 }
 
 model RaidHistory {
