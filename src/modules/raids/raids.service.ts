@@ -4,25 +4,34 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRaidDTO, LaunchRaidDTO, RaidReward } from './dto/raids.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { levelRequirements } from 'src/configs/global.config';
 
 @Injectable()
 export class RaidsService {
   constructor(private prisma: PrismaService) {}
 
   public async getRaidsList() {
-    return await this.prisma.raid.findMany();
+    return await this.prisma.raid.findMany({
+      include: {
+        rewards: true,
+      },
+    });
   }
 
   public async createRaid(
     title: string,
     description: string,
     duration: number,
-    rewards: RaidReward[]
+    icon: string,
+    image: string,
+    rewards: RaidReward[],
   ) {
     const data: Prisma.RaidCreateInput = {
       title,
       description,
       duration,
+      icon,
+      image,
       rewards: {
         create: rewards,
       },
@@ -35,7 +44,7 @@ export class RaidsService {
     title: string,
     description: string,
     duration: number,
-    rewards: RaidReward[]
+    rewards: RaidReward[],
   ) {
     const data: Prisma.RaidUpdateInput = {
       title,
@@ -56,17 +65,17 @@ export class RaidsService {
     raidId: number,
     alienIds: number[],
     characterIds: number[],
-    userWalletAddress: string
+    userWalletAddress: string,
   ) {
     const raid = await this.prisma.raid.findUnique({
-      where: { id: raidId }
+      where: { id: raidId },
     });
     if (!raid) {
       throw new BadRequestException('Raid not found');
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { walletAddress: userWalletAddress }
+      where: { walletAddress: userWalletAddress },
     });
     if (!user) {
       throw new BadRequestException('User not found');
@@ -76,7 +85,7 @@ export class RaidsService {
       where: {
         id: { in: alienIds },
         userId: user.id,
-      }
+      },
     });
     if (aliens.length !== alienIds.length) {
       throw new BadRequestException('Aliens not found');
@@ -88,23 +97,24 @@ export class RaidsService {
       }
     }
 
-    const characters = await this.prisma.userCharacter.findMany({
-      where: {
-        userId: user.id,
-        characterId: { in: characterIds },
-      }
-    });
-    if (characters.length !== characterIds.length) {
-      throw new BadRequestException('Characters not found');
-    }
+    // const characters = await this.prisma.userCharacter.findMany({
+    //   where: {
+    //     userId: user.id,
+    //     characterId: { in: characterIds },
+    //   }
+    // });
+    // if (characters.length !== characterIds.length) {
+    //   throw new BadRequestException('Characters not found');
+    // }
 
-    for (const character of characters) {
-      if (character.inRaid) {
-        throw new BadRequestException('A character is already in raid');
-      }
-    }
+    // for (const character of characters) {
+    //   if (character.inRaid) {
+    //     throw new BadRequestException('A character is already in raid');
+    //   }
+    // }
 
     const data: Prisma.RaidHistoryCreateInput = {
+      inProgress: true,
       raid: {
         connect: { id: raidId },
       },
@@ -114,17 +124,17 @@ export class RaidsService {
       aliens: {
         connect: alienIds.map((id) => ({ id })),
       },
-      characters: {
-        connect: characterIds.map((id) => ({ id })),
-      },
+      // characters: {
+      //   connect: characterIds.map((id) => ({ id })),
+      // },
     };
-    await this.prisma.raidHistory.create({ data });
-
+    const raidHistory = await this.prisma.raidHistory.create({ data });
+    return raidHistory;
   }
 
   public async getRaidHistory(userWalletAddress: string) {
     const user = await this.prisma.user.findUnique({
-      where: { walletAddress: userWalletAddress }
+      where: { walletAddress: userWalletAddress },
     });
     if (!user) {
       throw new BadRequestException('User not found');
@@ -136,7 +146,7 @@ export class RaidsService {
       },
       include: {
         aliens: true,
-      }
+      },
     });
   }
 
@@ -151,10 +161,11 @@ export class RaidsService {
         raid: {
           include: {
             rewards: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
+    console.log('Raids found:', raids.length);
 
     for (const raid of raids) {
       const raidAliens = raid.aliens;
@@ -164,26 +175,43 @@ export class RaidsService {
       // TODO: Add alien bonuses to raid completion time based on elements
 
       if (raid.createdAt.getTime() + raid.raid.duration * 1000 < Date.now()) {
+        console.log('Raid completed:', raid.id);
         await this.prisma.raidHistory.update({
           where: { id: raid.id },
           data: {
             inProgress: false,
-          }
+          },
         });
 
         for (const reward of raidRewards) {
+          let rewardType = 'experience';
+          if (reward.type === RewardType.REP) {
+            rewardType = 'reputation';
+          } else if (reward.type === RewardType.STARS) {
+            rewardType = 'stars';
+          }
           await this.prisma.user.update({
             where: { id: raidUserId },
             data: {
-              [reward.type]: {
+              [rewardType]: {
                 increment: reward.amount,
-              }
-            }
+              },
+            },
           });
-
-          // TODO: Handle level ups based on experience rewarded.
+          console.log('Reward processed:', reward.type, reward.amount);
+          const user = await this.prisma.user.findUnique({
+            where: { id: raidUserId },
+          });
+          const userLevel = user.level;
+          const levelRequirement = levelRequirements[userLevel];
+          if (user.experience >= levelRequirement.requiredPoints) {
+            console.log('User level up:', userLevel + 1);
+            await this.prisma.user.update({
+              where: { id: raidUserId },
+              data: { level: userLevel + 1 },
+            });
+          }
         }
-
       }
     }
   }

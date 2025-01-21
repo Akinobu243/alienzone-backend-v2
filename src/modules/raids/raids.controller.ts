@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 
@@ -21,14 +29,13 @@ export class RaidsController {
   @UseGuards(AdminGuard)
   @Post('/create-raid')
   @ApiBody({ type: CreateRaidDTO })
-  async createRaid(
-    @Body() createRaidDTO: CreateRaidDTO,
-    @Request() req,
-  ) {
+  async createRaid(@Body() createRaidDTO: CreateRaidDTO, @Request() req) {
     return this.raidsService.createRaid(
       createRaidDTO.title,
       createRaidDTO.description,
       createRaidDTO.duration,
+      createRaidDTO.icon,
+      createRaidDTO.image,
       createRaidDTO.rewards,
     );
   }
@@ -36,10 +43,7 @@ export class RaidsController {
   @UseGuards(AdminGuard)
   @Post('/edit-raid')
   @ApiBody({ type: EditRaidDTO })
-  async editRaid(
-    @Body() editRaidDto: EditRaidDTO,
-    @Request() req,
-  ) {
+  async editRaid(@Body() editRaidDto: EditRaidDTO, @Request() req) {
     return this.raidsService.editRaid(
       editRaidDto.raidId,
       editRaidDto.title,
@@ -52,10 +56,7 @@ export class RaidsController {
   @UseGuards(AuthGuard)
   @Post('/launch-raid')
   @ApiBody({ type: LaunchRaidDTO })
-  async launchRaid(
-    @Body() launchRaidDTO: LaunchRaidDTO,
-    @Request() req,
-  ) {
+  async launchRaid(@Body() launchRaidDTO: LaunchRaidDTO, @Request() req) {
     return this.raidsService.launchRaid(
       launchRaidDTO.raidId,
       launchRaidDTO.alienIds,
@@ -66,11 +67,7 @@ export class RaidsController {
 
   @UseGuards(AuthGuard)
   @Get('/get-raid-history')
-  async getRaidHistory(
-    @Request() req,
-  ) {
+  async getRaidHistory(@Request() req) {
     return this.raidsService.getRaidHistory(req.walletAddress);
   }
-
-
 }

@@ -19,10 +19,12 @@ export class ProfileService {
     }
   });
 
+
+
   public async getProfile(walletAddress: string) {
     const user = await this.prisma.user.findUnique({
       where: {
-        walletAddress,
+        walletAddress: walletAddress.toLowerCase(),
       },
     });
 
@@ -41,7 +43,7 @@ export class ProfileService {
 
   public async createAlien(
     walletAddress: string,
-    createAlienDTO: CreateAlienDTO
+    createAlienDTO: CreateAlienDTO,
   ) {
     const alien = await this.prisma.alien.create({
       data: {
@@ -50,8 +52,8 @@ export class ProfileService {
         strengthPoints: createAlienDTO.strengthPoints,
         inRaid: false,
         user: {
-          connect: { walletAddress }
-        }
+          connect: { walletAddress },
+        },
       },
     });
 
@@ -85,7 +87,7 @@ export class ProfileService {
       where: {
         user: {
           walletAddress: walletAddress,
-        }
+        },
       },
     });
 
@@ -101,7 +103,7 @@ export class ProfileService {
     const characters = await this.prisma.userCharacter.findMany({
       where: {
         userId: user.id,
-      }
+      },
     });
 
     return characters;
@@ -116,7 +118,7 @@ export class ProfileService {
     const items = await this.prisma.userItem.findMany({
       where: {
         userId: user.id,
-      }
+      },
     });
 
     return items;
@@ -130,7 +132,7 @@ export class ProfileService {
       take: 10,
     });
 
-    return users.map(user => {
+    return users.map((user) => {
       return {
         name: user.name,
         country: user.country,
@@ -166,8 +168,7 @@ export class ProfileService {
 
     if (timeSinceLastClaim < hours24) {
       throw new BadRequestException('No daily rewards available yet.');
-    }
-    else if (timeSinceLastClaim >= hours24 && timeSinceLastClaim < hours48) {
+    } else if (timeSinceLastClaim >= hours24 && timeSinceLastClaim < hours48) {
       reward = dailyRewards[user.dailyStreak];
       await this.prisma.user.update({
         where: {
@@ -219,7 +220,6 @@ export class ProfileService {
         },
       });
     }
-    
   }
 
   public async updateStarBalance(walletAddress: string, amount: number) {

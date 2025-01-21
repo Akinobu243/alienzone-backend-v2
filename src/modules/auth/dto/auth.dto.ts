@@ -1,11 +1,38 @@
 import { User } from '@prisma/client';
-import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthResponseDTO {
   walletAddress: string;
   accessToken: string;
+}
+
+export class RegisterUserDTO {
+  @IsString()
+  @ApiProperty()
+  name: string;
+
+  @IsString()
+  @ApiProperty()
+  country: string;
+
+  @IsOptional()
+  @ApiProperty()
+  twitterId?: string;
+
+  @IsOptional()
+  @ApiProperty()
+  image?: string;
+
+  @IsOptional()
+  @ApiProperty()
+  enterprise?: string;
 }
 
 export class AuthUserDTO {
@@ -20,25 +47,8 @@ export class AuthUserDTO {
   @IsString()
   @ApiProperty()
   accessToken?: string;
-}
 
-export class RegisterUserDTO {
-  @IsString()
-  @ApiProperty()
-  name: string;
-
-  @IsString()
-  @ApiProperty()
-  country: string;
-
-  @IsString()
-  @ApiProperty()
-  twitterId: string;
-
-  @IsString()
-  @ApiProperty()
-  image: string;
-
-  @ApiProperty()
-  enterprise?: string | null;
+  @IsOptional()
+  @ApiPropertyOptional()
+  register?: RegisterUserDTO;
 }

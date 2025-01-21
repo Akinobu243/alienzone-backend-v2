@@ -13,7 +13,6 @@ export class AuthGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromRequest(request);
     if (!token) {
@@ -24,8 +23,12 @@ export class AuthGuard implements CanActivate {
 
     request.walletAddress = (decoded.walletAddress as string).toLowerCase();
 
-    return decoded && ((decoded.role as string).toLowerCase() === USER_ROLE || (decoded.role as string).toLowerCase() === ADMIN_ROLE);
 
+    return (
+      decoded &&
+      ((decoded.role as string) === USER_ROLE ||
+        (decoded.role as string) === ADMIN_ROLE)
+    );
   }
 
   private extractTokenFromRequest(request: any): string {

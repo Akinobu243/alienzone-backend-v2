@@ -1,5 +1,16 @@
-import { Body, Controller, Get, Post, Query, Request, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Request,
+  UnauthorizedException,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { User } from '@prisma/client';
+import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -13,6 +24,7 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-profile')
+  @ApiQuery({ name: 'walletAddress', type: String })
   async getProfile(@Query('walletAddress') walletAddress: string) {
     return this.profileService.getProfile(walletAddress);
   }
@@ -21,11 +33,11 @@ export class ProfileController {
   @Post('/create-alien')
   @UseInterceptors(FileInterceptor('image'))
   @ApiBody({ type: CreateAlienDTO })
-  async createAlien(
-    @Body() createAlienDTO: CreateAlienDTO,
-    @Request() req,
-  ) {
-    return this.profileService.createAlien(req.walletAddress.toLowerCase(), createAlienDTO);
+  async createAlien(@Body() createAlienDTO: CreateAlienDTO, @Request() req) {
+    return this.profileService.createAlien(
+      req.walletAddress.toLowerCase(),
+      createAlienDTO,
+    );
   }
 
   @UseGuards(AuthGuard)

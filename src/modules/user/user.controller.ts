@@ -12,6 +12,11 @@ import { AdminGuard } from '../auth/guards/admin.guard';
 export class UserController {
   constructor(private userService: UserService) {}
 
+  @Get('/check-exists')
+  async checkExists(@Query('walletAddress') walletAddress: string) {
+    return this.userService.checkExists(walletAddress);
+  }
+
   @Get()
   @UseGuards(AdminGuard)
   @ApiQuery({
@@ -42,5 +47,4 @@ export class UserController {
     ]);
     return { data, total, page: parsedPage, limit: parsedLimit };
   }
-
 }
