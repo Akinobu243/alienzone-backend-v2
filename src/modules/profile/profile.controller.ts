@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post, Query, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
-import { User } from '@prisma/client';
-import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Query, Request, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAlienDTO } from './dto/profile.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('profile')
 @Controller('/profile')
@@ -19,6 +19,7 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Post('/create-alien')
+  @UseInterceptors(FileInterceptor('image'))
   @ApiBody({ type: CreateAlienDTO })
   async createAlien(
     @Body() createAlienDTO: CreateAlienDTO,
@@ -68,5 +69,11 @@ export class ProfileController {
     }
     amount = parseInt(amount.toString());
     return this.profileService.updateStarBalance(walletAddress, amount);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/get-all-traits')
+  async getAllTraits() {
+    return this.profileService.getAllTraits();
   }
 }

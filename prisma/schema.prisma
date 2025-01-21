@@ -89,7 +89,7 @@ model Alien {
   id             Int           @id @default(autoincrement())
   name           String
   element        String
-  image          String
+  image          String?
   strengthPoints Int
   user           User          @relation(fields: [userId], references: [id])
   userId         Int

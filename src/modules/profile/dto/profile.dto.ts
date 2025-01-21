@@ -12,7 +12,7 @@ export class CreateAlienDTO {
 
     @IsString()
     @ApiProperty()
-    image: string
+    image: Express.Multer.File;
 
     @IsNumber()
     @ApiProperty()

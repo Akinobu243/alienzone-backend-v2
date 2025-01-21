@@ -5,10 +5,19 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WALLETADDRESS_ALREADY_EXISTS } from 'src/shared/constants/strings';
 import exp from 'constants';
 import { CreateAlienDTO } from './dto/profile.dto';
+import { ListObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class ProfileService {
   constructor(private prisma: PrismaService) {}
+
+  private s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
+  });
 
   public async getProfile(walletAddress: string) {
     const user = await this.prisma.user.findUnique({
@@ -34,13 +43,39 @@ export class ProfileService {
     walletAddress: string,
     createAlienDTO: CreateAlienDTO
   ) {
-    await this.prisma.alien.create({
+    const alien = await this.prisma.alien.create({
       data: {
-        ...createAlienDTO,
+        name: createAlienDTO.name,
+        element: createAlienDTO.element,
+        strengthPoints: createAlienDTO.strengthPoints,
         inRaid: false,
         user: {
           connect: { walletAddress }
         }
+      },
+    });
+
+    // upload image to s3
+    try {
+      const uploadParams = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: `aliens/${alien.id}_${createAlienDTO.name}.png`,
+        Body: createAlienDTO.image.buffer,
+        ContentType: 'image/png',
+      };
+      const uploadCommand = new PutObjectCommand(uploadParams);
+      await this.s3.send(uploadCommand);
+    }
+    catch (error) {
+      console.error(`Error uploading image to S3: ${error}`);
+    }
+
+    await this.prisma.alien.update({
+      where: {
+        id: alien.id,
+      },
+      data: {
+        image: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${createAlienDTO.name}.png`,
       },
     });
   }
@@ -207,6 +242,31 @@ export class ProfileService {
         stars: newBalance,
       },
     });
+  }
+
+  public async getAllTraits() {
+    const traitFolders = ['Body', 'Elements', 'Eyes', 'Face', 'Hair', 'Mouth'];
+    const allImages = {};
+
+    try {
+      for (const folder of traitFolders) {
+        const input = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Prefix: `traits/${folder}/`,
+          MaxKeys: 1000,
+        };
+        const command = new ListObjectsCommand(input);
+        const response = await this.s3.send(command);
+    
+        const images = response.Contents.map((content) => `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${content.Key}`);
+        allImages[folder] = images;
+      }
+    }
+    catch (error) {
+      console.error(`Error listing objects in S3: ${error}`);
+    }
+
+    return allImages;
   }
 
 }
