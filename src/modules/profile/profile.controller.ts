@@ -88,4 +88,11 @@ export class ProfileController {
   async getAllTraits() {
     return this.profileService.getAllTraits();
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/use-referral-code')
+  async useReferralCode(@Request() req, @Body('code') code: string) {
+    return this.profileService.useReferralCode(req.walletAddress, code);
+  }
+
 }

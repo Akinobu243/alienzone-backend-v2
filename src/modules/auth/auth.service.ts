@@ -80,12 +80,24 @@ export class AuthService {
     });
 
     if (!user) {
+      var referralCode = Math.random().toString(36).substring(2, 8);
+      var existingUser = await this.userService.findUser({
+        referralCode: referralCode,
+      });
+      while (existingUser) {
+        referralCode = Math.random().toString(36).substring(2, 8);
+        existingUser = await this.userService.findUser({
+          referralCode: referralCode,
+        });
+      }
       user = await this.userService.createUser({
         walletAddress: userWalletAddress,
         name: registerUser.name,
         country: registerUser.country,
         twitterId: registerUser.twitterId || '',
         enterprise: registerUser.enterprise || '',
+        referralCode: referralCode,
+        referrerId: null,
         image: registerUser.image || '',
         level: 1,
         experience: 0,

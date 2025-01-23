@@ -31,6 +31,8 @@ model User {
   country          String
   twitterId        String
   enterprise       String
+  referralCode     String          @unique
+  referrerId       Int?
   image            String
   level            Int             @default(1)
   experience       Int

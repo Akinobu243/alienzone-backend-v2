@@ -269,4 +269,50 @@ export class ProfileService {
     return allImages;
   }
 
+  public async useReferralCode(walletAddress: string, code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const referrer = await this.prisma.user.findUnique({
+      where: {
+        referralCode: code,
+      },
+    });
+
+    if (!referrer) {
+      throw new BadRequestException('Referral code not found');
+    }
+
+    if (user.referrerId) {
+      throw new BadRequestException('Referral code already used');
+    }
+
+    await this.prisma.user.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        referrerId: referrer.id,
+      },
+    });
+
+    await this.prisma.user.update({
+      where: {
+        id: referrer.id,
+      },
+      data: {
+        stars: {
+          increment: 50,
+        },
+      },
+    });
+  }
+
 }

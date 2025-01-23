@@ -165,7 +165,7 @@ export class RaidsService {
         },
       },
     });
-    console.log('Raids found:', raids.length);
+    // console.log('Raids found:', raids.length);
 
     for (const raid of raids) {
       const raidAliens = raid.aliens;
