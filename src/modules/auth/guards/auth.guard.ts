@@ -18,7 +18,6 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       return false;
     }
-
     const decoded = jwt.decode(token) as jwt.JwtPayload;
 
     request.walletAddress = (decoded.walletAddress as string).toLowerCase();

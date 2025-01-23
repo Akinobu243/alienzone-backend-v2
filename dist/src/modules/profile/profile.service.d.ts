@@ -3,6 +3,7 @@ import { CreateAlienDTO } from './dto/profile.dto';
 export declare class ProfileService {
     private prisma;
     constructor(prisma: PrismaService);
+    private s3;
     getProfile(walletAddress: string): Promise<{
         walletAddress: string;
         name: string;
@@ -49,4 +50,5 @@ export declare class ProfileService {
     }[]>;
     awardDailyRewards(walletAddress: string): Promise<void>;
     updateStarBalance(walletAddress: string, amount: number): Promise<void>;
+    getAllTraits(): Promise<{}>;
 }

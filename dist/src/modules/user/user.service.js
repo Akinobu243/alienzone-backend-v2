@@ -19,10 +19,15 @@ let UserService = class UserService {
         this.prisma = prisma;
     }
     async checkExists(walletAddress) {
-        const user = await this.findUser({
-            walletAddress: walletAddress.toLowerCase(),
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress: walletAddress.toLowerCase(),
+            },
+            include: {
+                aliens: true,
+            },
         });
-        return user ? true : false;
+        return user && user.aliens.length > 0;
     }
     async findUser(userWhereUniqueInput) {
         try {

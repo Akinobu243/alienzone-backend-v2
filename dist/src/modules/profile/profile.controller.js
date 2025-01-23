@@ -50,6 +50,9 @@ let ProfileController = class ProfileController {
         amount = parseInt(amount.toString());
         return this.profileService.updateStarBalance(walletAddress, amount);
     }
+    async getAllTraits() {
+        return this.profileService.getAllTraits();
+    }
 };
 __decorate([
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
@@ -118,6 +121,12 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Number]),
     __metadata("design:returntype", Promise)
 ], ProfileController.prototype, "updateStarBalance", null);
+__decorate([
+    (0, common_1.Get)('/get-all-traits'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProfileController.prototype, "getAllTraits", null);
 ProfileController = __decorate([
     (0, swagger_1.ApiTags)('profile'),
     (0, common_1.Controller)('/profile'),

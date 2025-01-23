@@ -32,6 +32,17 @@ let AuthController = class AuthController {
         });
         return res.status(200).send(authData);
     }
+    async authenticateTma(walletAddress, res) {
+        console.log('walletAddress', walletAddress);
+        const authData = await this.authService.authenticateTma(walletAddress);
+        res.cookie('accessToken', authData.accessToken, {
+            expires: new Date(new Date().getTime() + global_constants_1.JWT_EXPIRY_SECONDS * 1000),
+            sameSite: 'strict',
+            secure: true,
+            httpOnly: true,
+        });
+        return res.status(200).send(authData);
+    }
 };
 __decorate([
     (0, common_1.Post)('authenticate'),
@@ -44,6 +55,17 @@ __decorate([
     __metadata("design:paramtypes", [auth_dto_1.AuthUserDTO, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "authenticate", null);
+__decorate([
+    (0, common_1.Post)('authenticate-tma'),
+    (0, swagger_1.ApiOperation)({ description: 'Authenticate user' }),
+    (0, swagger_1.ApiBody)({ type: auth_dto_1.AuthUserDTO }),
+    (0, swagger_1.ApiResponse)({ type: auth_dto_1.AuthResponseDTO }),
+    __param(0, (0, common_1.Body)('walletAddress')),
+    __param(1, (0, common_1.Response)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "authenticateTma", null);
 AuthController = __decorate([
     (0, swagger_1.ApiTags)('auth'),
     (0, common_1.Controller)('auth'),

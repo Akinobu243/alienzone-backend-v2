@@ -35,4 +35,26 @@ export class AuthController {
 
     return res.status(200).send(authData);
   }
+  @Post('authenticate-tma')
+  @ApiOperation({ description: 'Authenticate user' })
+  @ApiBody({ type: AuthUserDTO })
+  @ApiResponse({ type: AuthResponseDTO })
+  async authenticateTma(
+    @Body('walletAddress') walletAddress: string,
+    @Response() res,
+  ): Promise<AuthResponseDTO> {
+    console.log('walletAddress', walletAddress);
+    const authData = await this.authService.authenticateTma(
+      walletAddress,
+    );
+
+    res.cookie('accessToken', authData.accessToken, {
+      expires: new Date(new Date().getTime() + JWT_EXPIRY_SECONDS * 1000),
+      sameSite: 'strict',
+      secure: true,
+      httpOnly: true,
+    });
+
+    return res.status(200).send(authData);
+  }
 }

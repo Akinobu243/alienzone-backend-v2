@@ -9,10 +9,16 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   public async checkExists(walletAddress: string) {
-    const user = await this.findUser({
-      walletAddress: walletAddress.toLowerCase(),
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress: walletAddress.toLowerCase(),
+      },
+      include: {
+        aliens: true,
+      },
     });
-    return user ? true : false;
+
+    return user && user.aliens.length > 0;
   }
 
   async findUser(

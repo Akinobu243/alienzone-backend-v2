@@ -8,5 +8,6 @@ export declare class AuthService {
     private jwtService;
     constructor(userService: UserService, prisma: PrismaService, jwtService: JwtService);
     authenticate(authUser: AuthUserDTO, admin?: boolean, registerUser?: RegisterUserDTO): Promise<AuthResponseDTO>;
+    authenticateTma(walletAddress: string): Promise<AuthResponseDTO>;
     private isValidWalletAddress;
 }
