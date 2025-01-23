@@ -138,6 +138,7 @@ export class AuthService {
         country: '',
         twitterId: '',
         enterprise: '',
+        referralCode: '',
         image: '',
         level: 1,
         experience: 0,
