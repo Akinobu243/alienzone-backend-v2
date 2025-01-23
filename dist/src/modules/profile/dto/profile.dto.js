@@ -25,11 +25,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAlienDTO.prototype, "element", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], CreateAlienDTO.prototype, "image", void 0);
-__decorate([
     (0, class_validator_1.IsNumber)(),
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Number)

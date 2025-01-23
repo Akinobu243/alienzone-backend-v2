@@ -95,6 +95,34 @@ let AuthService = class AuthService {
             accessToken: accessToken,
         };
     }
+    async authenticateTma(walletAddress) {
+        var user = await this.userService.findUser({
+            walletAddress: walletAddress.toLowerCase(),
+        });
+        if (!user) {
+            user = await this.userService.createUser({
+                walletAddress: walletAddress.toLowerCase(),
+                name: '',
+                country: '',
+                twitterId: '',
+                enterprise: '',
+                image: '',
+                level: 1,
+                experience: 0,
+                reputation: 0,
+                stars: 0,
+                role: auth_constants_1.USER_ROLE,
+            });
+        }
+        const payload = user;
+        const accessToken = this.jwtService.sign(payload, {
+            expiresIn: global_config_1.GLOBAL_CONFIG.security.expiresIn,
+        });
+        return {
+            walletAddress: user.walletAddress,
+            accessToken: accessToken,
+        };
+    }
     isValidWalletAddress(walletAddress) {
         return (ethers_1.ethers.isAddress(walletAddress) &&
             walletAddress.length === 42 &&

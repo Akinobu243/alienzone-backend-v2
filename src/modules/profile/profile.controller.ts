@@ -31,9 +31,10 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Post('/create-alien')
-  @UseInterceptors(FileInterceptor('image'))
+  // @UseInterceptors(FileInterceptor('image'))
   @ApiBody({ type: CreateAlienDTO })
   async createAlien(@Body() createAlienDTO: CreateAlienDTO, @Request() req) {
+
     return this.profileService.createAlien(
       req.walletAddress.toLowerCase(),
       createAlienDTO,
@@ -83,7 +84,6 @@ export class ProfileController {
     return this.profileService.updateStarBalance(walletAddress, amount);
   }
 
-  @UseGuards(AuthGuard)
   @Get('/get-all-traits')
   async getAllTraits() {
     return this.profileService.getAllTraits();

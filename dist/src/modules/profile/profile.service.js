@@ -13,9 +13,17 @@ exports.ProfileService = void 0;
 const client_1 = require("@prisma/client");
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_s3_1 = require("@aws-sdk/client-s3");
 let ProfileService = class ProfileService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.s3 = new client_s3_1.S3Client({
+            region: process.env.AWS_REGION,
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            }
+        });
     }
     async getProfile(walletAddress) {
         const user = await this.prisma.user.findUnique({
@@ -36,10 +44,17 @@ let ProfileService = class ProfileService {
         };
     }
     async createAlien(walletAddress, createAlienDTO) {
-        await this.prisma.alien.create({
-            data: Object.assign(Object.assign({}, createAlienDTO), { inRaid: false, user: {
+        console.log(walletAddress);
+        const alien = await this.prisma.alien.create({
+            data: {
+                name: createAlienDTO.name,
+                element: createAlienDTO.element,
+                strengthPoints: createAlienDTO.strengthPoints,
+                inRaid: false,
+                user: {
                     connect: { walletAddress },
-                } }),
+                },
+            },
         });
     }
     async getAliens(walletAddress) {
@@ -189,6 +204,27 @@ let ProfileService = class ProfileService {
                 stars: newBalance,
             },
         });
+    }
+    async getAllTraits() {
+        const traitFolders = ['Body', 'Elements', 'Eyes', 'Face', 'Hair', 'Mouth'];
+        const allImages = {};
+        try {
+            for (const folder of traitFolders) {
+                const input = {
+                    Bucket: process.env.AWS_BUCKET_NAME,
+                    Prefix: `traits/${folder}/`,
+                    MaxKeys: 1000,
+                };
+                const command = new client_s3_1.ListObjectsCommand(input);
+                const response = await this.s3.send(command);
+                const images = response.Contents.map((content) => `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${content.Key}`);
+                allImages[folder] = images;
+            }
+        }
+        catch (error) {
+            console.error(`Error listing objects in S3: ${error}`);
+        }
+        return allImages;
     }
 };
 ProfileService = __decorate([

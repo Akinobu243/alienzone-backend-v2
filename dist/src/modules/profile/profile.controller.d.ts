@@ -49,4 +49,5 @@ export declare class ProfileController {
     }[]>;
     awardDailyRewards(req: any): Promise<void>;
     updateStarBalance(password: string, walletAddress: string, amount: number): Promise<void>;
+    getAllTraits(): Promise<{}>;
 }
