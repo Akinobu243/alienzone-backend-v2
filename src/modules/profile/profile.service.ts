@@ -44,8 +44,8 @@ export class ProfileService {
   public async createAlien(
     walletAddress: string,
     createAlienDTO: CreateAlienDTO,
+    image: Express.Multer.File,
   ) {
-    console.log(walletAddress);
     const alien = await this.prisma.alien.create({
       data: {
         name: createAlienDTO.name,
@@ -59,28 +59,28 @@ export class ProfileService {
     });
 
     // upload image to s3
-    // try {
-    //   const uploadParams = {
-    //     Bucket: process.env.AWS_BUCKET_NAME,
-    //     Key: `aliens/${alien.id}_${createAlienDTO.name}.png`,
-    //     Body: createAlienDTO.image.buffer,
-    //     ContentType: 'image/png',
-    //   };
-    //   const uploadCommand = new PutObjectCommand(uploadParams);
-    //   await this.s3.send(uploadCommand);
-    // }
-    // catch (error) {
-    //   console.error(`Error uploading image to S3: ${error}`);
-    // }
+    try {
+      const uploadParams = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: `aliens/${alien.id}_${createAlienDTO.name}.png`,
+        Body: image.buffer,
+        ContentType: 'image/png',
+      };
+      const uploadCommand = new PutObjectCommand(uploadParams);
+      await this.s3.send(uploadCommand);
+    }
+    catch (error) {
+      console.error(`Error uploading image to S3: ${error}`);
+    }
 
-    // await this.prisma.alien.update({
-    //   where: {
-    //     id: alien.id,
-    //   },
-    //   data: {
-    //     image: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${createAlienDTO.name}.png`,
-    //   },
-    // });
+    await this.prisma.alien.update({
+      where: {
+        id: alien.id,
+      },
+      data: {
+        image: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${createAlienDTO.name}.png`,
+      },
+    });
   }
 
   public async getAliens(walletAddress: string) {

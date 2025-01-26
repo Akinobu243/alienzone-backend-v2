@@ -6,6 +6,7 @@ import {
   Query,
   Request,
   UnauthorizedException,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -29,15 +30,17 @@ export class ProfileController {
     return this.profileService.getProfile(walletAddress);
   }
 
-  @UseGuards(AuthGuard)
   @Post('/create-alien')
-  // @UseInterceptors(FileInterceptor('image'))
-  @ApiBody({ type: CreateAlienDTO })
-  async createAlien(@Body() createAlienDTO: CreateAlienDTO, @Request() req) {
-
+  @UseInterceptors(FileInterceptor('image'))
+  async createAlien(
+    @Body() createAlienDTO: CreateAlienDTO,
+    @UploadedFile() image: Express.Multer.File,
+    @Request() req
+  ) {    
     return this.profileService.createAlien(
       req.walletAddress.toLowerCase(),
       createAlienDTO,
+      image,
     );
   }
 

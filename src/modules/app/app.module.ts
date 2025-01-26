@@ -15,6 +15,7 @@ import { RaidsModule } from '../raids/raids.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CharacterModule } from '../character/character.module';
 import { ItemsModule } from '../items/items.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -26,6 +27,12 @@ import { ItemsModule } from '../items/items.module';
     CharacterModule,
     ItemsModule,
     RaidsModule,
+    MulterModule.register({
+      dest: './uploads',
+      limits: {
+        fieldSize: 1000 * 1000 * 10
+      },
+    }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [() => GLOBAL_CONFIG] }),
   ],
