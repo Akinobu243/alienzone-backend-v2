@@ -11,23 +11,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAlienDTO = void 0;
 const swagger_1 = require("@nestjs/swagger");
-const class_validator_1 = require("class-validator");
 class CreateAlienDTO {
 }
 __decorate([
-    (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], CreateAlienDTO.prototype, "name", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], CreateAlienDTO.prototype, "element", void 0);
 __decorate([
-    (0, class_validator_1.IsNumber)(),
     (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", Number)
+    __metadata("design:type", String)
 ], CreateAlienDTO.prototype, "strengthPoints", void 0);
 exports.CreateAlienDTO = CreateAlienDTO;
 //# sourceMappingURL=profile.dto.js.map

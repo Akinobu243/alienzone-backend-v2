@@ -50,7 +50,7 @@ export class ProfileService {
       data: {
         name: createAlienDTO.name,
         element: createAlienDTO.element,
-        strengthPoints: createAlienDTO.strengthPoints,
+        strengthPoints: Number(createAlienDTO.strengthPoints),
         inRaid: false,
         user: {
           connect: { walletAddress },

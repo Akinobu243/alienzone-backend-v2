@@ -9,5 +9,5 @@ export class CreateAlienDTO {
   element: string;
 
   @ApiProperty()
-  strengthPoints: number;
+  strengthPoints: string;
 }

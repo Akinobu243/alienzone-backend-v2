@@ -29,14 +29,15 @@ export class ProfileController {
   async getProfile(@Query('walletAddress') walletAddress: string) {
     return this.profileService.getProfile(walletAddress);
   }
-
+  
+  @UseGuards(AuthGuard)
   @Post('/create-alien')
   @UseInterceptors(FileInterceptor('image'))
   async createAlien(
     @Body() createAlienDTO: CreateAlienDTO,
     @UploadedFile() image: Express.Multer.File,
-    @Request() req
-  ) {    
+    @Request() req,
+  ) {
     return this.profileService.createAlien(
       req.walletAddress.toLowerCase(),
       createAlienDTO,
@@ -97,5 +98,4 @@ export class ProfileController {
   async useReferralCode(@Request() req, @Body('code') code: string) {
     return this.profileService.useReferralCode(req.walletAddress, code);
   }
-
 }

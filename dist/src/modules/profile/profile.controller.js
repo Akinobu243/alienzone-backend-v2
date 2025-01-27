@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const profile_service_1 = require("./profile.service");
 const auth_guard_1 = require("../auth/guards/auth.guard");
 const profile_dto_1 = require("./dto/profile.dto");
+const platform_express_1 = require("@nestjs/platform-express");
 let ProfileController = class ProfileController {
     constructor(profileService) {
         this.profileService = profileService;
@@ -25,8 +26,8 @@ let ProfileController = class ProfileController {
     async getProfile(walletAddress) {
         return this.profileService.getProfile(walletAddress);
     }
-    async createAlien(createAlienDTO, req) {
-        return this.profileService.createAlien(req.walletAddress.toLowerCase(), createAlienDTO);
+    async createAlien(createAlienDTO, image, req) {
+        return this.profileService.createAlien(req.walletAddress.toLowerCase(), createAlienDTO, image);
     }
     async getAliens(req) {
         return this.profileService.getAliens(req.walletAddress.toLowerCase());
@@ -53,6 +54,9 @@ let ProfileController = class ProfileController {
     async getAllTraits() {
         return this.profileService.getAllTraits();
     }
+    async useReferralCode(req, code) {
+        return this.profileService.useReferralCode(req.walletAddress, code);
+    }
 };
 __decorate([
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
@@ -66,11 +70,12 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.Post)('/create-alien'),
-    (0, swagger_1.ApiBody)({ type: profile_dto_1.CreateAlienDTO }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Request)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [profile_dto_1.CreateAlienDTO, Object]),
+    __metadata("design:paramtypes", [profile_dto_1.CreateAlienDTO, Object, Object]),
     __metadata("design:returntype", Promise)
 ], ProfileController.prototype, "createAlien", null);
 __decorate([
@@ -127,6 +132,15 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], ProfileController.prototype, "getAllTraits", null);
+__decorate([
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.Post)('/use-referral-code'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)('code')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], ProfileController.prototype, "useReferralCode", null);
 ProfileController = __decorate([
     (0, swagger_1.ApiTags)('profile'),
     (0, common_1.Controller)('/profile'),

@@ -1,3 +1,4 @@
+/// <reference types="multer" />
 import { ProfileService } from './profile.service';
 import { CreateAlienDTO } from './dto/profile.dto';
 export declare class ProfileController {
@@ -14,7 +15,7 @@ export declare class ProfileController {
         reputation: number;
         stars: number;
     }>;
-    createAlien(createAlienDTO: CreateAlienDTO, req: any): Promise<void>;
+    createAlien(createAlienDTO: CreateAlienDTO, image: Express.Multer.File, req: any): Promise<void>;
     getAliens(req: any): Promise<(import("@prisma/client/runtime").GetResult<{
         id: number;
         name: string;
@@ -50,4 +51,5 @@ export declare class ProfileController {
     awardDailyRewards(req: any): Promise<void>;
     updateStarBalance(password: string, walletAddress: string, amount: number): Promise<void>;
     getAllTraits(): Promise<{}>;
+    useReferralCode(req: any, code: string): Promise<void>;
 }

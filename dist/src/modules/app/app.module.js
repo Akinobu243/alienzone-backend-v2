@@ -22,6 +22,7 @@ const raids_module_1 = require("../raids/raids.module");
 const schedule_1 = require("@nestjs/schedule");
 const character_module_1 = require("../character/character.module");
 const items_module_1 = require("../items/items.module");
+const platform_express_1 = require("@nestjs/platform-express");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -38,6 +39,12 @@ AppModule = __decorate([
             character_module_1.CharacterModule,
             items_module_1.ItemsModule,
             raids_module_1.RaidsModule,
+            platform_express_1.MulterModule.register({
+                dest: './uploads',
+                limits: {
+                    fieldSize: 1000 * 1000 * 10
+                },
+            }),
             schedule_1.ScheduleModule.forRoot(),
             config_1.ConfigModule.forRoot({ isGlobal: true, load: [() => global_config_1.GLOBAL_CONFIG] }),
         ],

@@ -43,17 +43,37 @@ let ProfileService = class ProfileService {
             stars: user.stars,
         };
     }
-    async createAlien(walletAddress, createAlienDTO) {
-        console.log(walletAddress);
+    async createAlien(walletAddress, createAlienDTO, image) {
         const alien = await this.prisma.alien.create({
             data: {
                 name: createAlienDTO.name,
                 element: createAlienDTO.element,
-                strengthPoints: createAlienDTO.strengthPoints,
+                strengthPoints: Number(createAlienDTO.strengthPoints),
                 inRaid: false,
                 user: {
                     connect: { walletAddress },
                 },
+            },
+        });
+        try {
+            const uploadParams = {
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Key: `aliens/${alien.id}_${createAlienDTO.name}.png`,
+                Body: image.buffer,
+                ContentType: 'image/png',
+            };
+            const uploadCommand = new client_s3_1.PutObjectCommand(uploadParams);
+            await this.s3.send(uploadCommand);
+        }
+        catch (error) {
+            console.error(`Error uploading image to S3: ${error}`);
+        }
+        await this.prisma.alien.update({
+            where: {
+                id: alien.id,
+            },
+            data: {
+                image: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${createAlienDTO.name}.png`,
             },
         });
     }
@@ -225,6 +245,45 @@ let ProfileService = class ProfileService {
             console.error(`Error listing objects in S3: ${error}`);
         }
         return allImages;
+    }
+    async useReferralCode(walletAddress, code) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                walletAddress,
+            },
+        });
+        if (!user) {
+            throw new common_1.BadRequestException('User not found');
+        }
+        const referrer = await this.prisma.user.findUnique({
+            where: {
+                referralCode: code,
+            },
+        });
+        if (!referrer) {
+            throw new common_1.BadRequestException('Referral code not found');
+        }
+        if (user.referrerId) {
+            throw new common_1.BadRequestException('Referral code already used');
+        }
+        await this.prisma.user.update({
+            where: {
+                walletAddress,
+            },
+            data: {
+                referrerId: referrer.id,
+            },
+        });
+        await this.prisma.user.update({
+            where: {
+                id: referrer.id,
+            },
+            data: {
+                stars: {
+                    increment: 50,
+                },
+            },
+        });
     }
 };
 ProfileService = __decorate([
