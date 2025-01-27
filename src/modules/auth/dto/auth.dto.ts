@@ -33,6 +33,10 @@ export class RegisterUserDTO {
   @IsOptional()
   @ApiProperty()
   enterprise?: string;
+
+  @IsOptional()
+  @ApiProperty()
+  referrerCode?: string;
 }
 
 export class AuthUserDTO {

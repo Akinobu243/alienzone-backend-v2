@@ -90,6 +90,30 @@ export class AuthService {
           referralCode: referralCode,
         });
       }
+
+      const referrerCode = registerUser.referrerCode;
+
+      let referrer: User | null = null;
+
+      if (referrerCode) {
+        referrer = await this.userService.findUser({
+          referralCode: referrerCode,
+        });
+      }
+
+      if (referrer) {
+        await this.prisma.user.update({
+          where: {
+            id: referrer.id,
+          },
+          data: {
+            stars: {
+              increment: 50,
+            },
+          },
+        });
+      }
+
       user = await this.userService.createUser({
         walletAddress: userWalletAddress,
         name: registerUser.name,
@@ -97,7 +121,7 @@ export class AuthService {
         twitterId: registerUser.twitterId || '',
         enterprise: registerUser.enterprise || '',
         referralCode: referralCode,
-        referrerId: null,
+        referrerId: referrer?.id || null,
         image: registerUser.image || '',
         level: 1,
         experience: 0,
@@ -111,40 +135,6 @@ export class AuthService {
       throw new UnauthorizedException({
         success: false,
         message: UNAUTHORIZED,
-      });
-    }
-
-    const payload = user;
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: GLOBAL_CONFIG.security.expiresIn,
-    });
-
-    return {
-      walletAddress: user.walletAddress,
-      accessToken: accessToken,
-    };
-  }
-  public async authenticateTma(
-    walletAddress: string,
-  ): Promise<AuthResponseDTO> {
-    var user = await this.userService.findUser({
-      walletAddress: walletAddress.toLowerCase(),
-    });
-
-    if (!user) {
-      user = await this.userService.createUser({
-        walletAddress: walletAddress.toLowerCase(),
-        name: '',
-        country: '',
-        twitterId: '',
-        enterprise: '',
-        referralCode: '',
-        image: '',
-        level: 1,
-        experience: 0,
-        reputation: 0,
-        stars: 0,
-        role: USER_ROLE,
       });
     }
 
