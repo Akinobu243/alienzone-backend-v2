@@ -38,6 +38,7 @@ export class ProfileService {
       experience: user.experience,
       reputation: user.reputation,
       stars: user.stars,
+      refferalCode:user.referralCode
     };
   }
 
