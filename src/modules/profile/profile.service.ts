@@ -28,6 +28,13 @@ export class ProfileService {
       },
     });
 
+    // get total referrals
+    const totalReferrals = await this.prisma.user.count({
+      where: {
+        referrerId: user.id,
+      },
+    });
+
     return {
       walletAddress: user.walletAddress,
       name: user.name,
@@ -38,7 +45,8 @@ export class ProfileService {
       experience: user.experience,
       reputation: user.reputation,
       stars: user.stars,
-      refferalCode:user.referralCode
+      refferalCode: user.referralCode,
+      totalReferrals,
     };
   }
 

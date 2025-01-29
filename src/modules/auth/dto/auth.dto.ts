@@ -36,7 +36,7 @@ export class RegisterUserDTO {
 
   @IsOptional()
   @ApiProperty()
-  referrerCode?: string;
+  refferalCode?: string;
 }
 
 export class AuthUserDTO {

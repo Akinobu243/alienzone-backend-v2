@@ -91,7 +91,7 @@ export class AuthService {
         });
       }
 
-      const referrerCode = registerUser.referrerCode;
+      const referrerCode = registerUser.refferalCode;
 
       let referrer: User | null = null;
 
@@ -108,7 +108,7 @@ export class AuthService {
           },
           data: {
             stars: {
-              increment: 50,
+              increment: 40,
             },
           },
         });
