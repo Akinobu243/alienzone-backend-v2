@@ -92,25 +92,11 @@ export class AuthService {
       }
 
       const referrerCode = registerUser.refferalCode;
-
       let referrer: User | null = null;
 
       if (referrerCode) {
         referrer = await this.userService.findUser({
           referralCode: referrerCode,
-        });
-      }
-
-      if (referrer) {
-        await this.prisma.user.update({
-          where: {
-            id: referrer.id,
-          },
-          data: {
-            stars: {
-              increment: 40,
-            },
-          },
         });
       }
 
@@ -129,6 +115,28 @@ export class AuthService {
         stars: 0,
         role: USER_ROLE,
       });
+
+      if (referrer) {
+        await this.prisma.$transaction([
+          this.prisma.user.update({
+            where: {
+              id: referrer.id,
+            },
+            data: {
+              stars: {
+                increment: 40,
+              },
+            },
+          }),
+          this.prisma.referralReward.create({
+            data: {
+              referrerId: referrer.id,
+              refereeId: user.id,
+              starsEarned: 40,
+            },
+          }),
+        ]);
+      }
     }
 
     if (admin && user.role !== (ADMIN_ROLE as any)) {

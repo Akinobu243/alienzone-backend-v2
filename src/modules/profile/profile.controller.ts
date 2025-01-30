@@ -29,7 +29,7 @@ export class ProfileController {
   async getProfile(@Query('walletAddress') walletAddress: string) {
     return this.profileService.getProfile(walletAddress);
   }
-  
+
   @UseGuards(AuthGuard)
   @Post('/create-alien')
   @UseInterceptors(FileInterceptor('image'))
@@ -97,5 +97,17 @@ export class ProfileController {
   @Post('/use-referral-code')
   async useReferralCode(@Request() req, @Body('code') code: string) {
     return this.profileService.useReferralCode(req.walletAddress, code);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/unseen-referral-rewards')
+  async getUnseenReferralRewards(@Request() req) {
+    return this.profileService.getUnseenReferralRewards(req.walletAddress);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/mark-referral-rewards-seen')
+  async markReferralRewardsAsSeen(@Request() req) {
+    return this.profileService.markReferralRewardsAsSeen(req.walletAddress);
   }
 }

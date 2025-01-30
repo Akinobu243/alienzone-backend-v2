@@ -25,16 +25,16 @@ enum DailyRewardType {
 }
 
 model User {
-  id               Int             @id @default(autoincrement())
-  walletAddress    String          @unique
+  id               Int              @id @default(autoincrement())
+  walletAddress    String           @unique
   name             String
   country          String
   twitterId        String
   enterprise       String
-  referralCode     String          @unique
+  referralCode     String           @unique
   referrerId       Int?
   image            String
-  level            Int             @default(1)
+  level            Int              @default(1)
   experience       Int
   reputation       Int
   stars            Int
@@ -42,11 +42,13 @@ model User {
   aliens           Alien[]
   characters       UserCharacter[]
   items            UserItem[]
-  role             Role            @default(USER)
-  dailyStreak      Int             @default(0)
-  lastDailyClaimed DateTime        @default(now())
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  role             Role             @default(USER)
+  dailyStreak      Int              @default(0)
+  lastDailyClaimed DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  referrerRewards  ReferralReward[] @relation("ReferrerRewards")
+  refereeRewards   ReferralReward[] @relation("RefereeRewards")
 }
 
 model Raid {
@@ -152,4 +154,19 @@ model DailyReward {
   item      Item?           @relation(fields: [itemId], references: [id])
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+}
+
+model ReferralReward {
+  id          Int      @id @default(autoincrement())
+  referrer    User     @relation("ReferrerRewards", fields: [referrerId], references: [id])
+  referrerId  Int
+  referee     User     @relation("RefereeRewards", fields: [refereeId], references: [id])
+  refereeId   Int
+  starsEarned Int
+  seen        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([refereeId])
 }

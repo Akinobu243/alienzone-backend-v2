@@ -5,7 +5,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WALLETADDRESS_ALREADY_EXISTS } from 'src/shared/constants/strings';
 import exp from 'constants';
 import { CreateAlienDTO } from './dto/profile.dto';
-import { ListObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  ListObjectsCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class ProfileService {
@@ -16,10 +20,8 @@ export class ProfileService {
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    }
+    },
   });
-
-
 
   public async getProfile(walletAddress: string) {
     const user = await this.prisma.user.findUnique({
@@ -77,8 +79,7 @@ export class ProfileService {
       };
       const uploadCommand = new PutObjectCommand(uploadParams);
       await this.s3.send(uploadCommand);
-    }
-    catch (error) {
+    } catch (error) {
       console.error(`Error uploading image to S3: ${error}`);
     }
 
@@ -268,11 +269,13 @@ export class ProfileService {
         const command = new ListObjectsCommand(input);
         const response = await this.s3.send(command);
 
-        const images = response.Contents.map((content) => `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${content.Key}`);
+        const images = response.Contents.map(
+          (content) =>
+            `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${content.Key}`,
+        );
         allImages[folder] = images;
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error(`Error listing objects in S3: ${error}`);
     }
 
@@ -281,9 +284,7 @@ export class ProfileService {
 
   public async useReferralCode(walletAddress: string, code: string) {
     const user = await this.prisma.user.findUnique({
-      where: {
-        walletAddress,
-      },
+      where: { walletAddress },
     });
 
     if (!user) {
@@ -291,9 +292,7 @@ export class ProfileService {
     }
 
     const referrer = await this.prisma.user.findUnique({
-      where: {
-        referralCode: code,
-      },
+      where: { referralCode: code },
     });
 
     if (!referrer) {
@@ -304,25 +303,65 @@ export class ProfileService {
       throw new BadRequestException('Referral code already used');
     }
 
-    await this.prisma.user.update({
+    // Create referral reward record
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { walletAddress },
+        data: { referrerId: referrer.id },
+      }),
+      this.prisma.user.update({
+        where: { id: referrer.id },
+        data: { stars: { increment: 40 } },
+      }),
+      this.prisma.referralReward.create({
+        data: {
+          referrerId: referrer.id,
+          refereeId: user.id,
+          starsEarned: 40,
+        },
+      }),
+    ]);
+  }
+
+  public async getUnseenReferralRewards(walletAddress: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const rewards = await this.prisma.referralReward.aggregate({
       where: {
-        walletAddress,
+        referrerId: user.id,
+        seen: false,
       },
-      data: {
-        referrerId: referrer.id,
+      _sum: {
+        starsEarned: true,
       },
     });
 
-    await this.prisma.user.update({
+    return rewards._sum.starsEarned || 0;
+  }
+
+  public async markReferralRewardsAsSeen(walletAddress: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    await this.prisma.referralReward.updateMany({
       where: {
-        id: referrer.id,
+        referrerId: user.id,
+        seen: false,
       },
       data: {
-        stars: {
-          increment: 50,
-        },
+        seen: true,
       },
     });
   }
-
 }
