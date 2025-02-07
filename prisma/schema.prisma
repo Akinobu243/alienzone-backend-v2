@@ -24,6 +24,21 @@ enum DailyRewardType {
   XP
 }
 
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  PACK
+  ALIEN_PART
+  STARS
+  XP
+  REP
+}
+
 model User {
   id               Int              @id @default(autoincrement())
   walletAddress    String           @unique
@@ -49,6 +64,8 @@ model User {
   updatedAt        DateTime         @updatedAt
   referrerRewards  ReferralReward[] @relation("ReferrerRewards")
   refereeRewards   ReferralReward[] @relation("RefereeRewards")
+  alienParts       UserAlienPart[]
+  transactions     Transaction[]
 }
 
 model Raid {
@@ -169,4 +186,94 @@ model ReferralReward {
 
   @@index([referrerId])
   @@index([refereeId])
+}
+
+enum AlienPartType {
+  BODY
+  CLOTHES
+  HEAD
+  FACE
+  HAIR
+}
+
+model UserAlienPart {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  alienPartId Int
+  user        User      @relation(fields: [userId], references: [id])
+  alienPart   AlienPart @relation(fields: [alienPartId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, alienPartId])
+}
+
+model AlienPart {
+  id           Int             @id @default(autoincrement())
+  type         AlienPartType
+  image        String
+  name         String
+  description  String?
+  price        Int?
+  isDefault    Boolean         @default(false)
+  users        UserAlienPart[]
+  packs        PackReward[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  transactions Transaction[]
+}
+
+enum PackRewardType {
+  STARS
+  ALIEN_PART
+  XP
+  REP
+}
+
+model Pack {
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String?
+  image        String?
+  price        Int
+  isActive     Boolean       @default(true)
+  rewards      PackReward[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model PackReward {
+  id          Int            @id @default(autoincrement())
+  pack        Pack           @relation(fields: [packId], references: [id])
+  packId      Int
+  type        PackRewardType
+  amount      Int?
+  alienPart   AlienPart?     @relation(fields: [alienPartId], references: [id])
+  alienPartId Int?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([packId])
+  @@index([alienPartId])
+}
+
+model Transaction {
+  id              Int               @id @default(autoincrement())
+  user            User              @relation(fields: [userId], references: [id])
+  userId          Int
+  type            TransactionType
+  amount          Float
+  status          TransactionStatus @default(PENDING)
+  stripePaymentId String?
+  pack            Pack?             @relation(fields: [packId], references: [id])
+  packId          Int?
+  alienPart       AlienPart?        @relation(fields: [alienPartId], references: [id])
+  alienPartId     Int?
+  quantity        Int               @default(1)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([stripePaymentId])
 }

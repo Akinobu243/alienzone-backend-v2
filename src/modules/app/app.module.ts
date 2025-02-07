@@ -16,6 +16,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CharacterModule } from '../character/character.module';
 import { ItemsModule } from '../items/items.module';
 import { MulterModule } from '@nestjs/platform-express';
+import { PacksModule } from '../packs/packs.module';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
   imports: [
@@ -30,11 +32,13 @@ import { MulterModule } from '@nestjs/platform-express';
     MulterModule.register({
       dest: './uploads',
       limits: {
-        fieldSize: 1000 * 1000 * 10
+        fieldSize: 1000 * 1000 * 10,
       },
     }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [() => GLOBAL_CONFIG] }),
+    PacksModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

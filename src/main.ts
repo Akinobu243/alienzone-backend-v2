@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { json } from 'express';
 
 import { AppModule } from './modules/app/app.module';
 import { API_PREFIX } from './shared/constants/global.constants';
@@ -36,6 +37,21 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe());
+
+  // Use raw body for Stripe webhook
+  app.use(
+    '/api/v1/stripe/webhook',
+    json({
+      verify: (req: any, res, buf) => {
+        if (req.originalUrl.startsWith('/api/v1/stripe/webhook')) {
+          req.rawBody = buf;
+        }
+      },
+    }),
+  );
+
+  // Regular JSON parsing for other routes
+  app.use(json());
 
   const configService = app.get<ConfigService>(ConfigService);
   const swaggerConfig = configService.get<SwaggerConfig>('swagger');
