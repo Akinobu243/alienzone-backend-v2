@@ -6,8 +6,18 @@ import { Pack, PackReward } from '@prisma/client';
 export class PacksService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllPacks() {
-    return this.prisma.pack.findMany({
+  async getAllPacks(walletAddress: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+      include: {
+        purchasedPacks: true,
+      },
+    });
+
+    // add additional field to check if user has purchased pack
+    const packs = await this.prisma.pack.findMany({
       where: {
         isActive: true,
       },
@@ -19,6 +29,11 @@ export class PacksService {
         },
       },
     });
+
+    return packs.map((pack) => ({
+      ...pack,
+      isPurchased: user.purchasedPacks.some((p) => p.id === pack.id),
+    }));
   }
 
   async getPackById(id: number) {

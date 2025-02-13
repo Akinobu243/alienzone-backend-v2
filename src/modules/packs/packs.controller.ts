@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
 import { PacksService } from './packs.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -15,8 +15,8 @@ export class PacksController {
     status: 200,
     description: 'Returns all active packs with their rewards',
   })
-  async getAllPacks() {
-    return this.packsService.getAllPacks();
+  async getAllPacks(@Req() req) {
+    return this.packsService.getAllPacks(req.walletAddress.toLowerCase());
   }
 
   @Get(':id')
