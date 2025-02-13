@@ -14,7 +14,7 @@ export class PacksService {
       include: {
         rewards: {
           include: {
-            alienPart: true,
+            alienParts: true,
           },
         },
       },
@@ -27,7 +27,7 @@ export class PacksService {
       include: {
         rewards: {
           include: {
-            alienPart: true,
+            alienParts: true,
           },
         },
       },
@@ -43,7 +43,7 @@ export class PacksService {
       include: {
         rewards: {
           include: {
-            alienPart: true,
+            alienParts: true,
           },
         },
       },

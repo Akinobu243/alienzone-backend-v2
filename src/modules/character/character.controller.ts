@@ -1,9 +1,17 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CharacterService } from './character.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { CharacterRarity, CharacterType } from '@prisma/client';
 
 @ApiTags('character')
 @Controller('/character')
@@ -14,13 +22,19 @@ export class CharacterController {
   @Post('/create-character')
   async createCharacter(
     @Body('name') name: string,
-    @Body('level') level: number,
-    @Body('element') element: string,
-    @Body('strengthPoints') strengthPoints: number,
+    @Body('type') type: CharacterType,
+    @Body('rarity') rarity: CharacterRarity,
+    @Body('power') power: number,
     @Body('image') image: string,
   ) {
-    strengthPoints = parseInt(strengthPoints.toString());
-    return this.characterService.createCharacter(name, level, element, strengthPoints, image);
+    power = parseInt(power.toString());
+    return this.characterService.createCharacter(
+      name,
+      type,
+      rarity,
+      power,
+      image,
+    );
   }
 
   @UseGuards(AdminGuard)
@@ -37,14 +51,19 @@ export class CharacterController {
     if (strengthPoints !== undefined) {
       strengthPoints = parseInt(strengthPoints.toString());
     }
-    return this.characterService.editCharacter(id, name, level, element, strengthPoints, image);
+    return this.characterService.editCharacter(
+      id,
+      name,
+      level,
+      element,
+      strengthPoints,
+      image,
+    );
   }
 
   @UseGuards(AdminGuard)
   @Post('/delete-character')
-  async deleteCharacter(
-    @Body('id') id: number,
-  ) {
+  async deleteCharacter(@Body('id') id: number) {
     id = parseInt(id.toString());
     return this.characterService.deleteCharacter(id);
   }
@@ -57,18 +76,17 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Post('/reward-character')
-  async rewardCharacter(
-    @Request() req,
-  ) {
-    return this.characterService.rewardCharacter(req.walletAddress.toLowerCase());
+  async rewardCharacter(@Request() req) {
+    return this.characterService.rewardCharacter(
+      req.walletAddress.toLowerCase(),
+    );
   }
 
   @UseGuards(AuthGuard)
   @Get('/get-user-characters')
-  async getUserCharacters(
-    @Request() req,
-  ) {
-    return this.characterService.getUserCharacters(req.walletAddress.toLowerCase());
+  async getUserCharacters(@Request() req) {
+    return this.characterService.getUserCharacters(
+      req.walletAddress.toLowerCase(),
+    );
   }
-
 }

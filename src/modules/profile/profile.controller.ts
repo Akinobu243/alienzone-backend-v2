@@ -88,11 +88,13 @@ export class ProfileController {
     return this.profileService.updateStarBalance(walletAddress, amount);
   }
 
-  @Get('/get-all-traits')
-  async getAllTraits() {
-    return this.profileService.getAllTraits();
+
+  @Get('/get-onboarding-data')
+  async getOnboardingData() {
+    return this.profileService.getOnboardingData();
   }
 
+  @UseGuards(AuthGuard)
   @UseGuards(AuthGuard)
   @Post('/use-referral-code')
   async useReferralCode(@Request() req, @Body('code') code: string) {

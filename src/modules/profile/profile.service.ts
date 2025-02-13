@@ -60,7 +60,11 @@ export class ProfileService {
     const alien = await this.prisma.alien.create({
       data: {
         name: createAlienDTO.name,
-        element: createAlienDTO.element,
+        element: {
+          connect: {
+            id: Number(createAlienDTO.elementId),
+          },
+        },
         strengthPoints: Number(createAlienDTO.strengthPoints),
         inRaid: false,
         user: {
@@ -99,6 +103,9 @@ export class ProfileService {
         user: {
           walletAddress: walletAddress,
         },
+      },
+      include: {
+        element: true,
       },
     });
 
@@ -280,6 +287,28 @@ export class ProfileService {
     }
 
     return allImages;
+  }
+
+  public async getOnboardingData() {
+    const alienParts = await this.prisma.alienPart.findMany({
+      where: {
+        isDefault: true,
+      },
+    });
+    const groups = alienParts.reduce((acc, part) => {
+      acc[part.type] = acc[part.type] || [];
+      acc[part.type].push(part);
+      return acc;
+    }, {});
+
+    // elements
+    const elements = await this.prisma.element.findMany({
+      where: {
+        isDefault: true,
+      },
+    });
+
+    return { alienParts: groups, elements };
   }
 
   public async useReferralCode(walletAddress: string, code: string) {

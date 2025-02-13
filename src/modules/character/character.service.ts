@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { CharacterRarity } from '@prisma/client';
+import { CharacterType } from '@prisma/client';
 
 @Injectable()
 export class CharacterService {
@@ -8,17 +10,17 @@ export class CharacterService {
 
   public async createCharacter(
     name: string,
-    level: number,
-    element: string,
-    strengthPoints: number,
+    type: CharacterType,
+    rarity: CharacterRarity,
+    power: number,
     image: string,
   ) {
     await this.prisma.character.create({
       data: {
         name,
-        level,
-        element,
-        strengthPoints,
+        type,
+        rarity,
+        power,
         image,
       },
     });
@@ -34,14 +36,14 @@ export class CharacterService {
   ) {
     await this.prisma.character.update({
       where: {
-      id: id,
+        id: id,
       },
       data: {
-      ...(name && { name }),
-      ...(level && { level }),
-      ...(element && { element }),
-      ...(strengthPoints && { strengthPoints }),
-      ...(image && { image }),
+        ...(name && { name }),
+        ...(level && { level }),
+        ...(element && { element }),
+        ...(strengthPoints && { strengthPoints }),
+        ...(image && { image }),
       },
     });
   }
@@ -61,7 +63,8 @@ export class CharacterService {
   public async rewardCharacter(walletAddress: string) {
     // Choose a random character to reward
     const characters = await this.prisma.character.findMany();
-    const randomCharacter = characters[Math.floor(Math.random() * characters.length)];
+    const randomCharacter =
+      characters[Math.floor(Math.random() * characters.length)];
 
     // Find the user
     const user = await this.prisma.user.findUnique({
@@ -85,8 +88,6 @@ export class CharacterService {
         },
       },
     });
-
-
   }
 
   public async getUserCharacters(walletAddress: string) {
@@ -109,5 +110,4 @@ export class CharacterService {
 
     return userCharacters;
   }
-
 }

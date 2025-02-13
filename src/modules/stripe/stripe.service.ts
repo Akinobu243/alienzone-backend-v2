@@ -155,6 +155,12 @@ export class StripeService {
       data: { status: 'COMPLETED' },
     });
 
+    // update user purchased packs
+    await this.prisma.user.update({
+      where: { id: transaction.userId },
+      data: { purchasedPacks: { connect: { id: transaction.packId } } },
+    });
+
     // Process the purchase based on type
     switch (transaction.type) {
       case 'PACK':
@@ -180,13 +186,45 @@ export class StripeService {
 
     for (const reward of pack.rewards) {
       switch (reward.type) {
-        case 'ALIEN_PART':
-          await this.prisma.userAlienPart.create({
+        case 'ALIEN_PARTS':
+          console.log('ALIEN_PARTS', reward.alienParts);
+          for (const alienPart of reward.alienParts) {
+            await this.prisma.alienPart.update({
+              where: { id: alienPart.id },
+              data: {
+                users: {
+                  connect: { id: transaction.userId },
+                },
+              },
+            });
+          }
+          break;
+        case 'ELEMENT':
+          await this.prisma.element.update({
+            where: { id: reward.elementId },
             data: {
-              userId: transaction.userId,
-              alienPartId: reward.alienPartId,
+              users: {
+                connect: { id: transaction.userId },
+              },
             },
           });
+          break;
+        case 'CHARACTER':
+          // check if user already has character
+          const userCharacter = await this.prisma.userCharacter.findFirst({
+            where: {
+              userId: transaction.userId,
+              characterId: reward.characterId,
+            },
+          });
+          if (!userCharacter) {
+            await this.prisma.userCharacter.create({
+              data: {
+                userId: transaction.userId,
+                characterId: reward.characterId,
+              },
+            });
+          }
           break;
         case 'STARS':
           await this.prisma.user.update({
@@ -194,16 +232,29 @@ export class StripeService {
             data: { stars: { increment: reward.amount } },
           });
           break;
-        // Add other reward types
+        case 'XP':
+          await this.prisma.user.update({
+            where: { id: transaction.userId },
+            data: { experience: { increment: reward.amount } },
+          });
+          break;
+        case 'REP':
+          await this.prisma.user.update({
+            where: { id: transaction.userId },
+            data: { reputation: { increment: reward.amount } },
+          });
+          break;
       }
     }
   }
 
   private async processAlienPartPurchase(transaction: any) {
-    await this.prisma.userAlienPart.create({
+    await this.prisma.alienPart.update({
+      where: { id: transaction.alienPartId },
       data: {
-        userId: transaction.userId,
-        alienPartId: transaction.alienPartId,
+        users: {
+          connect: { id: transaction.userId },
+        },
       },
     });
   }
