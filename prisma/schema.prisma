@@ -66,10 +66,8 @@ model User {
   refereeRewards   ReferralReward[] @relation("RefereeRewards")
   transactions     Transaction[]
   AlienParts       AlienPart[]
-  packId           Int?
   purchasedPacks   Pack[]           @relation("PurchasedPacks")
-  Element          Element?         @relation(fields: [elementId], references: [id])
-  elementId        Int?
+  elements         Element[]
 }
 
 model Raid {
