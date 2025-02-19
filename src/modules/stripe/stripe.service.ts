@@ -199,16 +199,6 @@ export class StripeService {
             });
           }
           break;
-        case 'ELEMENT':
-          await this.prisma.element.update({
-            where: { id: reward.elementId },
-            data: {
-              users: {
-                connect: { id: transaction.userId },
-              },
-            },
-          });
-          break;
         case 'CHARACTER':
           // check if user already has character
           const userCharacter = await this.prisma.userCharacter.findFirst({
