@@ -167,10 +167,10 @@ model Element {
   image          String
   background     String?
   aliens         Alien[]
-  weakness       Element          @relation("Strength", fields: [weaknessId], references: [id])
-  weaknessId     Int
-  strength       Element          @relation("Weakness", fields: [strengthId], references: [id])
-  strengthId     Int
+  weakness       Element?         @relation("Strength", fields: [weaknessId], references: [id])
+  weaknessId     Int?
+  strength       Element?         @relation("Weakness", fields: [strengthId], references: [id])
+  strengthId     Int?
   isDefault      Boolean          @default(false)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
