@@ -289,7 +289,7 @@ model AlienPart {
   image          String
   name           String
   description    String?
-  price          Int?
+  price          Float?
   isDefault      Boolean          @default(false)
   users          User[]
   packs          PackReward[]
@@ -324,7 +324,7 @@ model Pack {
   name         String
   description  String?
   image        String?
-  price        Int
+  price        Float
   isActive     Boolean       @default(true)
   rewards      PackReward[]
   createdAt    DateTime      @default(now())
