@@ -24,3 +24,5 @@ export const API_PREFIX = '/api/v1';
 export const PHONE_REGEX = /^[0-9\s+-.()]+$/;
 
 export const SLUG_SEPARATOR = '-';
+
+export const ELEMENTS = ['GAMMA', 'FIRE', 'LIFE', 'WATER', 'LOVE', 'GRAVITY', 'PLASMA', 'THUNDER'];

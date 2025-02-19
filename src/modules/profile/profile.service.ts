@@ -1,9 +1,7 @@
-import { DailyRewardType, Prisma, User } from '@prisma/client';
+import { DailyRewardType, Element, ItemQuality, ItemType } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { WALLETADDRESS_ALREADY_EXISTS } from 'src/shared/constants/strings';
-import exp from 'constants';
 import { CreateAlienDTO } from './dto/profile.dto';
 import {
   ListObjectsCommand,
@@ -57,10 +55,18 @@ export class ProfileService {
     createAlienDTO: CreateAlienDTO,
     image: Express.Multer.File,
   ) {
+    let element: Element;
+    if (createAlienDTO.element.toUpperCase() in Element) {
+      element = Element[createAlienDTO.element.toUpperCase() as keyof typeof Element];
+    } else {
+      throw new BadRequestException('Invalid element');
+    }
+
+
     const alien = await this.prisma.alien.create({
       data: {
         name: createAlienDTO.name,
-        element: createAlienDTO.element,
+        element: element,
         strengthPoints: Number(createAlienDTO.strengthPoints),
         inRaid: false,
         user: {
@@ -363,5 +369,82 @@ export class ProfileService {
         seen: true,
       },
     });
+  }
+
+  public async useConsumableItem(
+    walletAddress: string,
+    itemId: number,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const userItem = await this.prisma.userItem.findFirst({
+      where: {
+        userId: user.id,
+        itemId,
+      },
+      include: {
+        item: true,
+      }
+    });
+
+    if (!userItem || userItem.quantity < 1) {
+      throw new BadRequestException('Item not found');
+    }
+
+    let boostAmount = 0;
+    let boostType = '';
+    switch (userItem.item.type) {
+      case ItemType.SHEARS:
+        boostType = 'stars';
+        break;
+      case ItemType.CUT:
+        boostType = 'raidTimeBoost';
+        break;
+      case ItemType.KNIFE:
+        boostType = 'xpBoost';
+        break;
+      default:
+        throw new BadRequestException('Invalid item type');
+    }
+    switch (userItem.item.quality) {
+      case ItemQuality.BRONZE:
+        boostAmount = 0.02;
+        break;
+      case ItemQuality.SILVER:
+        boostAmount = 0.04;
+        break;
+      case ItemQuality.GOLDEN:
+        boostAmount = 0.08;
+        break;
+    }
+
+    await this.prisma.user.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        ... (boostType === 'stars' ? { starsBoost: boostAmount, lastStarBoost: new Date() } : {}),
+        ... (boostType === 'raidTimeBoost' ? { raidTimeBoost: boostAmount, lastRaidBoost: new Date() } : {}),
+        ... (boostType === 'xpBoost' ? { xpBoost: boostAmount, lastXpBoost: new Date() } : {}),
+      },
+    })
+
+    await this.prisma.userItem.update({
+      where: {
+        id: userItem.id,
+      },
+      data: {
+        quantity: {
+          decrement: 1,
+        }
+      },
+    });
+
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { Element } from '@prisma/client';
 
 @Injectable()
 export class CharacterService {
@@ -9,9 +10,10 @@ export class CharacterService {
   public async createCharacter(
     name: string,
     level: number,
-    element: string,
+    element: Element,
     strengthPoints: number,
     image: string,
+    portal: number,
   ) {
     await this.prisma.character.create({
       data: {
@@ -20,6 +22,7 @@ export class CharacterService {
         element,
         strengthPoints,
         image,
+        portal,
       },
     });
   }
@@ -28,9 +31,10 @@ export class CharacterService {
     id: number,
     name?: string,
     level?: number,
-    element?: string,
+    element?: Element,
     strengthPoints?: number,
     image?: string,
+    portal?: number,
   ) {
     await this.prisma.character.update({
       where: {
@@ -42,6 +46,7 @@ export class CharacterService {
       ...(element && { element }),
       ...(strengthPoints && { strengthPoints }),
       ...(image && { image }),
+      ...(portal && { portal }),
       },
     });
   }
@@ -58,17 +63,24 @@ export class CharacterService {
     return await this.prisma.character.findMany();
   }
 
-  public async rewardCharacter(walletAddress: string) {
-    // Choose a random character to reward
-    const characters = await this.prisma.character.findMany();
-    const randomCharacter = characters[Math.floor(Math.random() * characters.length)];
-
-    // Find the user
+  public async rewardCharacter(walletAddress: string, portal: number) {
     const user = await this.prisma.user.findUnique({
       where: {
         walletAddress,
       },
     });
+
+    if (user.stars < 100) {
+      throw new Error('Insufficient balance');
+    }
+
+    const characters = await this.prisma.character.findMany({
+      where: {
+        portal,
+      },
+    });
+    const randomCharacter = characters[Math.floor(Math.random() * characters.length)];
+    // TODO: reward character based on rarity from smart contract
 
     // Create the user character
     await this.prisma.userCharacter.create({
@@ -86,7 +98,16 @@ export class CharacterService {
       },
     });
 
-
+    await this.prisma.user.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        stars: {
+          decrement: 100,
+        },
+      },
+    });
   }
 
   public async getUserCharacters(walletAddress: string) {

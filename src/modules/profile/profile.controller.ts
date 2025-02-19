@@ -110,4 +110,16 @@ export class ProfileController {
   async markReferralRewardsAsSeen(@Request() req) {
     return this.profileService.markReferralRewardsAsSeen(req.walletAddress);
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/use-consumable-item')
+  async useConsumableItem(
+    @Request() req,
+    @Body('itemId') itemId: number,
+  ) {
+    return this.profileService.useConsumableItem(
+      req.walletAddress,
+      itemId,
+    );
+  }
 }

@@ -15,13 +15,20 @@ enum Role {
 enum RewardType {
   STARS
   XP
-  REP
 }
 
 enum DailyRewardType {
   ITEM
   STARS
   XP
+}
+
+enum RuneType {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
 }
 
 enum TransactionStatus {
@@ -37,6 +44,29 @@ enum TransactionType {
   STARS
   XP
   REP
+}
+
+enum Element {
+  GAMMA
+  FIRE
+  LIFE
+  WATER
+  LOVE
+  GRAVITY
+  PLASMA
+  THUNDER
+}
+
+enum ItemType {
+  SHEARS
+  CUT
+  KNIFE
+}
+
+enum ItemQuality {
+  BRONZE
+  SILVER
+  GOLDEN
 }
 
 model User {
@@ -57,6 +87,13 @@ model User {
   aliens           Alien[]
   characters       UserCharacter[]
   items            UserItem[]
+  runes            RuneType[]
+  starsBoost       Int              @default(0)
+  raidTimeBoost    Int              @default(0)
+  xpBoost          Int              @default(0)
+  lastStarBoost    DateTime?        
+  lastRaidBoost    DateTime?        
+  lastXpBoost      DateTime?        
   role             Role             @default(USER)
   dailyStreak      Int              @default(0)
   lastDailyClaimed DateTime         @default(now())
@@ -75,6 +112,7 @@ model Raid {
   duration    Int
   icon        String
   image       String
+  type        Element
   rewards     RaidReward[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -108,7 +146,7 @@ model RaidHistory {
 model Alien {
   id             Int           @id @default(autoincrement())
   name           String
-  element        String
+  element        Element
   image          String?
   strengthPoints Int
   user           User          @relation(fields: [userId], references: [id])
@@ -122,10 +160,11 @@ model Alien {
 model Character {
   id             Int             @id @default(autoincrement())
   name           String
-  element        String
+  element        Element
   strengthPoints Int
   level          Int
   image          String
+  portal         Int
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   users          UserCharacter[]
@@ -145,7 +184,8 @@ model UserCharacter {
 
 model Item {
   id          Int           @id @default(autoincrement())
-  name        String
+  type        ItemType
+  quality     ItemQuality
   description String
   image       String
   users       UserItem[]
