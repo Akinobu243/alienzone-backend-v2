@@ -282,7 +282,7 @@ export class RaidsService {
 
         // Reward Reputation points
         const teamStrength = raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
-          raidCharacters.reduce((acc, character) => acc + character.character.strengthPoints, 0);
+          raidCharacters.reduce((acc, character) => acc + character.character.power, 0);
         const raidDurationInMinutes = Math.floor(newRaidDuration / 60);
         const reputationPoints = raidDurationInMinutes * teamStrength;
         console.log('Reputation points rewarded:', reputationPoints);
