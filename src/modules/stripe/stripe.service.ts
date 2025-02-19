@@ -34,7 +34,6 @@ export class StripeService {
       let amount = 0;
       let name = '';
       let image = '';
-
       switch (type) {
         case 'PACK':
           const pack = await this.packsService.getPackById(itemId);
@@ -69,7 +68,7 @@ export class StripeService {
                 name,
                 images: image ? [image] : undefined,
               },
-              unit_amount: amount * 100, // Stripe expects amounts in cents
+              unit_amount: Math.round(amount * 100), // Round to ensure integer
             },
             quantity,
           },
