@@ -36,6 +36,7 @@ export class RaidsController {
       createRaidDTO.duration,
       createRaidDTO.icon,
       createRaidDTO.image,
+      createRaidDTO.elementId,
       createRaidDTO.rewards,
     );
   }

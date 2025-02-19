@@ -35,6 +35,10 @@ export class CreateRaidDTO {
 
   @ApiProperty()
   rewards: RaidReward[];
+
+  @ApiProperty()
+  @IsNumber()
+  elementId: number;
 }
 
 export class EditRaidDTO {
