@@ -91,9 +91,9 @@ model User {
   starsBoost       Int              @default(0)
   raidTimeBoost    Int              @default(0)
   xpBoost          Int              @default(0)
-  lastStarBoost    DateTime?        
-  lastRaidBoost    DateTime?        
-  lastXpBoost      DateTime?        
+  lastStarBoost    DateTime?
+  lastRaidBoost    DateTime?
+  lastXpBoost      DateTime?
   role             Role             @default(USER)
   dailyStreak      Int              @default(0)
   lastDailyClaimed DateTime         @default(now())
@@ -104,6 +104,8 @@ model User {
   transactions     Transaction[]
   AlienParts       AlienPart[]
   purchasedPacks   Pack[]           @relation("PurchasedPacks")
+  Element          Element?         @relation(fields: [elementId], references: [id])
+  elementId        Int?
 }
 
 model Raid {
@@ -117,8 +119,8 @@ model Raid {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   RaidHistory RaidHistory[]
-  element        Element       @relation(fields: [elementId], references: [id])
-  elementId      Int
+  element     Element       @relation(fields: [elementId], references: [id])
+  elementId   Int
 }
 
 model RaidReward {
@@ -187,18 +189,18 @@ enum CharacterRarity {
 }
 
 model Character {
-  id          Int             @id @default(autoincrement())
-  name        String
-  rarity      CharacterRarity @default(SR)
-  power       Int
-  image       String?
-  portal      Int
-  PackReward  PackReward[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  users       UserCharacter[]
-  element     Element       @relation(fields: [elementId], references: [id])
-  elementId   Int
+  id         Int             @id @default(autoincrement())
+  name       String
+  rarity     CharacterRarity @default(SR)
+  power      Int
+  image      String?
+  portal     Int
+  PackReward PackReward[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  users      UserCharacter[]
+  element    Element         @relation(fields: [elementId], references: [id])
+  elementId  Int
 }
 
 model UserCharacter {
@@ -295,9 +297,10 @@ model AlienPartGroup {
   name        String
   description String?
   parts       AlienPart[]
-  element     Element?
+  element     Element?    @relation(fields: [elementId], references: [id])
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  elementId   Int?
 }
 
 enum PackRewardType {
@@ -330,11 +333,12 @@ model PackReward {
   type        PackRewardType
   amount      Int?
   alienParts  AlienPart[]
-  element     Element?
+  element     Element?       @relation(fields: [elementId], references: [id])
   character   Character?     @relation(fields: [characterId], references: [id])
   characterId Int?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  elementId   Int?
 
   @@index([packId])
 }
