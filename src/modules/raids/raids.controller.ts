@@ -30,7 +30,6 @@ export class RaidsController {
   @Post('/create-raid')
   @ApiBody({ type: CreateRaidDTO })
   async createRaid(@Body() createRaidDTO: CreateRaidDTO, @Request() req) {
-    const raidType = createRaidDTO.type as Element;
     return this.raidsService.createRaid(
       createRaidDTO.title,
       createRaidDTO.description,
