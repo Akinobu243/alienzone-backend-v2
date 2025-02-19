@@ -1,7 +1,0 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "lastRaidBoost" TIMESTAMP(3),
-ADD COLUMN     "lastStarBoost" TIMESTAMP(3),
-ADD COLUMN     "lastXpBoost" TIMESTAMP(3),
-ADD COLUMN     "raidTimeBoost" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "starsBoost" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "xpBoost" INTEGER NOT NULL DEFAULT 0;
