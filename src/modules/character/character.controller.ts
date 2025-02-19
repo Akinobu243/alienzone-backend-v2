@@ -5,13 +5,14 @@ import {
   Post,
   Request,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CharacterService } from './character.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { CharacterRarity, CharacterType } from '@prisma/client';
+import { CharacterRarity } from '@prisma/client';
 
 @ApiTags('character')
 @Controller('/character')
@@ -22,19 +23,15 @@ export class CharacterController {
   @Post('/create-character')
   async createCharacter(
     @Body('name') name: string,
-    @Body('type') type: CharacterType,
+    @Body('elementId') elementId: number,
     @Body('rarity') rarity: CharacterRarity,
     @Body('power') power: number,
     @Body('image') image: string,
+    @Body('portal') portal: number,
   ) {
     power = parseInt(power.toString());
-    return this.characterService.createCharacter(
-      name,
-      type,
-      rarity,
-      power,
-      image,
-    );
+    portal = parseInt(portal.toString());
+    return this.characterService.createCharacter(name, elementId, rarity, power, image, portal);
   }
 
   @UseGuards(AdminGuard)
@@ -42,21 +39,22 @@ export class CharacterController {
   async editCharacter(
     @Body('id') id: number,
     @Body('name') name?: string,
-    @Body('level') level?: number,
-    @Body('element') element?: string,
-    @Body('strengthPoints') strengthPoints?: number,
+    @Body('elementId') elementId?: number,
+    @Body('power') power?: number,
     @Body('image') image?: string,
   ) {
     id = parseInt(id.toString());
-    if (strengthPoints !== undefined) {
-      strengthPoints = parseInt(strengthPoints.toString());
+    if (power !== undefined) {
+      power = parseInt(power.toString());
+    }
+    if (elementId !== undefined) {
+      elementId = parseInt(elementId.toString());
     }
     return this.characterService.editCharacter(
       id,
       name,
-      level,
-      element,
-      strengthPoints,
+      elementId,
+      power,
       image,
     );
   }
@@ -76,9 +74,14 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Post('/reward-character')
-  async rewardCharacter(@Request() req) {
+  async rewardCharacter(
+    @Body('portal') portal: number,
+    @Request() req,
+  ) {
+    portal = parseInt(portal.toString());
     return this.characterService.rewardCharacter(
       req.walletAddress.toLowerCase(),
+      portal
     );
   }
 

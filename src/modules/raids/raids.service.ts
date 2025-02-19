@@ -1,8 +1,8 @@
-import { Prisma, RewardType, User } from '@prisma/client';
+import { Element, Prisma, RewardType, RuneType, User } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateRaidDTO, LaunchRaidDTO, RaidReward } from './dto/raids.dto';
+import { RaidReward } from './dto/raids.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { levelRequirements } from 'src/configs/global.config';
 
@@ -24,6 +24,7 @@ export class RaidsService {
     duration: number,
     icon: string,
     image: string,
+    type: Element,
     rewards: RaidReward[],
   ) {
     const data: Prisma.RaidCreateInput = {
@@ -32,6 +33,7 @@ export class RaidsService {
       duration,
       icon,
       image,
+      type,
       rewards: {
         create: rewards,
       },
@@ -97,21 +99,25 @@ export class RaidsService {
       }
     }
 
-    // const characters = await this.prisma.userCharacter.findMany({
-    //   where: {
-    //     userId: user.id,
-    //     characterId: { in: characterIds },
-    //   }
-    // });
-    // if (characters.length !== characterIds.length) {
-    //   throw new BadRequestException('Characters not found');
-    // }
+    const characters = await this.prisma.userCharacter.findMany({
+      where: {
+        userId: user.id,
+        characterId: { in: characterIds },
+      }
+    });
+    if (characters.length !== characterIds.length) {
+      throw new BadRequestException('Characters not found');
+    }
 
-    // for (const character of characters) {
-    //   if (character.inRaid) {
-    //     throw new BadRequestException('A character is already in raid');
-    //   }
-    // }
+    for (const character of characters) {
+      if (character.inRaid) {
+        throw new BadRequestException('A character is already in raid');
+      }
+    }
+
+    if (aliens.length + characters.length > 5) {
+      throw new BadRequestException('Too many aliens and characters selected. Maximum is 5');
+    }
 
     const data: Prisma.RaidHistoryCreateInput = {
       inProgress: true,
@@ -124,9 +130,9 @@ export class RaidsService {
       aliens: {
         connect: alienIds.map((id) => ({ id })),
       },
-      // characters: {
-      //   connect: characterIds.map((id) => ({ id })),
-      // },
+      characters: {
+        connect: characterIds.map((id) => ({ id })),
+      },
     };
     const raidHistory = await this.prisma.raidHistory.create({ data });
     return raidHistory;
@@ -158,23 +164,70 @@ export class RaidsService {
       },
       include: {
         aliens: true,
+        characters: {
+          include: {
+            character: true,
+          }
+        },
         raid: {
           include: {
             rewards: true,
           },
         },
+        user: true,
       },
     });
     // console.log('Raids found:', raids.length);
 
     for (const raid of raids) {
       const raidAliens = raid.aliens;
+      const raidCharacters = raid.characters;
       const raidRewards = raid.raid.rewards;
       const raidUserId = raid.userId;
+      const raidType = raid.raid.type;
+      const raidDuration = raid.raid.duration;
+      
+      // Calculate new raid duration after all effects
+      let newRaidDuration = raidDuration;
+      for (const alien of raidAliens) { 
+        const alienElement = alien.element;
+        const alienEffects = this.getElementalEffects(alienElement);
 
-      // TODO: Add alien bonuses to raid completion time based on elements
+        if (!alienEffects) {
+          console.error('Element not found for alien:', alien.id);
+          continue;
+        }
 
-      if (raid.createdAt.getTime() + raid.raid.duration * 1000 < Date.now()) {
+        if (alienEffects.strength === raidType) {
+          newRaidDuration += raidDuration * 0.02;
+        } else if (alienEffects.weakness === raidType) {
+          newRaidDuration -= raidDuration * 0.02;
+        }
+      }
+      for (const character of raidCharacters) {
+        const characterElement = character.character.element;
+        const characterEffects = this.getElementalEffects(characterElement);
+
+        if (!characterEffects) {
+          console.error('Element not found for character:', character.id);
+          continue;
+        }
+
+        if (characterEffects.strength === raidType) {
+          newRaidDuration += raidDuration * 0.02;
+        } else if (characterEffects.weakness === raidType) {
+          newRaidDuration -= raidDuration * 0.02;
+        }
+      }
+
+      if (
+        raid.user.lastRaidBoost &&
+        raid.user.lastRaidBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
+      ) {
+        newRaidDuration -= raidDuration * raid.user.raidTimeBoost;
+      }
+
+      if (raid.createdAt.getTime() + newRaidDuration * 1000 < Date.now()) {
         console.log('Raid completed:', raid.id);
         await this.prisma.raidHistory.update({
           where: { id: raid.id },
@@ -184,21 +237,35 @@ export class RaidsService {
         });
 
         for (const reward of raidRewards) {
-          let rewardType = 'experience';
-          if (reward.type === RewardType.REP) {
-            rewardType = 'reputation';
+          let rewardAmount = reward.amount;
+          let rewardType: string;
+          if (reward.type === RewardType.XP) {
+            rewardType = 'experience';
+            if (
+              raid.user.lastXpBoost &&
+              raid.user.lastXpBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
+            ) {
+              rewardAmount += reward.amount * raid.user.xpBoost;
+            }
           } else if (reward.type === RewardType.STARS) {
             rewardType = 'stars';
+            if (
+              raid.user.lastStarBoost &&
+              raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
+            ) {
+              rewardAmount += reward.amount * raid.user.starsBoost;
+            }
           }
           await this.prisma.user.update({
             where: { id: raidUserId },
             data: {
               [rewardType]: {
-                increment: reward.amount,
+                increment: rewardAmount,
               },
             },
           });
           console.log('Reward processed:', reward.type, reward.amount);
+
           const user = await this.prisma.user.findUnique({
             where: { id: raidUserId },
           });
@@ -212,7 +279,100 @@ export class RaidsService {
             });
           }
         }
+
+        // Reward Reputation points
+        const teamStrength = raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
+          raidCharacters.reduce((acc, character) => acc + character.character.strengthPoints, 0);
+        const raidDurationInMinutes = Math.floor(newRaidDuration / 60);
+        const reputationPoints = raidDurationInMinutes * teamStrength;
+        console.log('Reputation points rewarded:', reputationPoints);
+
+        // Reward runes
+        const runeWon = this.getRewardedRune(Math.random());
+        console.log('Rune rewarded:', runeWon);
+
+        await this.prisma.user.update({
+          where: { id: raidUserId },
+          data: {
+            reputation: { increment: reputationPoints },
+            ... (runeWon && { runes: { push: runeWon } }),
+          },
+        });
+        
       }
     }
   }
+
+  public getElementalEffects(element: string): { weakness: string; strength: string } | null {
+    element = element.toLowerCase();
+    switch (element) {
+      case 'gamma':
+        return {
+          weakness: 'love',
+          strength: 'life',
+        };
+      case 'fire':
+        return {
+          weakness: 'water',
+          strength: 'love',
+        };
+      case 'life':
+        return {
+          weakness: 'gamma',
+          strength: 'gravity',
+        };
+      case 'water':
+        return {
+          weakness: 'thunder',
+          strength: 'fire',
+        };
+      case 'love':
+        return {
+          weakness: 'fire',
+          strength: 'gamma',
+        };
+      case 'gravity':
+        return {
+          weakness: 'life',
+          strength: 'plasma',
+        };
+      case 'plasma':
+        return {
+          weakness: 'gravity',
+          strength: 'thunder',
+        };
+      case 'thunder':
+        return {
+          weakness: 'plasma',
+          strength: 'water',
+        };
+      default:
+        return null;
+    }
+  }
+
+  public getAllRunesDropRate() {
+    return {
+      [RuneType.UNCOMMON]: 0.4,
+      [RuneType.COMMON]: 0.3,
+      [RuneType.RARE]: 0.18,
+      [RuneType.EPIC]: 0.08,
+      [RuneType.LEGENDARY]: 0.04,
+    };
+  }
+
+  public getRewardedRune(roll: number): RuneType | null {
+    const runesDropRate = this.getAllRunesDropRate();
+    let cumulativeRate = 0;
+  
+    for (const runeType in runesDropRate) {
+      cumulativeRate += runesDropRate[runeType];
+      if (roll < cumulativeRate) {
+        return runeType as RuneType;
+      }
+    }
+  
+    return null;
+  }
+
 }

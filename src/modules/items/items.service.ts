@@ -1,20 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SetDailyRewardDto } from './dto/daily-rewards.dto';
-import { DailyRewardType } from '@prisma/client';
+import { DailyRewardType, ItemQuality, ItemType } from '@prisma/client';
 
 @Injectable()
 export class ItemsService {
   constructor(private prisma: PrismaService) {}
 
   public async createItem(
-    name: string,
+    type: ItemType,
+    quality: ItemQuality,
     description: string,
     image: string
   ) {
     await this.prisma.item.create({
       data: {
-        name,
+        type,
+        quality,
         description,
         image,
       },
@@ -23,7 +25,8 @@ export class ItemsService {
 
   public async editItem(
     id: number,
-    name?: string,
+    type: ItemType,
+    quality: ItemQuality,
     description?: string,
     image?: string,
   ) {
@@ -32,7 +35,8 @@ export class ItemsService {
         id: id,
       },
       data: {
-        ...(name && { name }),
+        ...(type && { type }),
+        ...(quality && { quality }),
         ...(description && { description }),
         ...(image && { image }),
       },
