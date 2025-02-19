@@ -7,7 +7,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Element, User } from '@prisma/client';
 import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { RaidsService } from './raids.service';
@@ -30,12 +30,14 @@ export class RaidsController {
   @Post('/create-raid')
   @ApiBody({ type: CreateRaidDTO })
   async createRaid(@Body() createRaidDTO: CreateRaidDTO, @Request() req) {
+    const raidType = createRaidDTO.type as Element;
     return this.raidsService.createRaid(
       createRaidDTO.title,
       createRaidDTO.description,
       createRaidDTO.duration,
       createRaidDTO.icon,
       createRaidDTO.image,
+      raidType,
       createRaidDTO.rewards,
     );
   }

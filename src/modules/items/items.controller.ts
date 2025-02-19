@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { SetDailyRewardDto } from './dto/daily-rewards.dto';
+import { ItemQuality, ItemType } from '@prisma/client';
 
 @Controller('items')
 export class ItemsController {
@@ -10,22 +11,28 @@ export class ItemsController {
   @UseGuards(AdminGuard)
   @Post('/create-item')
   async createItem(
-    @Body('name') name: string,
+    @Body('type') type: string,
+    @Body('quality') quality: string,
     @Body('description') description: string,
     @Body('image') image: string,
   ) {
-    return this.itemsService.createItem(name, description, image);
+    const itemType = type as ItemType;
+    const itemQuality = quality as ItemQuality;
+    return this.itemsService.createItem(itemType, itemQuality, description, image);
   }
 
   @UseGuards(AdminGuard)
   @Post('/edit-item')
   async editItem(
     @Body('id') id: number,
-    @Body('name') name: string,
+    @Body('type') type: string,
+    @Body('quality') quality: string,
     @Body('description') description: string,
     @Body('image') image: string,
   ) {
-    return this.itemsService.editItem(id, name, description, image);
+    const itemType = type as ItemType;
+    const itemQuality = quality as ItemQuality;
+    return this.itemsService.editItem(id, itemType, itemQuality, description, image);
   }
 
   @UseGuards(AdminGuard)
