@@ -12,7 +12,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CharacterService } from './character.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { CharacterRarity, Element } from '@prisma/client';
+import { CharacterRarity } from '@prisma/client';
 
 @ApiTags('character')
 @Controller('/character')
@@ -23,7 +23,7 @@ export class CharacterController {
   @Post('/create-character')
   async createCharacter(
     @Body('name') name: string,
-    @Body('element') element: Element,
+    @Body('elementId') elementId: number,
     @Body('rarity') rarity: CharacterRarity,
     @Body('power') power: number,
     @Body('image') image: string,
@@ -31,13 +31,7 @@ export class CharacterController {
   ) {
     power = parseInt(power.toString());
     portal = parseInt(portal.toString());
-    let parsedElement: Element;
-    if (element.toUpperCase() in Element) {
-      element = Element[element.toUpperCase() as keyof typeof Element];
-    } else {
-      throw new BadRequestException('Invalid element');
-    }
-    return this.characterService.createCharacter(name, parsedElement, rarity, power, image, portal);
+    return this.characterService.createCharacter(name, elementId, rarity, power, image, portal);
   }
 
   @UseGuards(AdminGuard)
@@ -45,23 +39,24 @@ export class CharacterController {
   async editCharacter(
     @Body('id') id: number,
     @Body('name') name?: string,
-    @Body('level') level?: number,
-    @Body('element') element?: string,
-    @Body('strengthPoints') strengthPoints?: number,
+    @Body('elementId') elementId?: number,
+    @Body('power') power?: number,
     @Body('image') image?: string,
   ) {
     id = parseInt(id.toString());
-    if (strengthPoints !== undefined) {
-      strengthPoints = parseInt(strengthPoints.toString());
+    if (power !== undefined) {
+      power = parseInt(power.toString());
     }
-    let parsedElement: Element;
-    if (element.toUpperCase() in Element) {
-      element = Element[element.toUpperCase() as keyof typeof Element];
-    } else {
-      throw new BadRequestException('Invalid element');
+    if (elementId !== undefined) {
+      elementId = parseInt(elementId.toString());
     }
-        
-    return this.characterService.editCharacter(id, name, level, parsedElement, strengthPoints, image);
+    return this.characterService.editCharacter(
+      id,
+      name,
+      elementId,
+      power,
+      image,
+    );
   }
 
   @UseGuards(AdminGuard)

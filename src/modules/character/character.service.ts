@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CharacterRarity, Element } from '@prisma/client';
+import { CharacterRarity } from '@prisma/client';
 
 @Injectable()
 export class CharacterService {
@@ -9,16 +9,28 @@ export class CharacterService {
 
   public async createCharacter(
     name: string,
-    element: Element,
+    elementId: number,
     rarity: CharacterRarity,
     power: number,
     image: string,
     portal: number,
   ) {
+    const element = await this.prisma.element.findUnique({
+      where: {
+        id: elementId,
+      },
+    });
+    if (!element) {
+      throw new BadRequestException('Element not found');
+    }
     await this.prisma.character.create({
       data: {
         name,
-        element,
+        element: {
+          connect: {
+            id: elementId,
+          },
+        },
         rarity,
         power,
         image,
@@ -30,21 +42,29 @@ export class CharacterService {
   public async editCharacter(
     id: number,
     name?: string,
-    level?: number,
-    element?: Element,
-    strengthPoints?: number,
+    elementId?: number,
+    power?: number,
     image?: string,
     portal?: number,
   ) {
+    if (elementId) {
+      const element = await this.prisma.element.findUnique({
+        where: {
+          id: elementId,
+        },
+      });
+      if (!element) {
+        throw new BadRequestException('Element not found');
+      }
+    }
     await this.prisma.character.update({
       where: {
         id: id,
       },
       data: {
       ...(name && { name }),
-      ...(level && { level }),
-      ...(element && { element }),
-      ...(strengthPoints && { strengthPoints }),
+      ...(elementId && { element: { connect: { id: elementId } } }),
+      ...(power && { power }),
       ...(image && { image }),
       ...(portal && { portal }),
       },
