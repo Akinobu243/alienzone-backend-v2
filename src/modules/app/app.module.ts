@@ -18,6 +18,7 @@ import { ItemsModule } from '../items/items.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { PacksModule } from '../packs/packs.module';
 import { StripeModule } from '../stripe/stripe.module';
+import { ElementModule } from '../element/element.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { StripeModule } from '../stripe/stripe.module';
     ConfigModule.forRoot({ isGlobal: true, load: [() => GLOBAL_CONFIG] }),
     PacksModule,
     StripeModule,
+    ElementModule
   ],
   controllers: [AppController],
   providers: [AppService],

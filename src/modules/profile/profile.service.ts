@@ -1,4 +1,4 @@
-import { DailyRewardType, Element, ItemQuality, ItemType } from '@prisma/client';
+import { DailyRewardType, ItemQuality, ItemType } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -55,18 +55,23 @@ export class ProfileService {
     createAlienDTO: CreateAlienDTO,
     image: Express.Multer.File,
   ) {
-    let element: Element;
-    if (createAlienDTO.element.toUpperCase() in Element) {
-      element = Element[createAlienDTO.element.toUpperCase() as keyof typeof Element];
-    } else {
-      throw new BadRequestException('Invalid element');
+    const element = await this.prisma.element.findUnique({
+      where: {
+        id: Number(createAlienDTO.elementId),
+      },
+    });
+    if (!element) {
+      throw new BadRequestException('Element not found');
     }
-
 
     const alien = await this.prisma.alien.create({
       data: {
         name: createAlienDTO.name,
-        element: element,
+        element: {
+          connect: {
+            id: Number(createAlienDTO.elementId),
+          },
+        },
         strengthPoints: Number(createAlienDTO.strengthPoints),
         inRaid: false,
         user: {

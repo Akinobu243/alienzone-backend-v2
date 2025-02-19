@@ -24,16 +24,28 @@ export class RaidsService {
     duration: number,
     icon: string,
     image: string,
-    type: Element,
+    elementId: number,
     rewards: RaidReward[],
   ) {
+    const element = await this.prisma.element.findUnique({
+      where: {
+        id: elementId,
+      },
+    });
+    if (!element) {
+      throw new BadRequestException('Element not found');
+    }
     const data: Prisma.RaidCreateInput = {
       title,
       description,
       duration,
       icon,
       image,
-      type,
+      element: {
+        connect: {
+          id: elementId,
+        },
+      },
       rewards: {
         create: rewards,
       },
@@ -163,15 +175,24 @@ export class RaidsService {
         inProgress: true,
       },
       include: {
-        aliens: true,
+        aliens: {
+          include: {
+            element: true,
+          }
+        },
         characters: {
           include: {
-            character: true,
+            character: {
+              include: {
+                element: true,
+              },
+            },
           }
         },
         raid: {
           include: {
             rewards: true,
+            element: true,
           },
         },
         user: true,
@@ -184,38 +205,26 @@ export class RaidsService {
       const raidCharacters = raid.characters;
       const raidRewards = raid.raid.rewards;
       const raidUserId = raid.userId;
-      const raidType = raid.raid.type;
+      const raidElementId = raid.raid.elementId;
       const raidDuration = raid.raid.duration;
       
       // Calculate new raid duration after all effects
       let newRaidDuration = raidDuration;
       for (const alien of raidAliens) { 
         const alienElement = alien.element;
-        const alienEffects = this.getElementalEffects(alienElement);
 
-        if (!alienEffects) {
-          console.error('Element not found for alien:', alien.id);
-          continue;
-        }
-
-        if (alienEffects.strength === raidType) {
+        if (alienElement.weaknessId === raidElementId) {
           newRaidDuration += raidDuration * 0.02;
-        } else if (alienEffects.weakness === raidType) {
+        } else if (alienElement.strengthId === raidElementId) {
           newRaidDuration -= raidDuration * 0.02;
         }
       }
       for (const character of raidCharacters) {
         const characterElement = character.character.element;
-        const characterEffects = this.getElementalEffects(characterElement);
 
-        if (!characterEffects) {
-          console.error('Element not found for character:', character.id);
-          continue;
-        }
-
-        if (characterEffects.strength === raidType) {
+        if (characterElement.weaknessId === raidElementId) {
           newRaidDuration += raidDuration * 0.02;
-        } else if (characterEffects.weakness === raidType) {
+        } else if (characterElement.strengthId === raidElementId) {
           newRaidDuration -= raidDuration * 0.02;
         }
       }
@@ -300,54 +309,6 @@ export class RaidsService {
         });
         
       }
-    }
-  }
-
-  public getElementalEffects(element: string): { weakness: string; strength: string } | null {
-    element = element.toLowerCase();
-    switch (element) {
-      case 'gamma':
-        return {
-          weakness: 'love',
-          strength: 'life',
-        };
-      case 'fire':
-        return {
-          weakness: 'water',
-          strength: 'love',
-        };
-      case 'life':
-        return {
-          weakness: 'gamma',
-          strength: 'gravity',
-        };
-      case 'water':
-        return {
-          weakness: 'thunder',
-          strength: 'fire',
-        };
-      case 'love':
-        return {
-          weakness: 'fire',
-          strength: 'gamma',
-        };
-      case 'gravity':
-        return {
-          weakness: 'life',
-          strength: 'plasma',
-        };
-      case 'plasma':
-        return {
-          weakness: 'gravity',
-          strength: 'thunder',
-        };
-      case 'thunder':
-        return {
-          weakness: 'plasma',
-          strength: 'water',
-        };
-      default:
-        return null;
     }
   }
 

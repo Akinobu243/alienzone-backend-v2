@@ -11,28 +11,24 @@ export class ItemsController {
   @UseGuards(AdminGuard)
   @Post('/create-item')
   async createItem(
-    @Body('type') type: string,
-    @Body('quality') quality: string,
+    @Body('type') type: ItemType,
+    @Body('quality') quality: ItemQuality,
     @Body('description') description: string,
     @Body('image') image: string,
   ) {
-    const itemType = type as ItemType;
-    const itemQuality = quality as ItemQuality;
-    return this.itemsService.createItem(itemType, itemQuality, description, image);
+    return this.itemsService.createItem(type, quality, description, image);
   }
 
   @UseGuards(AdminGuard)
   @Post('/edit-item')
   async editItem(
     @Body('id') id: number,
-    @Body('type') type: string,
-    @Body('quality') quality: string,
+    @Body('type') type: ItemType,
+    @Body('quality') quality: ItemQuality,
     @Body('description') description: string,
     @Body('image') image: string,
   ) {
-    const itemType = type as ItemType;
-    const itemQuality = quality as ItemQuality;
-    return this.itemsService.editItem(id, itemType, itemQuality, description, image);
+    return this.itemsService.editItem(id, type, quality, description, image);
   }
 
   @UseGuards(AdminGuard)
