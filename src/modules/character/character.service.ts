@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { Element } from '@prisma/client';
+import { CharacterRarity, Element } from '@prisma/client';
 
 @Injectable()
 export class CharacterService {
@@ -9,18 +9,18 @@ export class CharacterService {
 
   public async createCharacter(
     name: string,
-    level: number,
     element: Element,
-    strengthPoints: number,
+    rarity: CharacterRarity,
+    power: number,
     image: string,
     portal: number,
   ) {
     await this.prisma.character.create({
       data: {
         name,
-        level,
         element,
-        strengthPoints,
+        rarity,
+        power,
         image,
         portal,
       },
@@ -38,7 +38,7 @@ export class CharacterService {
   ) {
     await this.prisma.character.update({
       where: {
-      id: id,
+        id: id,
       },
       data: {
       ...(name && { name }),
@@ -130,5 +130,4 @@ export class CharacterService {
 
     return userCharacters;
   }
-
 }

@@ -23,7 +23,7 @@
     "prisma:deploy": "npx prisma migrate deploy",
     "prisma:start": "npx prisma studio",
     "prisma:generate": "npx prisma generate",
-    "prisma:seed": "ts-node prisma/seeds/index.ts"
+    "prisma:seed": "ts-node --transpile-only prisma/seeds/index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.732.0",

@@ -1,10 +1,18 @@
-import { BadRequestException, Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CharacterService } from './character.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { Element } from '@prisma/client';
+import { CharacterRarity, Element } from '@prisma/client';
 
 @ApiTags('character')
 @Controller('/character')
@@ -15,13 +23,13 @@ export class CharacterController {
   @Post('/create-character')
   async createCharacter(
     @Body('name') name: string,
-    @Body('level') level: number,
-    @Body('element') element: string,
-    @Body('strengthPoints') strengthPoints: number,
+    @Body('element') element: Element,
+    @Body('rarity') rarity: CharacterRarity,
+    @Body('power') power: number,
     @Body('image') image: string,
     @Body('portal') portal: number,
   ) {
-    strengthPoints = parseInt(strengthPoints.toString());
+    power = parseInt(power.toString());
     portal = parseInt(portal.toString());
     let parsedElement: Element;
     if (element.toUpperCase() in Element) {
@@ -29,7 +37,7 @@ export class CharacterController {
     } else {
       throw new BadRequestException('Invalid element');
     }
-    return this.characterService.createCharacter(name, level, parsedElement, strengthPoints, image, portal);
+    return this.characterService.createCharacter(name, parsedElement, rarity, power, image, portal);
   }
 
   @UseGuards(AdminGuard)
@@ -58,9 +66,7 @@ export class CharacterController {
 
   @UseGuards(AdminGuard)
   @Post('/delete-character')
-  async deleteCharacter(
-    @Body('id') id: number,
-  ) {
+  async deleteCharacter(@Body('id') id: number) {
     id = parseInt(id.toString());
     return this.characterService.deleteCharacter(id);
   }
@@ -78,15 +84,17 @@ export class CharacterController {
     @Request() req,
   ) {
     portal = parseInt(portal.toString());
-    return this.characterService.rewardCharacter(req.walletAddress.toLowerCase(), portal);
+    return this.characterService.rewardCharacter(
+      req.walletAddress.toLowerCase(),
+      portal
+    );
   }
 
   @UseGuards(AuthGuard)
   @Get('/get-user-characters')
-  async getUserCharacters(
-    @Request() req,
-  ) {
-    return this.characterService.getUserCharacters(req.walletAddress.toLowerCase());
+  async getUserCharacters(@Request() req) {
+    return this.characterService.getUserCharacters(
+      req.walletAddress.toLowerCase(),
+    );
   }
-
 }

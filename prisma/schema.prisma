@@ -101,8 +101,9 @@ model User {
   updatedAt        DateTime         @updatedAt
   referrerRewards  ReferralReward[] @relation("ReferrerRewards")
   refereeRewards   ReferralReward[] @relation("RefereeRewards")
-  alienParts       UserAlienPart[]
   transactions     Transaction[]
+  AlienParts       AlienPart[]
+  purchasedPacks   Pack[]           @relation("PurchasedPacks")
 }
 
 model Raid {
@@ -157,17 +158,28 @@ model Alien {
   updatedAt      DateTime      @updatedAt
 }
 
+enum CharacterType {
+  FIRE
+  WATER
+  THUNDER
+}
+
+enum CharacterRarity {
+  SR
+}
+
 model Character {
   id             Int             @id @default(autoincrement())
   name           String
   element        Element
-  strengthPoints Int
-  level          Int
+  power          Int
+  rarity         CharacterRarity @default(SR)
   image          String
   portal         Int
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   users          UserCharacter[]
+  PackReward     PackReward[]
 }
 
 model UserCharacter {
@@ -178,6 +190,8 @@ model UserCharacter {
   user        User          @relation(fields: [userId], references: [id])
   character   Character     @relation(fields: [characterId], references: [id])
   raidHistory RaidHistory[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([userId, characterId])
 }
@@ -232,42 +246,48 @@ enum AlienPartType {
   BODY
   CLOTHES
   HEAD
-  FACE
+  EYES
+  MOUTH
   HAIR
-}
-
-model UserAlienPart {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  alienPartId Int
-  user        User      @relation(fields: [userId], references: [id])
-  alienPart   AlienPart @relation(fields: [alienPartId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId, alienPartId])
+  MARKS
+  POWERS
+  ACCESSORIES
+  FACE
 }
 
 model AlienPart {
-  id           Int             @id @default(autoincrement())
-  type         AlienPartType
-  image        String
-  name         String
-  description  String?
-  price        Int?
-  isDefault    Boolean         @default(false)
-  users        UserAlienPart[]
-  packs        PackReward[]
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  transactions Transaction[]
+  id             Int              @id @default(autoincrement())
+  type           AlienPartType
+  image          String
+  name           String
+  description    String?
+  price          Int?
+  isDefault      Boolean          @default(false)
+  users          User[]
+  packs          PackReward[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  transactions   Transaction[]
+  AlienPartGroup AlienPartGroup[]
+}
+
+model AlienPartGroup {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  parts       AlienPart[]
+  element     Element?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 enum PackRewardType {
   STARS
-  ALIEN_PART
+  ALIEN_PARTS
   XP
   REP
+  CHARACTER
+  ELEMENT
 }
 
 model Pack {
@@ -281,6 +301,7 @@ model Pack {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   transactions Transaction[]
+  users        User[]        @relation("PurchasedPacks")
 }
 
 model PackReward {
@@ -289,13 +310,14 @@ model PackReward {
   packId      Int
   type        PackRewardType
   amount      Int?
-  alienPart   AlienPart?     @relation(fields: [alienPartId], references: [id])
-  alienPartId Int?
+  alienParts  AlienPart[]
+  element     Element?
+  character   Character?     @relation(fields: [characterId], references: [id])
+  characterId Int?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   @@index([packId])
-  @@index([alienPartId])
 }
 
 model Transaction {

@@ -91,7 +91,7 @@ export class AuthService {
         });
       }
 
-      const referrerCode = registerUser.refferalCode;
+      const referrerCode = registerUser?.refferalCode || null;
       let referrer: User | null = null;
 
       if (referrerCode) {

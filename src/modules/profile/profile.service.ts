@@ -288,6 +288,25 @@ export class ProfileService {
     return allImages;
   }
 
+  public async getOnboardingData() {
+    const alienParts = await this.prisma.alienPart.findMany({
+      where: {
+        isDefault: true,
+      },
+    });
+    const groups = alienParts.reduce((acc, part) => {
+      acc[part.type] = acc[part.type] || [];
+      acc[part.type].push(part);
+      return acc;
+    }, {});
+
+    // elements
+    const elements = Object.values(Element);
+
+    
+    return { alienParts: groups, elements };
+  }
+
   public async useReferralCode(walletAddress: string, code: string) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress },
