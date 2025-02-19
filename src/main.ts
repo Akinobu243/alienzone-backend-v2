@@ -17,8 +17,8 @@ import { AllExceptionsFilter } from './filters/all.exceptions.filter';
 
 async function bootstrap() {
   const httpsOptions = {
-    key: readFileSync('/etc/letsencrypt/live/yourdomain.com/privkey.pem'),
-    cert: readFileSync('/etc/letsencrypt/live/yourdomain.com/fullchain.pem'),
+    key: readFileSync('/etc/letsencrypt/live/api.alienzone.io/privkey.pem'),
+    cert: readFileSync('/etc/letsencrypt/live/api.alienzone.io/fullchain.pem'),
   };
   const app = await NestFactory.create(AppModule, {
     httpsOptions,
