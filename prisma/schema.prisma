@@ -104,8 +104,7 @@ model User {
   transactions     Transaction[]
   AlienParts       AlienPart[]
   purchasedPacks   Pack[]           @relation("PurchasedPacks")
-  Element          Element?         @relation(fields: [elementId], references: [id])
-  elementId        Int?
+  UserElement      UserElement[]
 }
 
 model Raid {
@@ -177,11 +176,11 @@ model Element {
   updatedAt      DateTime         @updatedAt
   AlienPartGroup AlienPartGroup[]
   PackReward     PackReward[]
-  users          User[]
   characters     Character[]
   raids          Raid[]
   strengths      Element[]        @relation("Strength")
   weaknessess    Element[]        @relation("Weakness")
+  UserElement    UserElement[]
 }
 
 enum CharacterRarity {
@@ -215,6 +214,14 @@ model UserCharacter {
   updatedAt   DateTime      @updatedAt
 
   @@index([userId, characterId])
+}
+
+model UserElement {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  elementId Int
+  user      User    @relation(fields: [userId], references: [id])
+  element   Element @relation(fields: [elementId], references: [id])
 }
 
 model Item {

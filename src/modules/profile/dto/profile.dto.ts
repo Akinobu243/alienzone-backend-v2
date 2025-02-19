@@ -6,9 +6,9 @@ export class CreateAlienDTO {
   @ApiProperty()
   name: string;
 
-  @IsNumber()
+  @IsString()
   @ApiProperty()
-  elementId: number;
+  elementId: string;
 
   @IsString()
   @ApiProperty()

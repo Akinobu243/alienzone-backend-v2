@@ -361,10 +361,16 @@ export async function seed(prisma: PrismaClient) {
   try {
     // Clear existing data first
     await prisma.alienPart.deleteMany({});
+    await prisma.element.deleteMany({});
 
     // Create new records
     const createdAlienParts = await prisma.alienPart.createMany({
       data: alienParts,
+      skipDuplicates: true,
+    });
+
+    const createdElements = await prisma.element.createMany({
+      data: elements,
       skipDuplicates: true,
     });
 
@@ -472,6 +478,11 @@ export async function seed(prisma: PrismaClient) {
     ];
     const createdElfParts = await prisma.alienPart.createMany({
       data: elfParts,
+      skipDuplicates: true,
+    });
+
+    const createdElfElements = await prisma.element.createMany({
+      data: elfElements,
       skipDuplicates: true,
     });
 

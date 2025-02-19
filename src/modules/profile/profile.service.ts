@@ -111,6 +111,9 @@ export class ProfileService {
           walletAddress: walletAddress,
         },
       },
+      include: {
+        element: true,
+      },
     });
 
     return aliens;
@@ -306,9 +309,12 @@ export class ProfileService {
     }, {});
 
     // elements
-    const elements = Object.values(Element);
+    const elements = await this.prisma.element.findMany({
+      where: {
+        isDefault: true,
+      },
+    });
 
-    
     return { alienParts: groups, elements };
   }
 
@@ -395,10 +401,7 @@ export class ProfileService {
     });
   }
 
-  public async useConsumableItem(
-    walletAddress: string,
-    itemId: number,
-  ) {
+  public async useConsumableItem(walletAddress: string, itemId: number) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress },
     });
@@ -414,7 +417,7 @@ export class ProfileService {
       },
       include: {
         item: true,
-      }
+      },
     });
 
     if (!userItem || userItem.quantity < 1) {
@@ -453,11 +456,17 @@ export class ProfileService {
         walletAddress,
       },
       data: {
-        ... (boostType === 'stars' ? { starsBoost: boostAmount, lastStarBoost: new Date() } : {}),
-        ... (boostType === 'raidTimeBoost' ? { raidTimeBoost: boostAmount, lastRaidBoost: new Date() } : {}),
-        ... (boostType === 'xpBoost' ? { xpBoost: boostAmount, lastXpBoost: new Date() } : {}),
+        ...(boostType === 'stars'
+          ? { starsBoost: boostAmount, lastStarBoost: new Date() }
+          : {}),
+        ...(boostType === 'raidTimeBoost'
+          ? { raidTimeBoost: boostAmount, lastRaidBoost: new Date() }
+          : {}),
+        ...(boostType === 'xpBoost'
+          ? { xpBoost: boostAmount, lastXpBoost: new Date() }
+          : {}),
       },
-    })
+    });
 
     await this.prisma.userItem.update({
       where: {
@@ -466,9 +475,8 @@ export class ProfileService {
       data: {
         quantity: {
           decrement: 1,
-        }
+        },
       },
     });
-
   }
 }

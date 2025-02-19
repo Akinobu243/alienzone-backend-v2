@@ -234,6 +234,14 @@ export class StripeService {
             data: { reputation: { increment: reward.amount } },
           });
           break;
+        case 'ELEMENT':
+          await this.prisma.userElement.create({
+            data: {
+              userId: transaction.userId,
+              elementId: reward.elementId,
+            },
+          });
+          break;
       }
     }
   }
