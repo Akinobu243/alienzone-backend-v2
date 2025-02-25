@@ -84,6 +84,7 @@ export class AuthService {
       var existingUser = await this.userService.findUser({
         referralCode: referralCode,
       });
+
       while (existingUser) {
         referralCode = Math.random().toString(36).substring(2, 8);
         existingUser = await this.userService.findUser({
@@ -98,6 +99,18 @@ export class AuthService {
         referrer = await this.userService.findUser({
           referralCode: referrerCode,
         });
+      }
+
+      const totalReferals = await this.prisma.user.count({
+        where: {
+          referrerId: referrer?.id,
+        },
+      });
+
+      console.log(totalReferals);
+
+      if (totalReferals === parseInt(process.env.MAX_REFFERAL_COUNT || '5')) {
+        referrer = null;
       }
 
       user = await this.userService.createUser({
