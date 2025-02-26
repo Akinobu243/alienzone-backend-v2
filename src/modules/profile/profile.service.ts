@@ -479,4 +479,114 @@ export class ProfileService {
       },
     });
   }
+
+  public async updateTeam(walletAddress: string, characterIds: number[], alienIds: number[]) {
+    const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+    });
+
+    if (!user) {
+        throw new BadRequestException('User not found');
+    }
+
+    if (alienIds.length < 1 || characterIds.length + alienIds.length > 5) {
+        throw new BadRequestException('Invalid team configuration. Team must contain at least 1 alien and no more than 5 characters and aliens combined.');
+    }
+
+    const characters = await this.prisma.userCharacter.findMany({
+        where: {
+            userId: user.id,
+        },
+    });
+
+    const aliens = await this.prisma.alien.findMany({
+        where: {
+            userId: user.id,
+        },
+    });
+
+    for (const characterId of characterIds) {
+        if (!characters.some((character) => character.id === characterId)) {
+            throw new BadRequestException(`Character with ID ${characterId} not found in user's characters.`);
+        }
+    }
+
+    for (const alienId of alienIds) {
+        if (!aliens.some((alien) => alien.id === alienId)) {
+            throw new BadRequestException(`Alien with ID ${alienId} not found in user's aliens.`);
+        }
+    }
+    
+    // Remove all characters and aliens from team
+    await this.prisma.userCharacter.updateMany({
+        where: {
+            userId: user.id,
+        },
+        data: {
+            onTeam: false,
+        },
+    });
+
+    await this.prisma.alien.updateMany({
+        where: {
+            userId: user.id,
+        },
+        data: {
+            onTeam: false,
+        },
+    });
+    
+    // Add selected characters and aliens to team
+    for (const characterId of characterIds) {
+        await this.prisma.userCharacter.update({
+            where: {
+                id: characterId,
+            },
+            data: {
+                onTeam: true,
+            },
+        });
+    }
+
+    for (const alienId of alienIds) {
+        await this.prisma.alien.update({
+            where: {
+                id: alienId,
+            },
+            data: {
+                onTeam: true,
+            },
+        });
+    }
+
+  }
+
+  public async getTeam(walletAddress: string) {
+    const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+    });
+
+    if (!user) {
+        throw new BadRequestException('User not found');
+    }
+
+    const characters = await this.prisma.userCharacter.findMany({
+        where: {
+            userId: user.id,
+            onTeam: true,
+        },
+    });
+
+    const aliens = await this.prisma.alien.findMany({
+        where: {
+            userId: user.id,
+            onTeam: true,
+        },
+    });
+
+    return {
+        aliens: aliens,
+        characters: characters,
+    };
+  }
 }

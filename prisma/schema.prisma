@@ -154,6 +154,7 @@ model Alien {
   user           User          @relation(fields: [userId], references: [id])
   userId         Int
   inRaid         Boolean
+  onTeam         Boolean       @default(false)
   raidHistory    RaidHistory[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -207,6 +208,7 @@ model UserCharacter {
   userId      Int
   characterId Int
   inRaid      Boolean       @default(false)
+  onTeam      Boolean       @default(false)
   user        User          @relation(fields: [userId], references: [id])
   character   Character     @relation(fields: [characterId], references: [id])
   raidHistory RaidHistory[]

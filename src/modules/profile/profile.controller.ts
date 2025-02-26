@@ -124,4 +124,25 @@ export class ProfileController {
       itemId,
     );
   }
+
+    @UseGuards(AuthGuard)
+    @Post('/update-team')
+    async updateTeam(
+        @Request() req,
+        @Body('alienIds') alienIds: number[],
+        @Body('characterIds') characterIds: number[],
+    ) {
+        return this.profileService.updateTeam(
+            req.walletAddress,
+            alienIds,
+            characterIds,
+        );
+    }
+
+    @UseGuards(AuthGuard)
+    @Get('/get-team')
+    async getTeam(@Request() req) {
+        return this.profileService.getTeam(req.walletAddress);
+    }
+
 }

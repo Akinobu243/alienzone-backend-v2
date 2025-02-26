@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE "Alien" ADD COLUMN     "onTeam" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "AlienPart" ALTER COLUMN "price" SET DATA TYPE DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "Pack" ALTER COLUMN "price" SET DATA TYPE DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "UserCharacter" ADD COLUMN     "onTeam" BOOLEAN NOT NULL DEFAULT false;
