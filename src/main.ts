@@ -16,12 +16,16 @@ import { InvalidFormExceptionFilter } from './filters/invalid.form.exception.fil
 import { AllExceptionsFilter } from './filters/all.exceptions.filter';
 
 async function bootstrap() {
-  const httpsOptions = {
-    key: readFileSync('/etc/letsencrypt/live/api.alienzone.io/privkey.pem'),
-    cert: readFileSync('/etc/letsencrypt/live/api.alienzone.io/fullchain.pem'),
-  };
+  const useSSL = process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH && process.env.HTTPS_PORT;
+  let httpsOptions = null;
+  if (useSSL) {
+    httpsOptions = {
+      key: readFileSync(process.env.SSL_KEY_PATH),
+      cert: readFileSync(process.env.SSL_CERT_PATH),
+    };
+  }
   const app = await NestFactory.create(AppModule, {
-    httpsOptions,
+    httpsOptions: httpsOptions,
     logger: ['error', 'error', 'warn'],
   });
 
@@ -75,7 +79,7 @@ async function bootstrap() {
     SwaggerModule.setup(swaggerConfig.path || 'api', app, document);
   }
 
-  const PORT = process.env.PORT || GLOBAL_CONFIG.nest.port;
+  const PORT =  (useSSL ? process.env.HTTPS_PORT : null) || process.env.PORT || GLOBAL_CONFIG.nest.port;
   await app.listen(PORT, '0.0.0.0', async () => {
     const myLogger = await app.resolve(MyLogger);
     myLogger.log(`Server started listening: ${PORT}`);
