@@ -35,6 +35,16 @@ export class ProfileService {
       },
     });
 
+    var isStarBoostActive = false, isXpBoostActive = false, isRaidBoostActive = false;
+    if (user.starsBoost > 0) {
+        isStarBoostActive = new Date().getTime() - user.lastStarBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
+    if (user.xpBoost > 0) {
+        isXpBoostActive = new Date().getTime() - user.lastXpBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
+    if (user.raidTimeBoost > 0) {
+        isRaidBoostActive = new Date().getTime() - user.lastRaidBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
     return {
       walletAddress: user.walletAddress,
       name: user.name,
@@ -47,6 +57,9 @@ export class ProfileService {
       stars: user.stars,
       refferalCode: user.referralCode,
       totalReferrals,
+      starsBoost: (isStarBoostActive ? user.starsBoost : 0),
+      xpBoost: (isXpBoostActive ? user.xpBoost : 0),
+      raidTimeBoost: (isRaidBoostActive ? user.raidTimeBoost : 0),
     };
   }
 
@@ -570,6 +583,17 @@ export class ProfileService {
         throw new BadRequestException('User not found');
     }
 
+    var isStarBoostActive = false, isXpBoostActive = false, isRaidBoostActive = false;
+    if (user.starsBoost > 0) {
+        isStarBoostActive = new Date().getTime() - user.lastStarBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
+    if (user.xpBoost > 0) {
+        isXpBoostActive = new Date().getTime() - user.lastXpBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
+    if (user.raidTimeBoost > 0) {
+        isRaidBoostActive = new Date().getTime() - user.lastRaidBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
+
     const characters = await this.prisma.userCharacter.findMany({
         where: {
             userId: user.id,
@@ -589,21 +613,50 @@ export class ProfileService {
             userId: user.id,
             onTeam: true,
         },
+        include: {
+            element: true,
+        }
     });
 
     let teamStrengthPoints = 0;
+    let synergies = {};
+    let teamResponse = [];
     for (const character of characters) {
         teamStrengthPoints += character.character.power;
+        synergies[character.character.element.name] = synergies[character.character.element.name] || 0;
+        synergies[character.character.element.name] += 1;
+        teamResponse.push({
+            id: character.id,
+            name: character.character.name,
+            strengthPoints: character.character.power,
+            element: character.character.element,
+            image: character.character.image,
+            type: 'character',
+        })
     }
     for (const alien of aliens) {
         teamStrengthPoints += alien.strengthPoints;
+        synergies[alien.element.name] = synergies[alien.element.name] || 0;
+        synergies[alien.element.name] += 1;
+        teamResponse.push({
+            id: alien.id,
+            name: alien.name,
+            strengthPoints: alien.strengthPoints,
+            element: alien.element,
+            image: alien.image,
+            type: 'alien',
+        })
     }
-
 
     return {
         teamStrengthPoints: teamStrengthPoints,
-        aliens: aliens,
-        characters: characters,
+        team: teamResponse,
+        synergies: synergies,
+        buffs: {
+            starsBoost: isStarBoostActive ? user.starsBoost : 0,
+            xpBoost: isXpBoostActive ? user.xpBoost : 0,
+            raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
+        }
     };
   }
 }
