@@ -575,6 +575,13 @@ export class ProfileService {
             userId: user.id,
             onTeam: true,
         },
+        include: {
+            character: {
+                include: {
+                    element: true,
+                }
+            }
+        }
     });
 
     const aliens = await this.prisma.alien.findMany({
@@ -584,7 +591,17 @@ export class ProfileService {
         },
     });
 
+    let teamStrengthPoints = 0;
+    for (const character of characters) {
+        teamStrengthPoints += character.character.power;
+    }
+    for (const alien of aliens) {
+        teamStrengthPoints += alien.strengthPoints;
+    }
+
+
     return {
+        teamStrengthPoints: teamStrengthPoints,
         aliens: aliens,
         characters: characters,
     };
