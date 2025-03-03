@@ -155,6 +155,7 @@ model Alien {
   userId         Int
   inRaid         Boolean
   onTeam         Boolean       @default(false)
+  selected       Boolean       @default(false)
   raidHistory    RaidHistory[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -194,6 +195,7 @@ model Character {
   rarity     CharacterRarity @default(SR)
   power      Int
   image      String?
+  video      String?
   portal     Int
   PackReward PackReward[]
   createdAt  DateTime        @default(now())
@@ -207,6 +209,7 @@ model UserCharacter {
   id          Int           @id @default(autoincrement())
   userId      Int
   characterId Int
+  quantity    Int           @default(1)
   inRaid      Boolean       @default(false)
   onTeam      Boolean       @default(false)
   user        User          @relation(fields: [userId], references: [id])
@@ -215,6 +218,7 @@ model UserCharacter {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  @@unique([userId, characterId])
   @@index([userId, characterId])
 }
 

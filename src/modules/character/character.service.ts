@@ -62,11 +62,11 @@ export class CharacterService {
         id: id,
       },
       data: {
-      ...(name && { name }),
-      ...(elementId && { element: { connect: { id: elementId } } }),
-      ...(power && { power }),
-      ...(image && { image }),
-      ...(portal && { portal }),
+        ...(name && { name }),
+        ...(elementId && { element: { connect: { id: elementId } } }),
+        ...(power && { power }),
+        ...(image && { image }),
+        ...(portal && { portal }),
       },
     });
   }
@@ -91,7 +91,9 @@ export class CharacterService {
     });
 
     if (user.stars < 100) {
-      throw new Error('Insufficient balance');
+      throw new BadRequestException(
+        'Insufficient stars balance. Required: 100 stars',
+      );
     }
 
     const characters = await this.prisma.character.findMany({
@@ -99,24 +101,48 @@ export class CharacterService {
         portal,
       },
     });
-    const randomCharacter = characters[Math.floor(Math.random() * characters.length)];
+    const randomCharacter =
+      characters[Math.floor(Math.random() * characters.length)];
     // TODO: reward character based on rarity from smart contract
 
-    // Create the user character
-    await this.prisma.userCharacter.create({
-      data: {
-        user: {
-          connect: {
-            id: user.id,
-          },
-        },
-        character: {
-          connect: {
-            id: randomCharacter.id,
-          },
-        },
+    // Check if user already has this character
+    const existingUserCharacter = await this.prisma.userCharacter.findFirst({
+      where: {
+        userId: user.id,
+        characterId: randomCharacter.id,
       },
     });
+
+    if (existingUserCharacter) {
+      // Increment quantity if user already has this character
+      await this.prisma.userCharacter.update({
+        where: {
+          id: existingUserCharacter.id,
+        },
+        data: {
+          quantity: {
+            increment: 1,
+          },
+        },
+      });
+    } else {
+      // Create new user character record if user doesn't have this character yet
+      await this.prisma.userCharacter.create({
+        data: {
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+          character: {
+            connect: {
+              id: randomCharacter.id,
+            },
+          },
+          quantity: 1,
+        },
+      });
+    }
 
     await this.prisma.user.update({
       where: {
@@ -128,6 +154,11 @@ export class CharacterService {
         },
       },
     });
+
+    return {
+      success: true,
+      character: randomCharacter,
+    };
   }
 
   public async getUserCharacters(walletAddress: string) {
@@ -140,14 +171,129 @@ export class CharacterService {
       },
     });
 
-    var userCharacters = user.characters.map(async (char) => {
-      return await this.prisma.character.findUnique({
-        where: {
-          id: char.characterId,
-        },
-      });
-    });
+    const userCharacters = await Promise.all(
+      user.characters.map(async (userChar) => {
+        const character = await this.prisma.character.findUnique({
+          where: {
+            id: userChar.characterId,
+          },
+          include: {
+            element: true,
+          },
+        });
+
+        return {
+          ...character,
+          quantity: userChar.quantity,
+          inRaid: userChar.inRaid,
+          onTeam: userChar.onTeam,
+          userCharacterId: userChar.id,
+        };
+      }),
+    );
 
     return userCharacters;
+  }
+
+  public async multiSummonCharacters(walletAddress: string, portal: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.stars < 1000) {
+      throw new BadRequestException(
+        'Insufficient stars balance. Required: 1000 stars',
+      );
+    }
+
+    const characters = await this.prisma.character.findMany({
+      where: {
+        portal,
+      },
+      include: {
+        element: true,
+      },
+    });
+
+    if (characters.length === 0) {
+      throw new BadRequestException('No characters found for this portal');
+    }
+
+    const rewardedCharacters = [];
+    const summonResults = [];
+
+    // Reward 10 random characters
+    for (let i = 0; i < 10; i++) {
+      const randomCharacter =
+        characters[Math.floor(Math.random() * characters.length)];
+
+      // Check if user already has this character
+      const existingUserCharacter = await this.prisma.userCharacter.findFirst({
+        where: {
+          userId: user.id,
+          characterId: randomCharacter.id,
+        },
+      });
+
+      if (existingUserCharacter) {
+        // Increment quantity if user already has this character
+        await this.prisma.userCharacter.update({
+          where: {
+            id: existingUserCharacter.id,
+          },
+          data: {
+            quantity: {
+              increment: 1,
+            },
+          },
+        });
+      } else {
+        // Create new user character record if user doesn't have this character yet
+        await this.prisma.userCharacter.create({
+          data: {
+            user: {
+              connect: {
+                id: user.id,
+              },
+            },
+            character: {
+              connect: {
+                id: randomCharacter.id,
+              },
+            },
+            quantity: 1,
+          },
+        });
+      }
+
+      rewardedCharacters.push(randomCharacter);
+      summonResults.push({
+        character: randomCharacter,
+        isNew: !existingUserCharacter,
+      });
+    }
+
+    // Deduct stars from user
+    await this.prisma.user.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        stars: {
+          decrement: 1000,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      summonResults,
+    };
   }
 }
