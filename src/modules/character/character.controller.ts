@@ -31,7 +31,14 @@ export class CharacterController {
   ) {
     power = parseInt(power.toString());
     portal = parseInt(portal.toString());
-    return this.characterService.createCharacter(name, elementId, rarity, power, image, portal);
+    return this.characterService.createCharacter(
+      name,
+      elementId,
+      rarity,
+      power,
+      image,
+      portal,
+    );
   }
 
   @UseGuards(AdminGuard)
@@ -73,15 +80,12 @@ export class CharacterController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/reward-character')
-  async rewardCharacter(
-    @Body('portal') portal: number,
-    @Request() req,
-  ) {
+  @Post('/summon-character')
+  async rewardCharacter(@Body('portal') portal: number, @Request() req) {
     portal = parseInt(portal.toString());
     return this.characterService.rewardCharacter(
       req.walletAddress.toLowerCase(),
-      portal
+      portal,
     );
   }
 
@@ -90,6 +94,16 @@ export class CharacterController {
   async getUserCharacters(@Request() req) {
     return this.characterService.getUserCharacters(
       req.walletAddress.toLowerCase(),
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/multi-summon-characters')
+  async multiSummonCharacters(@Body('portal') portal: number, @Request() req) {
+    portal = parseInt(portal.toString());
+    return this.characterService.multiSummonCharacters(
+      req.walletAddress.toLowerCase(),
+      portal,
     );
   }
 }
