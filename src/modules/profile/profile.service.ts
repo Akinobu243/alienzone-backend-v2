@@ -503,14 +503,14 @@ export class ProfileService {
 
   public async updateTeam(
     walletAddress: string,
-    characterIds: number[],
     alienIds: number[],
+    characterIds: number[],
   ) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress },
     });
 
-    if (!user) { 
+    if (!user) {
       throw new BadRequestException('User not found');
     }
     console.log(alienIds.length, characterIds.length);

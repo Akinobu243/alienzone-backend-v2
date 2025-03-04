@@ -103,6 +103,9 @@ export class CharacterService {
     });
     const randomCharacter =
       characters[Math.floor(Math.random() * characters.length)];
+    if (!randomCharacter) {
+      throw new BadRequestException('No characters available yet');
+    }
     // TODO: reward character based on rarity from smart contract
 
     // Check if user already has this character
