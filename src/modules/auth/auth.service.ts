@@ -107,7 +107,6 @@ export class AuthService {
         },
       });
 
-      console.log(totalReferals);
 
       if (totalReferals === parseInt(process.env.MAX_REFFERAL_COUNT || '5')) {
         referrer = null;

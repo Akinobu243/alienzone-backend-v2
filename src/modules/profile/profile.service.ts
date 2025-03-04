@@ -95,6 +95,7 @@ export class ProfileService {
         strengthPoints: Number(createAlienDTO.strengthPoints),
         inRaid: false,
         selected: true,
+        onTeam: true,
         user: {
           connect: { walletAddress },
         },
