@@ -104,6 +104,7 @@ model User {
   transactions     Transaction[]
   AlienParts       AlienPart[]
   purchasedPacks   Pack[]           @relation("PurchasedPacks")
+  gearItems        UserGearItem[]
   UserElement      UserElement[]
 }
 
@@ -203,6 +204,7 @@ model Character {
   users      UserCharacter[]
   element    Element         @relation(fields: [elementId], references: [id])
   elementId  Int
+  gearItem   GearItem[]
 }
 
 model UserCharacter {
@@ -249,6 +251,32 @@ model UserItem {
   item     Item @relation(fields: [itemId], references: [id])
 
   @@index([userId, itemId])
+}
+
+enum GearItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+}
+
+model GearItem {
+  id                    Int           @id @default(autoincrement())
+  rarity                GearItemRarity
+  image                 String
+  users                 UserGearItem[]
+  summonedCharacter     Character?    @relation(fields: [summonedCharacterId], references: [id])
+  summonedCharacterId   Int?
+}
+
+model UserGearItem {
+  id            Int  @id @default(autoincrement())
+  userId        Int
+  gearItemId    Int
+  quantity      Int
+  user          User @relation(fields: [userId], references: [id])
+  gearItem      GearItem @relation(fields: [gearItemId], references: [id])
+
+  @@index([userId, gearItemId])
 }
 
 model DailyReward {

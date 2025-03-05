@@ -106,4 +106,33 @@ export class CharacterController {
       portal,
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/summon-gear')
+  async summonGear(@Request() req) {
+    return this.characterService.summonGear(req.walletAddress.toLowerCase());
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/summon-gear-multi')
+  async summonGearMulti(@Request() req, amount: number) {
+    const response = [];
+    for (let i = 0; i < amount; i++) {
+      const r = await this.characterService.summonGear(
+        req.walletAddress.toLowerCase(),
+      );
+      response.push(r);
+    }
+    return response;
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/burn-gear')
+  async burnGear(@Request() req, @Body('gearId') gearId: number) {
+    gearId = parseInt(gearId.toString());
+    return this.characterService.burnGear(
+      req.walletAddress.toLowerCase(),
+      gearId,
+    );
+  }
 }
