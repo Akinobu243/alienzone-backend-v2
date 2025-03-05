@@ -25,9 +25,8 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-profile')
-  @ApiQuery({ name: 'walletAddress', type: String })
-  async getProfile(@Query('walletAddress') walletAddress: string) {
-    return this.profileService.getProfile(walletAddress);
+  async getProfile(@Request() req) {
+    return this.profileService.getProfile(req.walletAddress.toLowerCase());
   }
 
   @UseGuards(AuthGuard)
@@ -88,7 +87,6 @@ export class ProfileController {
     return this.profileService.updateStarBalance(walletAddress, amount);
   }
 
-
   @Get('/get-onboarding-data')
   async getOnboardingData() {
     return this.profileService.getOnboardingData();
@@ -115,34 +113,27 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Post('/use-consumable-item')
-  async useConsumableItem(
+  async useConsumableItem(@Request() req, @Body('itemId') itemId: number) {
+    return this.profileService.useConsumableItem(req.walletAddress, itemId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/update-team')
+  async updateTeam(
     @Request() req,
-    @Body('itemId') itemId: number,
+    @Body('alienIds') alienIds: number[],
+    @Body('characterIds') characterIds: number[],
   ) {
-    return this.profileService.useConsumableItem(
+    return this.profileService.updateTeam(
       req.walletAddress,
-      itemId,
+      alienIds,
+      characterIds,
     );
   }
 
-    @UseGuards(AuthGuard)
-    @Post('/update-team')
-    async updateTeam(
-        @Request() req,
-        @Body('alienIds') alienIds: number[],
-        @Body('characterIds') characterIds: number[],
-    ) {
-        return this.profileService.updateTeam(
-            req.walletAddress,
-            alienIds,
-            characterIds,
-        );
-    }
-
-    @UseGuards(AuthGuard)
-    @Get('/get-team')
-    async getTeam(@Request() req) {
-        return this.profileService.getTeam(req.walletAddress);
-    }
-
+  @UseGuards(AuthGuard)
+  @Get('/get-team')
+  async getTeam(@Request() req) {
+    return this.profileService.getTeam(req.walletAddress);
+  }
 }

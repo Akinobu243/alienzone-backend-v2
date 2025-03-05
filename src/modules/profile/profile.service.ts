@@ -681,7 +681,7 @@ export class ProfileService {
 
     return {
       teamStrengthPoints: teamStrengthPoints,
-      team: teamResponse,
+      team: teamResponse.reverse(),
       synergies: synergies,
       buffs: {
         starsBoost: isStarBoostActive ? user.starsBoost : 0,
