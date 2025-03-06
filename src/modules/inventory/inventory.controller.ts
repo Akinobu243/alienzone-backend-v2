@@ -2,7 +2,7 @@ import { Controller, Get, Request, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { InventoryService } from './inventory.service';
-import { UserInventoryResponseDto } from './dto/inventory.dto';
+import { InventoryResponseDto } from './dto/inventory.dto';
 
 @ApiTags('inventory')
 @Controller('/inventory')
@@ -18,11 +18,11 @@ export class InventoryController {
     status: 200,
     description:
       'Returns all inventory items including characters, elements, alien parts, aliens, and items',
-    type: UserInventoryResponseDto,
+    type: InventoryResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUserInventory(@Request() req): Promise<UserInventoryResponseDto> {
+  async getUserInventory(@Request() req): Promise<InventoryResponseDto[]> {
     return this.inventoryService.getUserInventory(
       req.walletAddress.toLowerCase(),
     );

@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserInventoryResponseDto } from './dto/inventory.dto';
+import { InventoryResponseDto } from './dto/inventory.dto';
 
 @Injectable()
 export class InventoryService {
@@ -11,7 +11,7 @@ export class InventoryService {
    */
   public async getUserInventory(
     walletAddress: string,
-  ): Promise<UserInventoryResponseDto> {
+  ): Promise<InventoryResponseDto[]> {
     const user = await this.prisma.user.findUnique({
       where: {
         walletAddress,
@@ -67,102 +67,64 @@ export class InventoryService {
       },
     });
 
-    // Get user items
-    const userItems = await this.prisma.userItem.findMany({
+    // Get user gear items
+    const userGearItems = await this.prisma.userGearItem.findMany({
       where: {
         userId: user.id,
       },
       include: {
-        item: true,
+        gearItem: true,
       },
     });
 
-    // Format the characters to include quantity and other details
+    // Format the characters to match InventoryGroupsDto
     const formattedCharacters = userCharacters.map((userChar) => ({
       id: userChar.character.id,
-      userCharacterId: userChar.id,
       name: userChar.character.name,
-      rarity: userChar.character.rarity,
-      power: userChar.character.power,
-      image: userChar.character.image,
-      video: userChar.character.video,
-      portal: userChar.character.portal,
-      element: {
-        id: userChar.character.element.id,
-        name: userChar.character.element.name,
-        // Using a placeholder for type since it's required by the DTO
-        type: 'FIRE',
-        image: userChar.character.element.image,
-      },
       quantity: userChar.quantity,
-      inRaid: userChar.inRaid,
-      onTeam: userChar.onTeam,
-      createdAt: userChar.createdAt,
-      updatedAt: userChar.updatedAt,
+      image: userChar.character.image,
+      description: `${userChar.character.rarity} character with power ${userChar.character.power}`,
+      type: 'CHARACTER' as const,
     }));
 
-    // Format elements
+    // Format elements to match InventoryGroupsDto
     const formattedElements = userElements.map((userElem) => ({
       id: userElem.element.id,
       name: userElem.element.name,
-      // Using a placeholder for type since it's required by the DTO
-      type: 'FIRE',
+      quantity: 1, // Assuming each element is counted as 1
       image: userElem.element.image,
+      description: `Element type: ${userElem.element.name}`,
+      type: 'ELEMENT' as const,
     }));
 
-    // Format alien parts
+    // Format alien parts to match InventoryGroupsDto
     const formattedAlienParts = alienParts.map((part) => ({
       id: part.id,
       name: part.name,
+      quantity: 1, // Assuming each alien part is counted as 1
       image: part.image,
-      group: part.AlienPartGroup.length > 0 ? part.AlienPartGroup[0] : null,
+      description:
+        part.AlienPartGroup.length > 0
+          ? part.AlienPartGroup[0].description
+          : '',
+      type: 'ALIEN_PART' as const,
     }));
 
-    // Format aliens
-    const formattedAliens = user.aliens.map((alien) => ({
-      id: alien.id,
-      name: alien.name,
-      image: alien.image,
-      strengthPoints: alien.strengthPoints,
-      inRaid: alien.inRaid,
-      onTeam: alien.onTeam,
-      selected: alien.selected,
-      element: {
-        id: alien.element.id,
-        name: alien.element.name,
-        // Using a placeholder for type since it's required by the DTO
-        type: 'FIRE',
-        image: alien.element.image,
-      },
+    // Format gear items to match InventoryGroupsDto
+    const formattedGearItems = userGearItems.map((userGear) => ({
+      id: userGear.gearItem.id,
+      name: `${userGear.gearItem.rarity} Gear`,
+      quantity: userGear.quantity,
+      image: userGear.gearItem.image,
+      description: `${userGear.gearItem.rarity} gear item`,
+      type: 'GEAR' as const,
     }));
 
-    // Format items
-    const formattedItems = userItems.map((userItem) => ({
-      id: userItem.item.id,
-      // Using item type as name since Item doesn't have a name field
-      name: String(userItem.item.type),
-      description: userItem.item.description,
-      image: userItem.item.image,
-      quantity: userItem.quantity,
-    }));
-
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        walletAddress: user.walletAddress,
-        level: user.level,
-        experience: user.experience,
-        reputation: user.reputation,
-        stars: user.stars,
-      },
-      inventory: {
-        characters: formattedCharacters,
-        elements: formattedElements,
-        alienParts: formattedAlienParts,
-        aliens: formattedAliens,
-        items: formattedItems,
-      },
-    };
+    return [
+      ...formattedCharacters,
+      ...formattedElements,
+      ...formattedAlienParts,
+      ...formattedGearItems,
+    ];
   }
 }
