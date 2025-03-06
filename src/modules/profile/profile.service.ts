@@ -95,6 +95,7 @@ export class ProfileService {
         strengthPoints: Number(createAlienDTO.strengthPoints),
         inRaid: false,
         selected: true,
+        onTeam: true,
         user: {
           connect: { walletAddress },
         },
@@ -503,14 +504,14 @@ export class ProfileService {
 
   public async updateTeam(
     walletAddress: string,
-    characterIds: number[],
     alienIds: number[],
+    characterIds: number[],
   ) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress },
     });
 
-    if (!user) { 
+    if (!user) {
       throw new BadRequestException('User not found');
     }
     console.log(alienIds.length, characterIds.length);
@@ -680,7 +681,7 @@ export class ProfileService {
 
     return {
       teamStrengthPoints: teamStrengthPoints,
-      team: teamResponse,
+      team: teamResponse.reverse(),
       synergies: synergies,
       buffs: {
         starsBoost: isStarBoostActive ? user.starsBoost : 0,
