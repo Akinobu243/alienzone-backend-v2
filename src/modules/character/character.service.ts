@@ -728,7 +728,6 @@ export class CharacterService {
 
       const rolledRarity = getRandomRarity();
 
-      console.log(rolledRarity);
       // Select a random item from gearItems that has the rolled rarity
       const filteredGear = gearItems.filter(
         (item) => item.rarity.toLowerCase() === rolledRarity.toLowerCase(),
