@@ -119,102 +119,115 @@ export class CharacterService {
   }
 
   public async summonCharacter(walletAddress: string, portal: number) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        walletAddress,
-      },
-    });
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
 
-    if (user.stars < 100) {
-      throw new BadRequestException(
-        'Insufficient stars balance. Required: 100 stars',
-      );
-    }
-
-    const characters = await this.prisma.character.findMany({
-      where: {
-        portal,
-      },
-    });
-
-    const rarityChances = {
-      R: 0.6,
-      SR: 0.3,
-      UR: 0.1,
-    };
-
-    const rollRarity = () => {
-      const random = Math.random();
-      let accumulatedChance = 0;
-
-      for (const rarity in rarityChances) {
-        accumulatedChance += rarityChances[rarity];
-        if (random < accumulatedChance) {
-          return rarity;
-        }
+      if (user.stars < 100) {
+        throw new BadRequestException(
+          'Insufficient stars balance. Required: 100 stars',
+        );
       }
-    };
 
-    const rolledRarity = rollRarity();
+      const characters = await this.prisma.character.findMany({
+        where: {
+          portal,
+        },
+      });
 
-    const charactersByRarity = characters.filter(
-      (character) => character.rarity === rolledRarity,
-    );
+      const rarityChances = {
+        R: 0.6,
+        SR: 0.3,
+        UR: 0.1,
+      };
 
-    if (charactersByRarity.length === 0) {
-      throw new BadRequestException(
-        'No characters found for the rolled rarity',
+      const rollRarity = () => {
+        const random = Math.random();
+        let accumulatedChance = 0;
+
+        for (const rarity in rarityChances) {
+          accumulatedChance += rarityChances[rarity];
+          if (random < accumulatedChance) {
+            return rarity;
+          }
+        }
+      };
+
+      const rolledRarity = rollRarity();
+
+      const charactersByRarity = characters.filter(
+        (character) => character.rarity === rolledRarity,
       );
+
+      if (charactersByRarity.length === 0) {
+        throw new BadRequestException(
+          'No characters found for the rolled rarity',
+        );
+      }
+
+      const randomCharacter =
+        charactersByRarity[
+          Math.floor(Math.random() * charactersByRarity.length)
+        ];
+
+      if (!randomCharacter) {
+        throw new BadRequestException('No characters available yet');
+      }
+
+      await this.prisma.unmintedCharacter.deleteMany({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      await this.prisma.unmintedCharacter.create({
+        data: {
+          character: {
+            connect: {
+              id: randomCharacter.id,
+            },
+          },
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      // Check if user already has this character
+      const existingUserCharacter = await this.prisma.userCharacter.findFirst({
+        where: {
+          userId: user.id,
+          characterId: randomCharacter.id,
+        },
+      });
+
+      await this.prisma.user.update({
+        where: {
+          walletAddress,
+        },
+        data: {
+          stars: {
+            decrement: 100,
+          },
+        },
+      });
+
+      return {
+        success: true,
+        character: randomCharacter,
+        isNew: !existingUserCharacter,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
     }
-
-    const randomCharacter =
-      charactersByRarity[Math.floor(Math.random() * charactersByRarity.length)];
-
-    await this.prisma.unmintedCharacter.deleteMany({
-      where: {
-        userId: user.id,
-      },
-    });
-
-    await this.prisma.unmintedCharacter.create({
-      data: {
-        character: {
-          connect: {
-            id: randomCharacter.id,
-          },
-        },
-        user: {
-          connect: {
-            id: user.id,
-          },
-        },
-      },
-    });
-
-    // Check if user already has this character
-    const existingUserCharacter = await this.prisma.userCharacter.findFirst({
-      where: {
-        userId: user.id,
-        characterId: randomCharacter.id,
-      },
-    });
-
-    await this.prisma.user.update({
-      where: {
-        walletAddress,
-      },
-      data: {
-        stars: {
-          decrement: 100,
-        },
-      },
-    });
-
-    return {
-      success: true,
-      character: randomCharacter,
-      isNew: !existingUserCharacter,
-    };
   }
 
   public async getUserCharacters(walletAddress: string) {
@@ -640,52 +653,170 @@ export class CharacterService {
   }
 
   public async summonGear(walletAddress: string) {
-    try {
-      const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.stars < 50) {
+      throw new BadRequestException(
+        'Insufficient stars balance. Required: 50 stars',
+      );
+    }
+
+    // Reward random gear based on rarity
+    const gearItems = await this.prisma.gearItem.findMany();
+
+    if (gearItems.length === 0) {
+      throw new BadRequestException('No gear items found');
+    }
+
+    const getRandomRarity = () => {
+      const rarityChances = {
+        common: 0.7, // 70% chance
+        uncommon: 0.2, // 20% chance
+        rare: 0.1, // 10% chance
+      };
+      const random = Math.random();
+      let accumulatedChance = 0;
+
+      for (const rarity in rarityChances) {
+        accumulatedChance += rarityChances[rarity];
+        if (random < accumulatedChance) {
+          return rarity;
+        }
+      }
+    };
+
+    const rolledRarity = getRandomRarity();
+
+    console.log(rolledRarity);
+    // Select a random item from gearItems that has the rolled rarity
+    const filteredGear = gearItems.filter(
+      (item) => item.rarity.toLowerCase() === rolledRarity.toLowerCase(),
+    );
+
+    if (filteredGear.length === 0) {
+      throw new BadRequestException('No gear items found for this rarity');
+    }
+
+    const rewardedGear =
+      filteredGear[Math.floor(Math.random() * filteredGear.length)];
+    // Check if user already has this gear
+    const existingUserGear = await this.prisma.userGearItem.findFirst({
+      where: {
+        userId: user.id,
+        gearItemId: rewardedGear.id,
+      },
+    });
+
+    if (existingUserGear) {
+      // Increment quantity if user already has this gear
+      await this.prisma.userGearItem.update({
         where: {
-          walletAddress,
+          id: existingUserGear.id,
+        },
+        data: {
+          quantity: {
+            increment: 1,
+          },
         },
       });
+    } else {
+      // Create new user gear record if user doesn't have this gear yet
+      await this.prisma.userGearItem.create({
+        data: {
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+          gearItem: {
+            connect: {
+              id: rewardedGear.id,
+            },
+          },
+          quantity: 1,
+        },
+      });
+    }
 
-      if (!user) {
-        throw new BadRequestException('User not found');
-      }
+    // Deduct stars from user
+    await this.prisma.user.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        stars: {
+          decrement: 50,
+        },
+      },
+    });
 
-      if (user.stars < 50) {
-        throw new BadRequestException(
-          'Insufficient stars balance. Required: 50 stars',
-        );
-      }
+    return {
+      success: true,
+      gear: rewardedGear,
+    };
+  }
 
-      // Reward random gear based on rarity
-      const gearItems = await this.prisma.gearItem.findMany();
+  public async multiSummonGear(walletAddress: string, amount: number = 10) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
 
-      if (gearItems.length === 0) {
-        throw new BadRequestException('No gear items found');
-      }
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
 
-      const getRandomRarity = () => {
-        const rarityChances = {
-          common: 0.7, // 70% chance
-          uncommon: 0.2, // 20% chance
-          rare: 0.1, // 10% chance
-        };
-        const random = Math.random();
-        let accumulatedChance = 0;
+    // Calculate total stars needed (50 stars per summon)
+    const totalStarsNeeded = 50 * amount;
 
-        for (const rarity in rarityChances) {
-          accumulatedChance += rarityChances[rarity];
-          if (random < accumulatedChance) {
-            return rarity;
-          }
-        }
+    if (user.stars < totalStarsNeeded) {
+      throw new BadRequestException(
+        `Insufficient stars balance. Required: ${totalStarsNeeded} stars`,
+      );
+    }
+
+    // Reward random gear based on rarity
+    const gearItems = await this.prisma.gearItem.findMany();
+
+    if (gearItems.length === 0) {
+      throw new BadRequestException('No gear items found');
+    }
+
+    const getRandomRarity = () => {
+      const rarityChances = {
+        common: 0.7, // 70% chance
+        uncommon: 0.2, // 20% chance
+        rare: 0.1, // 10% chance
       };
+      const random = Math.random();
+      let accumulatedChance = 0;
 
+      for (const rarity in rarityChances) {
+        accumulatedChance += rarityChances[rarity];
+        if (random < accumulatedChance) {
+          return rarity;
+        }
+      }
+    };
+
+    const rewardedGears = [];
+
+    // Reward multiple gear items
+    for (let i = 0; i < amount; i++) {
       const rolledRarity = getRandomRarity();
 
       // Select a random item from gearItems that has the rolled rarity
       const filteredGear = gearItems.filter(
-        (item) => item.rarity === rolledRarity,
+        (item) => item.rarity.toLowerCase() === rolledRarity.toLowerCase(),
       );
       const rewardedGear =
         filteredGear[Math.floor(Math.random() * filteredGear.length)];
@@ -729,126 +860,122 @@ export class CharacterService {
         });
       }
 
-      // Deduct stars from user
-      await this.prisma.user.update({
-        where: {
-          walletAddress,
-        },
-        data: {
-          stars: {
-            decrement: 50,
-          },
-        },
-      });
-
-      return {
-        success: true,
-        gear: rewardedGear,
-      };
-    } catch (error) {
-      return error;
+      rewardedGears.push(rewardedGear);
     }
+
+    // Deduct total stars from user
+    await this.prisma.user.update({
+      where: {
+        walletAddress,
+      },
+      data: {
+        stars: {
+          decrement: totalStarsNeeded,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      gears: rewardedGears,
+    };
   }
 
   public async burnGear(walletAddress: string, gearItemId: number) {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          walletAddress,
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const userGear = await this.prisma.userGearItem.findFirst({
+      where: {
+        userId: user.id,
+        gearItemId: gearItemId,
+      },
+    });
+
+    if (!userGear) {
+      throw new BadRequestException('User does not have this gear');
+    }
+
+    if (userGear.quantity < 8) {
+      throw new BadRequestException(
+        'User does not have enough gear to burn. Required: 8',
+      );
+    }
+
+    // Deduct 8 gear items from user
+    await this.prisma.userGearItem.update({
+      where: {
+        id: userGear.id,
+      },
+      data: {
+        quantity: {
+          decrement: 8,
         },
-      });
+      },
+    });
 
-      if (!user) {
-        throw new BadRequestException('User not found');
-      }
+    // Reward the user with the associated character of the burned gear
+    const gearItem = await this.prisma.gearItem.findUnique({
+      where: {
+        id: gearItemId,
+      },
+    });
 
-      const userGear = await this.prisma.userGearItem.findFirst({
+    const character = await this.prisma.character.findUnique({
+      where: {
+        id: gearItem.summonedCharacterId,
+      },
+    });
+
+    const existingUserCharacter = await this.prisma.userCharacter.findFirst({
+      where: {
+        userId: user.id,
+        characterId: character.id,
+      },
+    });
+
+    if (existingUserCharacter) {
+      // Increment quantity if user already has this character
+      await this.prisma.userCharacter.update({
         where: {
-          userId: user.id,
-          gearItemId: gearItemId,
-        },
-      });
-
-      if (!userGear) {
-        throw new BadRequestException('User does not have this gear');
-      }
-
-      if (userGear.quantity < 8) {
-        throw new BadRequestException(
-          'User does not have enough gear to burn. Required: 8',
-        );
-      }
-
-      // Deduct 8 gear items from user
-      await this.prisma.userGearItem.update({
-        where: {
-          id: userGear.id,
+          id: existingUserCharacter.id,
         },
         data: {
           quantity: {
-            decrement: 8,
+            increment: 1,
           },
         },
       });
-
-      // Reward the user with the associated character of the burned gear
-      const gearItem = await this.prisma.gearItem.findUnique({
-        where: {
-          id: gearItemId,
-        },
-      });
-
-      const character = await this.prisma.character.findUnique({
-        where: {
-          id: gearItem.summonedCharacterId,
-        },
-      });
-
-      const existingUserCharacter = await this.prisma.userCharacter.findFirst({
-        where: {
-          userId: user.id,
-          characterId: character.id,
-        },
-      });
-
-      if (existingUserCharacter) {
-        // Increment quantity if user already has this character
-        await this.prisma.userCharacter.update({
-          where: {
-            id: existingUserCharacter.id,
-          },
-          data: {
-            quantity: {
-              increment: 1,
+    } else {
+      // Create new user character record if user doesn't have this character yet
+      await this.prisma.userCharacter.create({
+        data: {
+          user: {
+            connect: {
+              id: user.id,
             },
           },
-        });
-      } else {
-        // Create new user character record if user doesn't have this character yet
-        await this.prisma.userCharacter.create({
-          data: {
-            user: {
-              connect: {
-                id: user.id,
-              },
+          character: {
+            connect: {
+              id: character.id,
             },
-            character: {
-              connect: {
-                id: character.id,
-              },
-            },
-            quantity: 1,
           },
-        });
-      }
-
-      return {
-        success: true,
-        character,
-      };
-    } catch (error) {
-      return error;
+          quantity: 1,
+        },
+      });
     }
+
+    return {
+      success: true,
+      character,
+    };
   }
 
   private async generateServerSignature(

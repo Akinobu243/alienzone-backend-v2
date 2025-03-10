@@ -138,16 +138,12 @@ export class CharacterController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/summon-gear-multi')
-  async summonGearMulti(@Request() req, amount: number) {
-    const response = [];
-    for (let i = 0; i < amount; i++) {
-      const r = await this.characterService.summonGear(
-        req.walletAddress.toLowerCase(),
-      );
-      response.push(r);
-    }
-    return response;
+  @Post('/multi-summon-gear')
+  async summonGearMulti(@Request() req, @Body('amount') amount: number = 10) {
+    return this.characterService.multiSummonGear(
+      req.walletAddress.toLowerCase(),
+      amount,
+    );
   }
 
   @UseGuards(AuthGuard)

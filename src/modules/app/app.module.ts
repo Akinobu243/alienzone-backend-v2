@@ -19,6 +19,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { PacksModule } from '../packs/packs.module';
 import { StripeModule } from '../stripe/stripe.module';
 import { ElementModule } from '../element/element.module';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { ElementModule } from '../element/element.module';
     ConfigModule.forRoot({ isGlobal: true, load: [() => GLOBAL_CONFIG] }),
     PacksModule,
     StripeModule,
-    ElementModule
+    ElementModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
