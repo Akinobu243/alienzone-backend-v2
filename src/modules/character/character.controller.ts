@@ -28,9 +28,21 @@ export class CharacterController {
     @Body('power') power: number,
     @Body('image') image: string,
     @Body('portal') portal: number,
+    @Body('upgradeAmountRequired') upgradeAmountRequired?: number,
+    @Body('upgradesToId') upgradesToId?: number,
   ) {
-    power = parseInt(power.toString());
-    portal = parseInt(portal.toString());
+    if (power !== undefined) {
+      power = parseInt(power.toString());
+    }
+    if (elementId !== undefined) {
+      elementId = parseInt(elementId.toString());
+    }
+    if (upgradeAmountRequired !== undefined) {
+      upgradeAmountRequired = parseInt(upgradeAmountRequired.toString());
+    }
+    if (upgradesToId !== undefined) {
+      upgradesToId = parseInt(upgradesToId.toString());
+    }
     return this.characterService.createCharacter(
       name,
       elementId,
@@ -38,6 +50,8 @@ export class CharacterController {
       power,
       image,
       portal,
+      upgradeAmountRequired,
+      upgradesToId,
     );
   }
 
@@ -49,6 +63,8 @@ export class CharacterController {
     @Body('elementId') elementId?: number,
     @Body('power') power?: number,
     @Body('image') image?: string,
+    @Body('upgradeAmountRequired') upgradeAmountRequired?: number,
+    @Body('upgradesToId') upgradesToId?: number,
   ) {
     id = parseInt(id.toString());
     if (power !== undefined) {
@@ -57,12 +73,20 @@ export class CharacterController {
     if (elementId !== undefined) {
       elementId = parseInt(elementId.toString());
     }
+    if (upgradeAmountRequired !== undefined) {
+      upgradeAmountRequired = parseInt(upgradeAmountRequired.toString());
+    }
+    if (upgradesToId !== undefined) {
+      upgradesToId = parseInt(upgradesToId.toString());
+    }
     return this.characterService.editCharacter(
       id,
       name,
       elementId,
       power,
       image,
+      upgradeAmountRequired,
+      upgradesToId,
     );
   }
 
@@ -83,7 +107,7 @@ export class CharacterController {
   @Post('/summon-character')
   async rewardCharacter(@Body('portal') portal: number, @Request() req) {
     portal = parseInt(portal.toString());
-    return this.characterService.rewardCharacter(
+    return this.characterService.summonCharacter(
       req.walletAddress.toLowerCase(),
       portal,
     );
@@ -129,6 +153,68 @@ export class CharacterController {
     return this.characterService.burnGear(
       req.walletAddress.toLowerCase(),
       gearId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/mint-character')
+  async mintCharacter(
+    @Request() req,
+    @Body('characterId') characterId: number,
+    @Body('signature') signature: string,
+  ) {
+    characterId = parseInt(characterId.toString());
+    return this.characterService.mintCharacter(
+      req.walletAddress.toLowerCase(),
+      characterId,
+      signature,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/verify-mint-transaction')
+  async verifyMintTransaction(
+    @Request() req,
+    @Body('mintTransactionId') mintTransactionId: number,
+    @Body('characterId') characterId: number,
+    @Body('serverSignature') serverSignature: string,
+    @Body('txHash') txHash: string,
+  ) {
+    mintTransactionId = parseInt(mintTransactionId.toString());
+    characterId = parseInt(characterId.toString());
+    return this.characterService.verifyMintTransaction(
+      mintTransactionId,
+      req.walletAddress.toLowerCase(),
+      characterId,
+      serverSignature,
+      txHash,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/upgrade-character')
+  async upgradeCharacter(
+    @Request() req,
+    @Body('characterId') characterId: number,
+  ) {
+    characterId = parseInt(characterId.toString());
+    return this.characterService.upgradeCharacter(
+      req.walletAddress.toLowerCase(),
+      characterId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/verify-upgrade-transaction')
+  async verifyUpgradeTransaction(
+    @Request() req,
+    @Body('upgradeTransactionId') upgradeTransactionId: number,
+    @Body('txHash') txHash: string,
+  ) {
+    upgradeTransactionId = parseInt(upgradeTransactionId.toString());
+    return this.characterService.verifyUpgradeTransaction(
+      upgradeTransactionId,
+      txHash,
     );
   }
 }
