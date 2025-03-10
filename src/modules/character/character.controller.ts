@@ -190,4 +190,31 @@ export class CharacterController {
       txHash,
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/upgrade-character')
+  async upgradeCharacter(
+    @Request() req,
+    @Body('characterId') characterId: number,
+  ) {
+    characterId = parseInt(characterId.toString());
+    return this.characterService.upgradeCharacter(
+      req.walletAddress.toLowerCase(),
+      characterId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/verify-upgrade-transaction')
+  async verifyUpgradeTransaction(
+    @Request() req,
+    @Body('upgradeTransactionId') upgradeTransactionId: number,
+    @Body('txHash') txHash: string,
+  ) {
+    upgradeTransactionId = parseInt(upgradeTransactionId.toString());
+    return this.characterService.verifyUpgradeTransaction(
+      upgradeTransactionId,
+      txHash,
+    );
+  }
 }

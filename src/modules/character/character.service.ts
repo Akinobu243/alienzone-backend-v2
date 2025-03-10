@@ -559,17 +559,6 @@ export class CharacterService {
       if (!tx) {
         return;
       }
-      if (tx.retries >= 3) {
-        await this.prisma.characterTransaction.update({
-          where: {
-            id: tx.id,
-          },
-          data: {
-            status: TransactionStatus.FAILED,
-          },
-        });
-        return;
-      }
 
       const receipt = await this.provider.getTransactionReceipt(tx.txHash);
 
@@ -638,38 +627,84 @@ export class CharacterService {
           `Mint transaction ${tx.txHash} successful. Awarded character ${character.name} to user ${tx.userWallet}`,
         );
       } else if (tx.type === CharacterTransactionType.BURN) {
-        const character = await this.prisma.character.findUnique({
+        const userCharacter = await this.prisma.userCharacter.findFirst({
           where: {
-            id: tx.characterId,
+            userId: tx.userId,
+            characterId: tx.characterId,
+          },
+          include: {
+            character: true,
           },
         });
 
-        const existingUserCharacter = await this.prisma.userCharacter.findFirst(
-          {
-            where: {
-              userId: tx.userId,
-              characterId: character.id,
-            },
-          },
-        );
-
-        if (existingUserCharacter) {
-          await this.prisma.userCharacter.update({
-            where: {
-              id: existingUserCharacter.id,
-            },
-            data: {
-              quantity: {
-                decrement: 1,
-              },
-            },
-          });
+        if (!userCharacter) {
+          throw new BadRequestException('User does not have this character');
         }
 
+        await this.prisma.userCharacter.update({
+          where: {
+            id: userCharacter.id,
+          },
+          data: {
+            quantity: {
+              decrement: userCharacter.character.upgradeReq,
+            },
+          },
+        });
+
+        const newUserCharacter = await this.prisma.userCharacter.upsert({
+          where: {
+            userId_characterId: {
+              userId: tx.userId,
+              characterId: userCharacter.character.upgradesToId,
+            },
+          },
+          update: {
+            user: {
+              connect: {
+                id: tx.userId,
+              },
+            },
+            character: {
+              connect: {
+                id: userCharacter.character.upgradesToId,
+              },
+            },
+            quantity: {
+              increment: 1,
+            },
+          },
+          create: {
+            user: {
+              connect: {
+                id: tx.userId,
+              },
+            },
+            character: {
+              connect: {
+                id: userCharacter.character.upgradesToId,
+              },
+            },
+            quantity: 1,
+          },
+          include: {
+            character: true,
+          },
+        });
+
         console.log(
-          `Burn transaction ${tx.txHash} successful. Burned character ${character.name} from user ${tx.userWallet}`,
+          `Burn transaction ${tx.txHash} successful. Burned ${userCharacter.character.upgradeReq} ${userCharacter.character.name} from user ${tx.userWallet} for ${newUserCharacter.character.name}`,
         );
       }
+
+      await this.prisma.characterTransaction.update({
+        where: {
+          id: tx.id,
+        },
+        data: {
+          status: TransactionStatus.COMPLETED,
+        },
+      });
     } catch (error) {
       await this.prisma.characterTransaction.update({
         where: {
@@ -681,6 +716,16 @@ export class CharacterService {
           },
         },
       });
+      if (tx.retries >= 3) {
+        await this.prisma.characterTransaction.update({
+          where: {
+            id: tx.id,
+          },
+          data: {
+            status: TransactionStatus.FAILED,
+          },
+        });
+      }
     }
   }
 
@@ -1042,6 +1087,37 @@ export class CharacterService {
     return signature;
   }
 
+  public async verifyUpgradeTransaction(
+    upgradeTransactionId: number,
+    txHash: string,
+  ) {
+    try {
+      const tx = await this.prisma.characterTransaction.update({
+        where: {
+          id: upgradeTransactionId,
+        },
+        data: {
+          status: TransactionStatus.PENDING,
+          txHash,
+        },
+      });
+
+      if (!tx) {
+        throw new BadRequestException('Transaction not found');
+      }
+
+      return {
+        success: true,
+        transactionId: upgradeTransactionId,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
   public async upgradeCharacter(walletAddress: string, characterId: number) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -1074,6 +1150,10 @@ export class CharacterService {
         throw new BadRequestException('Character cannot be upgraded');
       }
 
+      if (character.readyToUpgrade) {
+        throw new BadRequestException('Character is already ready to upgrade');
+      }
+
       if (character.quantity < character.character.upgradeReq) {
         throw new BadRequestException(
           `Insufficient quantity. Required: ${character.character.upgradeReq} characters`,
@@ -1085,54 +1165,39 @@ export class CharacterService {
           id: characterId,
         },
         data: {
-          quantity: {
-            decrement: character.character.upgradeReq,
-          },
+          readyToUpgrade: true,
         },
       });
 
-      const upgradedCharacter = await this.prisma.character.findUnique({
-        where: {
-          id: character.character.upgradesToId,
+      const serverSignature = await this.generateServerSignature(
+        character.character.id,
+        character.character.upgradeReq,
+      );
+
+      const upgradeTx = await this.prisma.characterTransaction.create({
+        data: {
+          type: CharacterTransactionType.BURN,
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+          character: {
+            connect: {
+              id: character.character.id,
+            },
+          },
+          status: TransactionStatus.INITIATED,
+          userWallet: walletAddress,
+          serverSignature,
         },
       });
 
-      const existingUserCharacter = await this.prisma.userCharacter.findFirst({
-        where: {
-          userId: user.id,
-          characterId: upgradedCharacter.id,
-        },
-      });
-
-      if (existingUserCharacter) {
-        // Increment quantity if user already has this character
-        await this.prisma.userCharacter.update({
-          where: {
-            id: existingUserCharacter.id,
-          },
-          data: {
-            quantity: {
-              increment: 1,
-            },
-          },
-        });
-      } else {
-        await this.prisma.userCharacter.create({
-          data: {
-            user: {
-              connect: {
-                id: user.id,
-              },
-            },
-            character: {
-              connect: {
-                id: upgradedCharacter.id,
-              },
-            },
-            quantity: 1,
-          },
-        });
-      }
+      return {
+        success: true,
+        serverSignature: serverSignature,
+        transactionId: upgradeTx.id,
+      };
     } catch (error) {
       return {
         success: false,

@@ -229,6 +229,7 @@ model UserCharacter {
   quantity    Int           @default(1)
   inRaid      Boolean       @default(false)
   onTeam      Boolean       @default(false)
+  readyToUpgrade Boolean    @default(false)
   user        User          @relation(fields: [userId], references: [id])
   character   Character     @relation(fields: [characterId], references: [id])
   raidHistory RaidHistory[]
