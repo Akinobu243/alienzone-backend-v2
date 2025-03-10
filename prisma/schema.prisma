@@ -113,7 +113,6 @@ model Raid {
   title       String
   description String
   duration    Int
-  icon        String
   image       String
   rewards     RaidReward[]
   createdAt   DateTime      @default(now())
