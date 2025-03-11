@@ -14,6 +14,7 @@ export class RaidsService {
     return await this.prisma.raid.findMany({
       include: {
         rewards: true,
+        element: true,
       },
     });
   }
@@ -207,10 +208,10 @@ export class RaidsService {
       const raidUserId = raid.userId;
       const raidElementId = raid.raid.elementId;
       const raidDuration = raid.raid.duration;
-      
+
       // Calculate new raid duration after all effects
       let newRaidDuration = raidDuration;
-      for (const alien of raidAliens) { 
+      for (const alien of raidAliens) {
         const alienElement = alien.element;
 
         if (alienElement.weaknessId === raidElementId) {
@@ -307,7 +308,7 @@ export class RaidsService {
             ... (runeWon && { runes: { push: runeWon } }),
           },
         });
-        
+
       }
     }
   }
@@ -325,14 +326,14 @@ export class RaidsService {
   public getRewardedRune(roll: number): RuneType | null {
     const runesDropRate = this.getAllRunesDropRate();
     let cumulativeRate = 0;
-  
+
     for (const runeType in runesDropRate) {
       cumulativeRate += runesDropRate[runeType];
       if (roll < cumulativeRate) {
         return runeType as RuneType;
       }
     }
-  
+
     return null;
   }
 
