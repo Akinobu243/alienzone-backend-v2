@@ -197,6 +197,7 @@ model Element {
 enum CharacterRarity {
   R
   SR
+  SSR
   UR
 }
 
