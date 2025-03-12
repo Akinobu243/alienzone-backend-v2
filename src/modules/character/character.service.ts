@@ -245,10 +245,7 @@ export class CharacterService {
         isNew: !existingUserCharacter,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+      throw error
     }
   }
 
@@ -286,7 +283,7 @@ export class CharacterService {
 
       return { success: true, userCharacters };
     } catch (error) {
-      return { success: false, error };
+      throw error;
     }
   }
 
@@ -413,7 +410,7 @@ export class CharacterService {
         summonResults,
       };
     } catch (error) {
-      return { success: false, error };
+      throw error;
     }
   }
 
@@ -492,10 +489,7 @@ export class CharacterService {
         transactionId: mintTransaction.id,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+      throw error;
     }
   }
 
@@ -537,10 +531,7 @@ export class CharacterService {
         transactionId: mintTransactionId,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+      throw error;
     }
   }
 
@@ -840,10 +831,7 @@ export class CharacterService {
         gear: rewardedGear,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+      throw error;
     }
   }
 
@@ -964,10 +952,7 @@ export class CharacterService {
         gears: rewardedGears,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+     throw error;
     }
   }
 
@@ -1068,10 +1053,7 @@ export class CharacterService {
         character,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+      throw error;
     }
   }
 
@@ -1111,10 +1093,7 @@ export class CharacterService {
         transactionId: upgradeTransactionId,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+     throw error;
     }
   }
 
@@ -1199,10 +1178,7 @@ export class CharacterService {
         transactionId: upgradeTx.id,
       };
     } catch (error) {
-      return {
-        success: false,
-        error,
-      };
+     throw error;
     }
   }
 }
