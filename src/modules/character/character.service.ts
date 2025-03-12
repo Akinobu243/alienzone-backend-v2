@@ -161,9 +161,10 @@ export class CharacterService {
       });
 
       const rarityChances = {
-        R: 0.6,
-        SR: 0.3,
-        UR: 0.1,
+        R: 0.7,
+        SR: 0.2,
+        SSR: 0.09,
+        UR: 0.01,
       };
 
       const rollRarity = () => {
