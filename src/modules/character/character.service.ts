@@ -453,6 +453,10 @@ export class CharacterService {
         },
       });
 
+      if (characters.length !== characterIds.length) {
+        throw new BadRequestException('Character not found');
+      }
+
       const signerAddress = ethers.verifyMessage(
         characterIds.join(',').toString(),
         signature,
