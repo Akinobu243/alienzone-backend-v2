@@ -181,14 +181,16 @@ export class CharacterService {
 
       const rolledRarity = rollRarity();
 
-      const charactersByRarity = characters.filter(
+      var charactersByRarity = characters.filter(
         (character) => character.rarity === rolledRarity,
       );
 
       if (charactersByRarity.length === 0) {
-        throw new BadRequestException(
-          'No characters found for the rolled rarity',
-        );
+        charactersByRarity = characters;
+        // TODO: Uncomment this line
+        // throw new BadRequestException(
+        //   'No characters found for the rolled rarity',
+        // );
       }
 
       const randomCharacter =
@@ -246,7 +248,7 @@ export class CharacterService {
         isNew: !existingUserCharacter,
       };
     } catch (error) {
-      throw error
+      throw error;
     }
   }
 
@@ -950,7 +952,7 @@ export class CharacterService {
         gears: rewardedGears,
       };
     } catch (error) {
-     throw error;
+      throw error;
     }
   }
 
@@ -1091,7 +1093,7 @@ export class CharacterService {
         transactionId: upgradeTransactionId,
       };
     } catch (error) {
-     throw error;
+      throw error;
     }
   }
 
@@ -1176,7 +1178,7 @@ export class CharacterService {
         transactionId: upgradeTx.id,
       };
     } catch (error) {
-     throw error;
+      throw error;
     }
   }
 
