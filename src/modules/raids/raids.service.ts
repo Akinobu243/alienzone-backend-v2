@@ -23,7 +23,6 @@ export class RaidsService {
     title: string,
     description: string,
     duration: number,
-    icon: string,
     image: string,
     elementId: number,
     rewards: RaidReward[],
@@ -40,7 +39,6 @@ export class RaidsService {
       title,
       description,
       duration,
-      icon,
       image,
       element: {
         connect: {

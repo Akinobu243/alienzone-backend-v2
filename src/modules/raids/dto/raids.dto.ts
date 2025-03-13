@@ -19,10 +19,6 @@ export class CreateRaidDTO {
 
   @ApiProperty()
   @IsString()
-  icon: string;
-
-  @ApiProperty()
-  @IsString()
   image: string;
 
   @ApiProperty()
