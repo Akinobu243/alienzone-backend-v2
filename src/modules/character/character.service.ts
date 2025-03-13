@@ -416,7 +416,7 @@ export class CharacterService {
 
   public async mintCharacter(
     walletAddress: string,
-    characterId: number,
+    characterIds: number[],
     signature: string,
   ) {
     try {
@@ -430,27 +430,31 @@ export class CharacterService {
         throw new BadRequestException('User not found');
       }
 
-      const unmintedCharacter = await this.prisma.unmintedCharacter.findFirst({
+      const unmintedCharacters = await this.prisma.unmintedCharacter.findMany({
         where: {
           userId: user.id,
-          characterId,
+          characterId: {
+            in: characterIds,
+          },
         },
       });
 
-      if (!unmintedCharacter) {
+      if (!unmintedCharacters || unmintedCharacters.length === 0) {
         throw new BadRequestException(
           'Character not found in mintable list for this user.',
         );
       }
 
-      const character = await this.prisma.character.findUnique({
+      const characters = await this.prisma.character.findMany({
         where: {
-          id: characterId,
+          id: {
+            in: characterIds,
+          },
         },
       });
 
       const signerAddress = ethers.verifyMessage(
-        characterId.toString(),
+        characterIds.join(',').toString(),
         signature,
       );
 
@@ -459,7 +463,7 @@ export class CharacterService {
       }
 
       const serverSignature = await this.generateServerSignature(
-        characterId,
+        characterIds,
         1,
       );
 
@@ -471,11 +475,7 @@ export class CharacterService {
               id: user.id,
             },
           },
-          character: {
-            connect: {
-              id: character.id,
-            },
-          },
+          characterIds: characterIds,
           status: TransactionStatus.INITIATED,
           userWallet: walletAddress,
           serverSignature,
@@ -484,7 +484,7 @@ export class CharacterService {
 
       return {
         success: true,
-        character,
+        characterIds,
         serverSignature,
         transactionId: mintTransaction.id,
       };
@@ -496,7 +496,6 @@ export class CharacterService {
   public async verifyMintTransaction(
     mintTransactionId: number,
     walletAddress: string,
-    characterId: number,
     serverSignature: string,
     txHash: string,
   ) {
@@ -506,7 +505,6 @@ export class CharacterService {
           id: mintTransactionId,
           type: CharacterTransactionType.MINT,
           userWallet: walletAddress,
-          characterId,
           serverSignature,
           status: TransactionStatus.INITIATED,
         },
@@ -562,66 +560,67 @@ export class CharacterService {
       }
 
       if (tx.type === CharacterTransactionType.MINT) {
-        const character = await this.prisma.character.findUnique({
+        const characters = await this.prisma.character.findMany({
           where: {
-            id: tx.characterId,
+            id: { in: tx.characterIds },
           },
         });
 
-        const existingUserCharacter = await this.prisma.userCharacter.findFirst(
-          {
-            where: {
-              userId: tx.userId,
-              characterId: character.id,
-            },
-          },
-        );
+        for (const character of characters) {
+          const existingUserCharacter =
+            await this.prisma.userCharacter.findFirst({
+              where: {
+                userId: tx.userId,
+                characterId: character.id,
+              },
+            });
 
-        if (existingUserCharacter) {
-          await this.prisma.userCharacter.update({
+          if (existingUserCharacter) {
+            await this.prisma.userCharacter.update({
+              where: {
+                id: existingUserCharacter.id,
+              },
+              data: {
+                quantity: {
+                  increment: 1,
+                },
+              },
+            });
+          } else {
+            await this.prisma.userCharacter.create({
+              data: {
+                user: {
+                  connect: {
+                    id: tx.userId,
+                  },
+                },
+                character: {
+                  connect: {
+                    id: character.id,
+                  },
+                },
+                quantity: 1,
+              },
+            });
+          }
+
+          await this.prisma.unmintedCharacter.delete({
             where: {
-              id: existingUserCharacter.id,
-            },
-            data: {
-              quantity: {
-                increment: 1,
+              userId_characterId: {
+                userId: tx.userId,
+                characterId: character.id,
               },
-            },
-          });
-        } else {
-          await this.prisma.userCharacter.create({
-            data: {
-              user: {
-                connect: {
-                  id: tx.userId,
-                },
-              },
-              character: {
-                connect: {
-                  id: character.id,
-                },
-              },
-              quantity: 1,
             },
           });
         }
-
-        await this.prisma.unmintedCharacter.delete({
-          where: {
-            userId_characterId: {
-              userId: tx.userId,
-              characterId: character.id,
-            },
-          },
-        });
         console.log(
-          `Mint transaction ${tx.txHash} successful. Awarded character ${character.name} to user ${tx.userWallet}`,
+          `Mint transaction ${tx.txHash} successful. Awarded characters [${tx.characterIds}] to user ${tx.userWallet}`,
         );
       } else if (tx.type === CharacterTransactionType.BURN) {
         const userCharacter = await this.prisma.userCharacter.findFirst({
           where: {
             userId: tx.userId,
-            characterId: tx.characterId,
+            characterId: tx.characterIds[0],
           },
           include: {
             character: true,
@@ -1058,12 +1057,12 @@ export class CharacterService {
   }
 
   private async generateServerSignature(
-    id: number,
+    ids: number[],
     amount: number,
   ): Promise<string> {
     const hash = ethers.solidityPackedKeccak256(
-      ['address', 'uint256', 'uint256'],
-      [this.adminWallet.address, id, amount],
+      ['address', 'uint256[]', 'uint256'],
+      [this.adminWallet.address, ids, amount],
     );
     const signature = await this.adminWallet.signMessage(ethers.getBytes(hash));
     return signature;
@@ -1149,7 +1148,7 @@ export class CharacterService {
       });
 
       const serverSignature = await this.generateServerSignature(
-        character.character.id,
+        [character.character.id],
         character.character.upgradeReq,
       );
 
@@ -1161,11 +1160,7 @@ export class CharacterService {
               id: user.id,
             },
           },
-          character: {
-            connect: {
-              id: character.character.id,
-            },
-          },
+          characterIds: [character.character.id],
           status: TransactionStatus.INITIATED,
           userWallet: walletAddress,
           serverSignature,
