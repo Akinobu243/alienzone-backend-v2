@@ -27,7 +27,7 @@ export class CharacterController {
     @Body('rarity') rarity: CharacterRarity,
     @Body('power') power: number,
     @Body('image') image: string,
-    @Body('portal') portal: number,
+    @Body('tier') tier: number,
     @Body('upgradeAmountRequired') upgradeAmountRequired?: number,
     @Body('upgradesToId') upgradesToId?: number,
   ) {
@@ -43,13 +43,16 @@ export class CharacterController {
     if (upgradesToId !== undefined) {
       upgradesToId = parseInt(upgradesToId.toString());
     }
+    if (tier !== undefined) {
+      tier = parseInt(tier.toString());
+    }
     return this.characterService.createCharacter(
       name,
       elementId,
       rarity,
       power,
       image,
-      portal,
+      tier,
       upgradeAmountRequired,
       upgradesToId,
     );
@@ -105,11 +108,9 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Post('/summon-character')
-  async rewardCharacter(@Body('portal') portal: number, @Request() req) {
-    portal = parseInt(portal.toString());
+  async rewardCharacter(@Request() req) {
     return this.characterService.summonCharacter(
       req.walletAddress.toLowerCase(),
-      portal,
     );
   }
 
@@ -123,11 +124,9 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Post('/multi-summon-characters')
-  async multiSummonCharacters(@Body('portal') portal: number, @Request() req) {
-    portal = parseInt(portal.toString());
+  async multiSummonCharacters(@Request() req) {
     return this.characterService.multiSummonCharacters(
       req.walletAddress.toLowerCase(),
-      portal,
     );
   }
 
@@ -216,5 +215,11 @@ export class CharacterController {
       upgradeTransactionId,
       txHash,
     );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/tiers')
+  async getTiers(@Body('characterId') characterId: number) {
+    return this.characterService.getTiers(characterId);
   }
 }

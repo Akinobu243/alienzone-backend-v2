@@ -25,7 +25,7 @@ export class CharacterService {
     rarity: CharacterRarity,
     power: number,
     image: string,
-    portal: number,
+    tier: number,
     upgradeAmountRequired?: number,
     upgradesToId?: number,
   ) {
@@ -63,10 +63,10 @@ export class CharacterService {
           rarity,
           power,
           image,
-          portal,
           upgradeReq: upgradeAmountRequired,
           upgradesToId: upgradesToId,
           tokenId: currentTokenID,
+          tier: tier,
         },
       });
 
@@ -82,9 +82,9 @@ export class CharacterService {
     elementId?: number,
     power?: number,
     image?: string,
-    portal?: number,
     upgradeAmountRequired?: number,
     upgradesToId?: number,
+    tier?: number,
   ) {
     try {
       if (elementId) {
@@ -106,9 +106,9 @@ export class CharacterService {
           ...(elementId && { element: { connect: { id: elementId } } }),
           ...(power && { power }),
           ...(image && { image }),
-          ...(portal && { portal }),
           ...(upgradeAmountRequired && { upgradeReq: upgradeAmountRequired }),
           ...(upgradesToId && { upgradesToId }),
+          ...(tier && { tier }),
         },
       });
 
@@ -140,7 +140,7 @@ export class CharacterService {
     }
   }
 
-  public async summonCharacter(walletAddress: string, portal: number) {
+  public async summonCharacter(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
@@ -155,8 +155,8 @@ export class CharacterService {
       }
 
       const characters = await this.prisma.character.findMany({
-        where: {
-          portal,
+        include: {
+          element: true,
         },
       });
 
@@ -291,7 +291,7 @@ export class CharacterService {
     }
   }
 
-  public async multiSummonCharacters(walletAddress: string, portal: number) {
+  public async multiSummonCharacters(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
@@ -316,9 +316,6 @@ export class CharacterService {
       });
 
       const characters = await this.prisma.character.findMany({
-        where: {
-          portal,
-        },
         include: {
           element: true,
         },
@@ -1198,6 +1195,69 @@ export class CharacterService {
         success: true,
         serverSignature: serverSignature,
         transactionId: upgradeTx.id,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async getTiers(characterId: number) {
+    var allCharacters = [];
+    try {
+      const character = await this.prisma.character.findUnique({
+        where: {
+          id: characterId,
+        },
+      });
+
+      if (!character) {
+        throw new BadRequestException('Character not found');
+      }
+
+      allCharacters.push(character);
+
+      if (character.tier >= 2) {
+        const prevCharacter = await this.prisma.character.findMany({
+          where: {
+            upgradesToId: character.id,
+          },
+        });
+        allCharacters.push(prevCharacter[0]);
+
+        if (prevCharacter[0].tier === 2) {
+          const prevCharacter2 = await this.prisma.character.findMany({
+            where: {
+              upgradesToId: prevCharacter[0].id,
+            },
+          });
+          allCharacters.push(prevCharacter2[0]);
+        }
+      }
+
+      if (character.tier <= 2) {
+        const nextCharacter = await this.prisma.character.findUnique({
+          where: {
+            id: character.upgradesToId,
+          },
+        });
+        allCharacters.push(nextCharacter);
+
+        if (nextCharacter.tier === 2) {
+          const nextCharacter2 = await this.prisma.character.findUnique({
+            where: {
+              id: character.upgradesToId,
+            },
+          });
+          allCharacters.push(nextCharacter2);
+        }
+      }
+
+      return {
+        success: true,
+        characters: allCharacters,
       };
     } catch (error) {
       return {

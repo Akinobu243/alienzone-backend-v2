@@ -207,10 +207,10 @@ model Character {
   power      Int
   image      String?
   video      String?
-  portal     Int
   tokenId    Int
   upgradeReq Int?
   upgradesToId Int?
+  tier       Int
   PackReward PackReward[]
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
