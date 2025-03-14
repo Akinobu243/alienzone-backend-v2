@@ -6,6 +6,7 @@ import {
   Request,
   UseGuards,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
@@ -219,7 +220,8 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Get('/tiers')
-  async getTiers(@Body('characterId') characterId: number) {
+  async getTiers(@Query('characterId') characterId: number) {
+    characterId = parseInt(characterId.toString());
     return this.characterService.getTiers(characterId);
   }
 }

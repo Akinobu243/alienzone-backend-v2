@@ -7,6 +7,3 @@
 */
 -- AlterTable
 ALTER TABLE "Character" ADD COLUMN     "tier" INTEGER NOT NULL;
-
--- AlterTable
-ALTER TABLE "Raid" DROP COLUMN "icon";
