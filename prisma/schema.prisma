@@ -219,7 +219,6 @@ model Character {
   element    Element         @relation(fields: [elementId], references: [id])
   elementId  Int
   gearItem   GearItem[]
-  characterTransactions CharacterTransaction[]
 }
 
 model UserCharacter {
@@ -438,8 +437,7 @@ model CharacterTransaction {
   type            CharacterTransactionType
   user            User              @relation(fields: [userId], references: [id])
   userId          Int
-  character       Character         @relation(fields: [characterId], references: [id])
-  characterId     Int
+  characterIds    Int[]
   status          TransactionStatus @default(INITIATED)
   txHash          String?
   userWallet      String

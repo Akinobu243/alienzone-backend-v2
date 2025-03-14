@@ -160,13 +160,12 @@ export class CharacterController {
   @Post('/mint-character')
   async mintCharacter(
     @Request() req,
-    @Body('characterId') characterId: number,
+    @Body('characterIds') characterIds: number[],
     @Body('signature') signature: string,
   ) {
-    characterId = parseInt(characterId.toString());
     return this.characterService.mintCharacter(
       req.walletAddress.toLowerCase(),
-      characterId,
+      characterIds,
       signature,
     );
   }
@@ -176,16 +175,13 @@ export class CharacterController {
   async verifyMintTransaction(
     @Request() req,
     @Body('mintTransactionId') mintTransactionId: number,
-    @Body('characterId') characterId: number,
     @Body('serverSignature') serverSignature: string,
     @Body('txHash') txHash: string,
   ) {
     mintTransactionId = parseInt(mintTransactionId.toString());
-    characterId = parseInt(characterId.toString());
     return this.characterService.verifyMintTransaction(
       mintTransactionId,
       req.walletAddress.toLowerCase(),
-      characterId,
       serverSignature,
       txHash,
     );
