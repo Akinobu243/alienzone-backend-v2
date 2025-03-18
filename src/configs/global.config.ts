@@ -65,3 +65,5 @@ export const levelRequirements = [
   },
 ];
 
+export const singleCharacterSummonCost = 1;
+export const multiCharacterSummonCost = 5;
