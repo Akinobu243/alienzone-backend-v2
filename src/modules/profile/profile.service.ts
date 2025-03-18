@@ -234,7 +234,63 @@ export class ProfileService {
       });
     }
 
-    return users.map((user) => {
+    const currentUser = await this.prisma.user.findUnique({
+      where: { walletAddress },
+    });
+
+    let currentUserRank = null;
+
+    if (filter === 'enterprises') {
+      currentUserRank = await this.prisma.user.count({
+        where: {
+          enterprise: {
+            contains: search,
+            mode: 'insensitive',
+          },
+          reputation: {
+            gt: currentUser.reputation,
+          },
+        },
+      });
+    } else if (filter === 'likes') {
+      const likedUserIds = (
+        await this.prisma.user.findUnique({
+          where: { walletAddress },
+          select: {
+            likedUserIds: true,
+          },
+        })
+      ).likedUserIds;
+
+      currentUserRank = await this.prisma.user.count({
+        where: {
+          id: { in: likedUserIds },
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+          reputation: {
+            gt: currentUser.reputation,
+          },
+        },
+      });
+    } else {
+      currentUserRank = await this.prisma.user.count({
+        where: {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+          reputation: {
+            gt: currentUser.reputation,
+          },
+        },
+      });
+    }
+
+    currentUserRank += 1;
+    return {
+      users: users.map((user) => {
       return {
         name: user.name,
         country: user.country,
@@ -244,7 +300,18 @@ export class ProfileService {
         experience: user.experience,
         reputation: user.reputation,
       };
-    });
+      }),
+      thisUser: {
+        name: currentUser.name,
+        country: currentUser.country,
+        enterprise: currentUser.enterprise,
+        image: currentUser.image,
+        level: currentUser.level,
+        experience: currentUser.experience,
+        reputation: currentUser.reputation,
+        rank: currentUserRank,
+      },
+    };
   }
 
   public async likeUser(walletAddress: string, userId: number) {
