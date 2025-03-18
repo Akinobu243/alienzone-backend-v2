@@ -8,6 +8,10 @@ import {
 } from '@prisma/client';
 import { ethers } from 'ethers';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import {
+  multiCharacterSummonCost,
+  singleCharacterSummonCost,
+} from 'src/configs/global.config';
 
 @Injectable()
 export class CharacterService {
@@ -148,9 +152,9 @@ export class CharacterService {
         },
       });
 
-      if (user.stars < 100) {
+      if (user.stars < singleCharacterSummonCost) {
         throw new BadRequestException(
-          'Insufficient stars balance. Required: 100 stars',
+          `Insufficient stars balance. Required: ${singleCharacterSummonCost} stars`,
         );
       }
 
@@ -231,13 +235,15 @@ export class CharacterService {
         },
       });
 
+
+
       await this.prisma.user.update({
         where: {
           walletAddress,
         },
         data: {
           stars: {
-            decrement: 100,
+            decrement: singleCharacterSummonCost,
           },
         },
       });
@@ -302,9 +308,9 @@ export class CharacterService {
         throw new BadRequestException('User not found');
       }
 
-      if (user.stars < 1000) {
+      if (user.stars < multiCharacterSummonCost) {
         throw new BadRequestException(
-          'Insufficient stars balance. Required: 1000 stars',
+          `Insufficient stars balance. Required: ${multiCharacterSummonCost} stars`,
         );
       }
 
@@ -363,6 +369,7 @@ export class CharacterService {
           ];
 
         // Create a mintable character
+        console.log(randomCharacter.id, user.id);
         await this.prisma.unmintedCharacter.create({
           data: {
             character: {
@@ -400,7 +407,7 @@ export class CharacterService {
         },
         data: {
           stars: {
-            decrement: 1000,
+            decrement: multiCharacterSummonCost,
           },
         },
       });
@@ -461,7 +468,7 @@ export class CharacterService {
         characterIds.join(',').toString(),
         signature,
       );
-
+      console.log(signerAddress, walletAddress);
       if (signerAddress.toLowerCase() !== walletAddress.toLowerCase()) {
         throw new BadRequestException('Invalid signature');
       }

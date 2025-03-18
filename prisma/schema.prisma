@@ -82,7 +82,7 @@ model User {
   walletAddress         String           @unique
   name                  String
   country               String
-  twitterId             String
+  twitterId             String?
   enterprise            String
   referralCode          String           @unique
   referrerId            Int?
@@ -458,7 +458,7 @@ model CharacterTransaction {
   retries         Int               @default(0)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  
+
   @@index([userId])
   @@index([txHash])
 }

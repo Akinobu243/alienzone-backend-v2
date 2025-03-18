@@ -288,29 +288,53 @@ export class ProfileService {
       });
     }
 
+    const likedUserIds = (
+      await this.prisma.user.findUnique({
+        where: { walletAddress: currentUser.walletAddress },
+        select: {
+          likedUserIds: true,
+        },
+      })
+    ).likedUserIds;
+
     currentUserRank += 1;
     return {
-      users: users.map((user) => {
-      return {
-        name: user.name,
-        country: user.country,
-        enterprise: user.enterprise,
-        image: user.image,
-        level: user.level,
-        experience: user.experience,
-        reputation: user.reputation,
-      };
+      users: users.map((user, index) => {
+        return {
+          id: user.id,
+          name: user.name,
+          country: user.country,
+          enterprise: user.enterprise,
+          image: user.image,
+          level: user.level,
+          experience: user.experience,
+          reputation: user.reputation,
+          walletAddress: user.walletAddress,
+          rank: index + 1,
+          stars: user.stars,
+          createdAt: user.createdAt,
+          twitterId: user.twitterId,
+          isLiked: likedUserIds.includes(user.id),
+          // isLiked: true,
+        };
       }),
-      thisUser: {
-        name: currentUser.name,
-        country: currentUser.country,
-        enterprise: currentUser.enterprise,
-        image: currentUser.image,
-        level: currentUser.level,
-        experience: currentUser.experience,
-        reputation: currentUser.reputation,
-        rank: currentUserRank,
-      },
+      // only return if user is not in users array
+      thisUser: users.some(
+        (user) => user.walletAddress === currentUser.walletAddress,
+      )
+        ? undefined
+        : {
+            name: currentUser.name,
+            country: currentUser.country,
+            enterprise: currentUser.enterprise,
+            image: currentUser.image,
+            level: currentUser.level,
+            experience: currentUser.experience,
+            reputation: currentUser.reputation,
+            rank: currentUserRank,
+            stars: currentUser.stars,
+            createdAt: currentUser.createdAt,
+          },
     };
   }
 
@@ -360,6 +384,8 @@ export class ProfileService {
         },
       });
     }
+
+    return { liked: alreadyLiked ? false : true };
   }
 
   public async awardDailyRewards(walletAddress: string) {
@@ -846,6 +872,7 @@ export class ProfileService {
         element: alien.element,
         image: alien.image,
         type: 'alien',
+        isSelected: alien.selected,
       });
     }
 
