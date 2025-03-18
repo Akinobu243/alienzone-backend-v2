@@ -171,15 +171,126 @@ export class ProfileService {
     return items;
   }
 
-  public async getLeaderboard() {
-    const users = await this.prisma.user.findMany({
-      orderBy: {
-        reputation: 'desc',
-      },
-      take: 10,
+  public async getLeaderboard(
+    walletAddress: string,
+    offset: number,
+    limit: number,
+    filter: string,
+    search: string,
+  ) {
+    let users;
+
+    if (filter === 'enterprises') {
+      users = await this.prisma.user.findMany({
+        where: {
+          enterprise: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        orderBy: {
+          reputation: 'desc',
+        },
+        skip: offset,
+        take: limit,
+      });
+    } else if (filter === 'likes') {
+      const likedUserIds = (
+        await this.prisma.user.findUnique({
+          where: { walletAddress },
+          select: {
+            likedUserIds: true,
+          },
+        })
+      ).likedUserIds;
+
+      users = await this.prisma.user.findMany({
+        where: {
+          id: { in: likedUserIds },
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        orderBy: {
+          reputation: 'desc',
+        },
+        skip: offset,
+        take: limit,
+      });
+    } else {
+      users = await this.prisma.user.findMany({
+        where: {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        orderBy: {
+          reputation: 'desc',
+        },
+        skip: offset,
+        take: limit,
+      });
+    }
+
+    const currentUser = await this.prisma.user.findUnique({
+      where: { walletAddress },
     });
 
-    return users.map((user) => {
+    let currentUserRank = null;
+
+    if (filter === 'enterprises') {
+      currentUserRank = await this.prisma.user.count({
+        where: {
+          enterprise: {
+            contains: search,
+            mode: 'insensitive',
+          },
+          reputation: {
+            gt: currentUser.reputation,
+          },
+        },
+      });
+    } else if (filter === 'likes') {
+      const likedUserIds = (
+        await this.prisma.user.findUnique({
+          where: { walletAddress },
+          select: {
+            likedUserIds: true,
+          },
+        })
+      ).likedUserIds;
+
+      currentUserRank = await this.prisma.user.count({
+        where: {
+          id: { in: likedUserIds },
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+          reputation: {
+            gt: currentUser.reputation,
+          },
+        },
+      });
+    } else {
+      currentUserRank = await this.prisma.user.count({
+        where: {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+          reputation: {
+            gt: currentUser.reputation,
+          },
+        },
+      });
+    }
+
+    currentUserRank += 1;
+    return {
+      users: users.map((user) => {
       return {
         name: user.name,
         country: user.country,
@@ -189,7 +300,66 @@ export class ProfileService {
         experience: user.experience,
         reputation: user.reputation,
       };
+      }),
+      thisUser: {
+        name: currentUser.name,
+        country: currentUser.country,
+        enterprise: currentUser.enterprise,
+        image: currentUser.image,
+        level: currentUser.level,
+        experience: currentUser.experience,
+        reputation: currentUser.reputation,
+        rank: currentUserRank,
+      },
+    };
+  }
+
+  public async likeUser(walletAddress: string, userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
     });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const likedUser = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!likedUser) {
+      throw new BadRequestException('Liked user not found');
+    }
+
+    const alreadyLiked = user.likedUserIds.includes(userId);
+
+    if (alreadyLiked) {
+      await this.prisma.user.update({
+        where: {
+          walletAddress,
+        },
+        data: {
+          likedUserIds: {
+            set: user.likedUserIds.filter((id) => id !== userId),
+          },
+        },
+      });
+    } else {
+      await this.prisma.user.update({
+        where: {
+          walletAddress,
+        },
+        data: {
+          likedUserIds: {
+            push: userId,
+          },
+        },
+      });
+    }
   }
 
   public async awardDailyRewards(walletAddress: string) {

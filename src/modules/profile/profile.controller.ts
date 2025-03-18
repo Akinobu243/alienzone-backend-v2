@@ -64,8 +64,26 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-leaderboard')
-  async getLeaderboard() {
-    return this.profileService.getLeaderboard();
+  async getLeaderboard(
+    @Query('offset') offset: number,
+    @Query('limit') limit: number,
+    @Query('filter') filter: string,
+    @Query('search') search: string,
+    @Request() req,
+  ) {
+    return this.profileService.getLeaderboard(
+      req.walletAddress,
+      offset,
+      limit,
+      filter,
+      search,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/like-user')
+  async likeUser(@Request() req, @Body('userId') userId: number) {
+    return this.profileService.likeUser(req.walletAddress, userId);
   }
 
   @UseGuards(AuthGuard)
