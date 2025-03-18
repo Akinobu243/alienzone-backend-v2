@@ -21,7 +21,7 @@ export class AdminGuard implements CanActivate {
     }
 
     const decoded = jwt.decode(token) as jwt.JwtPayload;
-    return decoded && (decoded.role as string).toLowerCase() === ADMIN_ROLE;
+    return decoded && (decoded.role as string) === ADMIN_ROLE;
 
   }
 

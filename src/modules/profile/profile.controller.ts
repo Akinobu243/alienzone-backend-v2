@@ -71,6 +71,15 @@ export class ProfileController {
     @Query('search') search: string,
     @Request() req,
   ) {
+
+    if (offset === undefined) {
+      offset = 0;
+    }
+
+    if (limit === undefined) {
+      limit = 10;
+    }
+
     return this.profileService.getLeaderboard(
       req.walletAddress,
       offset,
@@ -151,7 +160,12 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-team')
+  @ApiQuery({ name: 'walletAddress', type: String, required: false })
   async getTeam(@Request() req) {
-    return this.profileService.getTeam(req.walletAddress);
+    let walletAddress = req.query.walletAddress;
+    if (walletAddress === undefined) {
+      walletAddress = req.query.walletAddress;
+    }
+    return this.profileService.getTeam(walletAddress);
   }
 }
