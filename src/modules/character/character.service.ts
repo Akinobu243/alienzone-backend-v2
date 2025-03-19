@@ -235,8 +235,6 @@ export class CharacterService {
         },
       });
 
-
-
       await this.prisma.user.update({
         where: {
           walletAddress,
@@ -357,11 +355,12 @@ export class CharacterService {
           (character) => character.rarity === rolledRarity,
         );
 
-        if (charactersByRarity.length === 0) {
-          throw new BadRequestException(
-            'No characters found for the rolled rarity',
-          );
-        }
+        // TODO: Uncomment this line
+        // if (charactersByRarity.length === 0) {
+        //   throw new BadRequestException(
+        //     'No characters found for the rolled rarity',
+        //   );
+        // }
 
         const randomCharacter =
           charactersByRarity[
@@ -369,7 +368,6 @@ export class CharacterService {
           ];
 
         // Create a mintable character
-        console.log(randomCharacter.id, user.id);
         await this.prisma.unmintedCharacter.create({
           data: {
             character: {

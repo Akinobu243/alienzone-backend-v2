@@ -1,8 +1,17 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Request,
+} from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { SetDailyRewardDto } from './dto/daily-rewards.dto';
 import { ItemQuality, ItemType } from '@prisma/client';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('items')
 export class ItemsController {
@@ -36,7 +45,7 @@ export class ItemsController {
   async deleteItem(@Body('id') id: number) {
     return this.itemsService.deleteItem(id);
   }
-  
+
   @UseGuards(AdminGuard)
   @Get('/get-all-items')
   async getAllItems(
@@ -48,10 +57,19 @@ export class ItemsController {
 
   @UseGuards(AdminGuard)
   @Post('/set-daily-rewards')
-  async setDailyRewards(
-    @Body('rewards') rewards: SetDailyRewardDto[],
-  ) {
+  async setDailyRewards(@Body('rewards') rewards: SetDailyRewardDto[]) {
     return this.itemsService.setDailyRewards(rewards);
   }
 
+  @UseGuards(AuthGuard)
+  @Get('/get-daily-rewards')
+  async getDailyRewards() {
+    return this.itemsService.getDailyRewards();
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/claim-daily-reward')
+  async claimDailyReward(@Request() req) {
+    return this.itemsService.claimDailyReward(req.walletAddress);
+  }
 }

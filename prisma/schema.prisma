@@ -21,6 +21,8 @@ enum DailyRewardType {
   ITEM
   STARS
   XP
+  PARTS
+  GEAR
 }
 
 enum RuneType {
@@ -113,7 +115,8 @@ model User {
   refereeRewards        ReferralReward[]       @relation("RefereeRewards")
   transactions          Transaction[]
   AlienParts            AlienPart[]
-  purchasedPacks        Pack[]                 @relation("PurchasedPacks")
+  AlienPartGroups       AlienPartGroup[]
+  purchasedPacks        Pack[]           @relation("PurchasedPacks")
   gearItems             UserGearItem[]
   UserElement           UserElement[]
   characterTransactions CharacterTransaction[]
@@ -291,12 +294,13 @@ enum GearItemRarity {
 }
 
 model GearItem {
-  id                  Int            @id @default(autoincrement())
-  rarity              GearItemRarity
-  image               String
-  users               UserGearItem[]
-  summonedCharacter   Character?     @relation(fields: [summonedCharacterId], references: [id])
-  summonedCharacterId Int?
+  id                    Int           @id @default(autoincrement())
+  rarity                GearItemRarity
+  image                 String
+  users                 UserGearItem[]
+  summonedCharacter     Character?    @relation(fields: [summonedCharacterId], references: [id])
+  summonedCharacterId   Int?
+  dailyRewards  DailyReward[]
 }
 
 model UserGearItem {
@@ -316,6 +320,11 @@ model DailyReward {
   itemId    Int?
   amount    Int?
   item      Item?           @relation(fields: [itemId], references: [id])
+  alienPartId Int?
+  alienPart AlienPart?     @relation(fields: [alienPartId], references: [id])
+  gearItemId Int?
+  gearItem GearItem?       @relation(fields: [gearItemId], references: [id])
+  rewardDate DateTime
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   User      User[]
@@ -363,6 +372,7 @@ model AlienPart {
   updatedAt      DateTime         @updatedAt
   transactions   Transaction[]
   AlienPartGroup AlienPartGroup[]
+  dailyRewards   DailyReward[]
 }
 
 model AlienPartGroup {
@@ -371,6 +381,8 @@ model AlienPartGroup {
   description String?
   parts       AlienPart[]
   element     Element?    @relation(fields: [elementId], references: [id])
+  userId      Int?
+  user        User?       @relation(fields: [userId], references: [id])
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   elementId   Int?
