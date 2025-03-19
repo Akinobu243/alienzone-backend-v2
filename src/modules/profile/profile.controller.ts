@@ -71,7 +71,6 @@ export class ProfileController {
     @Query('search') search: string,
     @Request() req,
   ) {
-
     if (offset === undefined) {
       offset = 0;
     }
@@ -93,6 +92,12 @@ export class ProfileController {
   @Post('/like-user')
   async likeUser(@Request() req, @Body('userId') userId: number) {
     return this.profileService.likeUser(req.walletAddress, userId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/get-daily-rewards')
+  async getDailyRewards(@Request() req) {
+    return this.profileService.getDailyRewards(req.walletAddress);
   }
 
   @UseGuards(AuthGuard)
@@ -162,10 +167,7 @@ export class ProfileController {
   @Get('/get-team')
   @ApiQuery({ name: 'walletAddress', type: String, required: false })
   async getTeam(@Request() req) {
-    let walletAddress = req.query.walletAddress;
-    if (walletAddress === undefined) {
-      walletAddress = req.query.walletAddress;
-    }
+    let walletAddress = req.query.walletAddress ?? req.walletAddress;
     return this.profileService.getTeam(walletAddress);
   }
 }

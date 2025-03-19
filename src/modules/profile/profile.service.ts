@@ -388,6 +388,68 @@ export class ProfileService {
     return { liked: alreadyLiked ? false : true };
   }
 
+  public async getDailyRewards(walletAddress: string) {
+    const dailyRewards = await this.prisma.dailyReward.findMany({
+      orderBy: {
+        id: 'asc',
+      },
+    });
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+      include: {
+        lastDailyReward: true,
+      },
+    });
+
+    const hours24 = 24 * 60 * 60 * 1000;
+    const hours48 = 48 * 60 * 60 * 1000;
+    const currentTime = new Date().getTime();
+    const lastClaimedTime = user.lastDailyClaimed.getTime();
+    const timeSinceLastClaim = currentTime - lastClaimedTime;
+    const rewards = [];
+    let nextRewardMarked = false;
+    const lastClaimedReward = user.lastDailyReward;
+    const lastClaimedRewardIndex = dailyRewards.findIndex(
+      (reward) => reward.id === lastClaimedReward?.id,
+    );
+
+    dailyRewards.forEach((reward, index) => {
+      const isClaimed = user.dailyStreak >= index + 1;
+
+
+      // Three scenarios for availability:
+      // 1. Last claimed reward available if within 24h
+      // 2. Next unclaimed reward available if last claim was more than 24h ago
+      // 3. First reward available if no rewards claimed (dailyStreak = 0)
+      const isAvailable =
+        (isClaimed &&
+          index === lastClaimedRewardIndex &&
+          timeSinceLastClaim < hours24) || // Last claimed reward within 24h
+        (!isClaimed &&
+          !nextRewardMarked &&
+          index === lastClaimedRewardIndex + 1 &&
+          timeSinceLastClaim >= hours24) || // Next unclaimed reward after 24h
+        (!isClaimed &&
+          !nextRewardMarked &&
+          index === 0 &&
+          user.dailyStreak === 0); // First reward for new users
+
+      if (isAvailable) {
+        nextRewardMarked = true;
+      }
+
+      rewards.push({
+        ...reward,
+        claimed: isClaimed,
+        current: isAvailable,
+      });
+    });
+
+    return rewards;
+  }
+
   public async awardDailyRewards(walletAddress: string) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -420,6 +482,7 @@ export class ProfileService {
         data: {
           dailyStreak: user.dailyStreak + 1,
           lastDailyClaimed: new Date(),
+          lastDailyRewardId: reward.id,
         },
       });
     } else {
@@ -431,6 +494,7 @@ export class ProfileService {
         data: {
           dailyStreak: 1,
           lastDailyClaimed: new Date(),
+          lastDailyRewardId: reward.id,
         },
       });
     }
@@ -710,7 +774,6 @@ export class ProfileService {
     if (!user) {
       throw new BadRequestException('User not found');
     }
-    console.log(alienIds.length, characterIds.length);
     if (alienIds.length < 1 || characterIds.length + alienIds.length > 5) {
       throw new BadRequestException(
         'Invalid team configuration. Team must contain at least 1 alien and no more than 5 characters and aliens combined.',
@@ -728,7 +791,6 @@ export class ProfileService {
         userId: user.id,
       },
     });
-    console.log(characters);
     for (const characterId of characterIds) {
       if (
         !characters.some((character) => character.characterId === characterId)

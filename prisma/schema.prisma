@@ -76,16 +76,16 @@ enum ItemQuality {
 }
 
 model User {
-  id                    Int              @id @default(autoincrement())
-  walletAddress         String           @unique
+  id                    Int                    @id @default(autoincrement())
+  walletAddress         String                 @unique
   name                  String
   country               String
   twitterId             String?
   enterprise            String
-  referralCode          String           @unique
+  referralCode          String                 @unique
   referrerId            Int?
   image                 String
-  level                 Int              @default(1)
+  level                 Int                    @default(1)
   experience            Int
   reputation            Int
   stars                 Int
@@ -95,26 +95,28 @@ model User {
   unmintedCharacters    UnmintedCharacter[]
   items                 UserItem[]
   runes                 RuneType[]
-  starsBoost            Int              @default(0)
-  raidTimeBoost         Int              @default(0)
-  xpBoost               Int              @default(0)
+  starsBoost            Int                    @default(0)
+  raidTimeBoost         Int                    @default(0)
+  xpBoost               Int                    @default(0)
   lastStarBoost         DateTime?
   lastRaidBoost         DateTime?
   lastXpBoost           DateTime?
-  role                  Role             @default(USER)
-  dailyStreak           Int              @default(0)
-  lastDailyClaimed      DateTime         @default(now())
-  likedUserIds          Int[]            @default([])
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
-  referrerRewards       ReferralReward[] @relation("ReferrerRewards")
-  refereeRewards        ReferralReward[] @relation("RefereeRewards")
+  role                  Role                   @default(USER)
+  dailyStreak           Int                    @default(0)
+  lastDailyClaimed      DateTime               @default(now())
+  lastDailyReward       DailyReward?           @relation(fields: [lastDailyRewardId], references: [id])
+  lastDailyRewardId     Int?
+  likedUserIds          Int[]                  @default([])
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  referrerRewards       ReferralReward[]       @relation("ReferrerRewards")
+  refereeRewards        ReferralReward[]       @relation("RefereeRewards")
   transactions          Transaction[]
   AlienParts            AlienPart[]
-  purchasedPacks        Pack[]           @relation("PurchasedPacks")
+  purchasedPacks        Pack[]                 @relation("PurchasedPacks")
   gearItems             UserGearItem[]
   UserElement           UserElement[]
-  characterTransactions      CharacterTransaction[]
+  characterTransactions CharacterTransaction[]
 }
 
 model Raid {
@@ -202,52 +204,52 @@ enum CharacterRarity {
 }
 
 model Character {
-  id         Int             @id @default(autoincrement())
-  name       String
-  rarity     CharacterRarity @default(R)
-  power      Int
-  image      String?
-  video      String?
-  tokenId    Int
-  upgradeReq Int?
-  upgradesToId Int?
-  tier       Int
-  PackReward PackReward[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  users      UserCharacter[]
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  rarity             CharacterRarity     @default(R)
+  power              Int
+  image              String?
+  video              String?
+  tokenId            Int
+  upgradeReq         Int?
+  upgradesToId       Int?
+  tier               Int
+  PackReward         PackReward[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  users              UserCharacter[]
   unmintedCharacters UnmintedCharacter[]
-  element    Element         @relation(fields: [elementId], references: [id])
-  elementId  Int
-  gearItem   GearItem[]
+  element            Element             @relation(fields: [elementId], references: [id])
+  elementId          Int
+  gearItem           GearItem[]
 }
 
 model UserCharacter {
-  id          Int           @id @default(autoincrement())
-  userId      Int
-  characterId Int
-  quantity    Int           @default(1)
-  inRaid      Boolean       @default(false)
-  onTeam      Boolean       @default(false)
-  readyToUpgrade Boolean    @default(false)
-  user        User          @relation(fields: [userId], references: [id])
-  character   Character     @relation(fields: [characterId], references: [id])
-  raidHistory RaidHistory[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  characterId    Int
+  quantity       Int           @default(1)
+  inRaid         Boolean       @default(false)
+  onTeam         Boolean       @default(false)
+  readyToUpgrade Boolean       @default(false)
+  user           User          @relation(fields: [userId], references: [id])
+  character      Character     @relation(fields: [characterId], references: [id])
+  raidHistory    RaidHistory[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@unique([userId, characterId])
   @@index([userId, characterId])
 }
 
 model UnmintedCharacter {
-  id          Int           @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   userId      Int
   characterId Int
-  user        User          @relation(fields: [userId], references: [id])
-  character   Character     @relation(fields: [characterId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+  character   Character @relation(fields: [characterId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([userId, characterId])
   @@index([userId, characterId])
@@ -289,21 +291,21 @@ enum GearItemRarity {
 }
 
 model GearItem {
-  id                    Int           @id @default(autoincrement())
-  rarity                GearItemRarity
-  image                 String
-  users                 UserGearItem[]
-  summonedCharacter     Character?    @relation(fields: [summonedCharacterId], references: [id])
-  summonedCharacterId   Int?
+  id                  Int            @id @default(autoincrement())
+  rarity              GearItemRarity
+  image               String
+  users               UserGearItem[]
+  summonedCharacter   Character?     @relation(fields: [summonedCharacterId], references: [id])
+  summonedCharacterId Int?
 }
 
 model UserGearItem {
-  id            Int  @id @default(autoincrement())
-  userId        Int
-  gearItemId    Int
-  quantity      Int
-  user          User @relation(fields: [userId], references: [id])
-  gearItem      GearItem @relation(fields: [gearItemId], references: [id])
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  gearItemId Int
+  quantity   Int
+  user       User     @relation(fields: [userId], references: [id])
+  gearItem   GearItem @relation(fields: [gearItemId], references: [id])
 
   @@index([userId, gearItemId])
 }
@@ -316,6 +318,7 @@ model DailyReward {
   item      Item?           @relation(fields: [itemId], references: [id])
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+  User      User[]
 }
 
 model ReferralReward {
@@ -434,18 +437,18 @@ model Transaction {
 }
 
 model CharacterTransaction {
-  id              Int               @id @default(autoincrement())
+  id              Int                      @id @default(autoincrement())
   type            CharacterTransactionType
-  user            User              @relation(fields: [userId], references: [id])
+  user            User                     @relation(fields: [userId], references: [id])
   userId          Int
   characterIds    Int[]
-  status          TransactionStatus @default(INITIATED)
+  status          TransactionStatus        @default(INITIATED)
   txHash          String?
   userWallet      String
   serverSignature String
-  retries         Int               @default(0)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  retries         Int                      @default(0)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
 
   @@index([userId])
   @@index([txHash])
