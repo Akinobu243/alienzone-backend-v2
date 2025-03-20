@@ -476,258 +476,17 @@ export class CharacterService {
         1,
       );
 
-      const mintTransaction = await this.prisma.characterTransaction.create({
-        data: {
-          type: CharacterTransactionType.MINT,
-          user: {
-            connect: {
-              id: user.id,
-            },
-          },
-          characterIds: characterIds,
-          status: TransactionStatus.INITIATED,
-          userWallet: walletAddress,
-          serverSignature,
-        },
-      });
-
       return {
         success: true,
         characterIds,
         serverSignature,
-        transactionId: mintTransaction.id,
       };
     } catch (error) {
       throw error;
     }
   }
 
-  public async verifyMintTransaction(
-    mintTransactionId: number,
-    walletAddress: string,
-    serverSignature: string,
-    txHash: string,
-  ) {
-    try {
-      const tx = await this.prisma.characterTransaction.findFirst({
-        where: {
-          id: mintTransactionId,
-          type: CharacterTransactionType.MINT,
-          userWallet: walletAddress,
-          serverSignature,
-          status: TransactionStatus.INITIATED,
-        },
-      });
-
-      if (!tx) {
-        throw new BadRequestException('Transaction not found');
-      }
-
-      await this.prisma.characterTransaction.update({
-        where: {
-          id: mintTransactionId,
-        },
-        data: {
-          status: TransactionStatus.PENDING,
-          txHash,
-        },
-      });
-
-      return {
-        success: true,
-        transactionId: mintTransactionId,
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  private async handleTransactions() {
-    console.log('Checking character transactions...');
-    const tx = await this.prisma.characterTransaction.findFirst({
-      where: {
-        status: TransactionStatus.PENDING,
-      },
-      orderBy: {
-        retries: 'asc',
-      },
-    });
-    try {
-      if (!tx) {
-        return;
-      }
-
-      const receipt = await this.provider.getTransactionReceipt(tx.txHash);
-
-      if (!receipt) {
-        throw new BadRequestException('Transaction not found');
-      }
-
-      if (receipt.status !== 1) {
-        throw new BadRequestException('Transaction failed');
-      }
-
-      if (tx.type === CharacterTransactionType.MINT) {
-        const characters = await this.prisma.character.findMany({
-          where: {
-            id: { in: tx.characterIds },
-          },
-        });
-
-        for (const character of characters) {
-          const existingUserCharacter =
-            await this.prisma.userCharacter.findFirst({
-              where: {
-                userId: tx.userId,
-                characterId: character.id,
-              },
-            });
-
-          if (existingUserCharacter) {
-            await this.prisma.userCharacter.update({
-              where: {
-                id: existingUserCharacter.id,
-              },
-              data: {
-                quantity: {
-                  increment: 1,
-                },
-              },
-            });
-          } else {
-            await this.prisma.userCharacter.create({
-              data: {
-                user: {
-                  connect: {
-                    id: tx.userId,
-                  },
-                },
-                character: {
-                  connect: {
-                    id: character.id,
-                  },
-                },
-                quantity: 1,
-              },
-            });
-          }
-
-          await this.prisma.unmintedCharacter.delete({
-            where: {
-              userId_characterId: {
-                userId: tx.userId,
-                characterId: character.id,
-              },
-            },
-          });
-        }
-        console.log(
-          `Mint transaction ${tx.txHash} successful. Awarded characters [${tx.characterIds}] to user ${tx.userWallet}`,
-        );
-      } else if (tx.type === CharacterTransactionType.BURN) {
-        const userCharacter = await this.prisma.userCharacter.findFirst({
-          where: {
-            userId: tx.userId,
-            characterId: tx.characterIds[0],
-          },
-          include: {
-            character: true,
-          },
-        });
-
-        if (!userCharacter) {
-          throw new BadRequestException('User does not have this character');
-        }
-
-        await this.prisma.userCharacter.update({
-          where: {
-            id: userCharacter.id,
-          },
-          data: {
-            quantity: {
-              decrement: userCharacter.character.upgradeReq,
-            },
-          },
-        });
-
-        const newUserCharacter = await this.prisma.userCharacter.upsert({
-          where: {
-            userId_characterId: {
-              userId: tx.userId,
-              characterId: userCharacter.character.upgradesToId,
-            },
-          },
-          update: {
-            user: {
-              connect: {
-                id: tx.userId,
-              },
-            },
-            character: {
-              connect: {
-                id: userCharacter.character.upgradesToId,
-              },
-            },
-            quantity: {
-              increment: 1,
-            },
-          },
-          create: {
-            user: {
-              connect: {
-                id: tx.userId,
-              },
-            },
-            character: {
-              connect: {
-                id: userCharacter.character.upgradesToId,
-              },
-            },
-            quantity: 1,
-          },
-          include: {
-            character: true,
-          },
-        });
-
-        console.log(
-          `Burn transaction ${tx.txHash} successful. Burned ${userCharacter.character.upgradeReq} ${userCharacter.character.name} from user ${tx.userWallet} for ${newUserCharacter.character.name}`,
-        );
-      }
-
-      await this.prisma.characterTransaction.update({
-        where: {
-          id: tx.id,
-        },
-        data: {
-          status: TransactionStatus.COMPLETED,
-        },
-      });
-    } catch (error) {
-      await this.prisma.characterTransaction.update({
-        where: {
-          id: tx.id,
-        },
-        data: {
-          retries: {
-            increment: 1,
-          },
-        },
-      });
-      if (tx.retries >= 3) {
-        await this.prisma.characterTransaction.update({
-          where: {
-            id: tx.id,
-          },
-          data: {
-            status: TransactionStatus.FAILED,
-          },
-        });
-      }
-    }
-  }
-
+  // TODO: fix image
   public async summonGear(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -1077,34 +836,6 @@ export class CharacterService {
     return signature;
   }
 
-  public async verifyUpgradeTransaction(
-    upgradeTransactionId: number,
-    txHash: string,
-  ) {
-    try {
-      const tx = await this.prisma.characterTransaction.update({
-        where: {
-          id: upgradeTransactionId,
-        },
-        data: {
-          status: TransactionStatus.PENDING,
-          txHash,
-        },
-      });
-
-      if (!tx) {
-        throw new BadRequestException('Transaction not found');
-      }
-
-      return {
-        success: true,
-        transactionId: upgradeTransactionId,
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
   public async upgradeCharacter(walletAddress: string, characterId: number) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -1161,25 +892,9 @@ export class CharacterService {
         character.character.upgradeReq,
       );
 
-      const upgradeTx = await this.prisma.characterTransaction.create({
-        data: {
-          type: CharacterTransactionType.BURN,
-          user: {
-            connect: {
-              id: user.id,
-            },
-          },
-          characterIds: [character.character.id],
-          status: TransactionStatus.INITIATED,
-          userWallet: walletAddress,
-          serverSignature,
-        },
-      });
-
       return {
         success: true,
         serverSignature: serverSignature,
-        transactionId: upgradeTx.id,
       };
     } catch (error) {
       throw error;

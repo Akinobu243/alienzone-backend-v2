@@ -171,23 +171,6 @@ export class CharacterController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/verify-mint-transaction')
-  async verifyMintTransaction(
-    @Request() req,
-    @Body('mintTransactionId') mintTransactionId: number,
-    @Body('serverSignature') serverSignature: string,
-    @Body('txHash') txHash: string,
-  ) {
-    mintTransactionId = parseInt(mintTransactionId.toString());
-    return this.characterService.verifyMintTransaction(
-      mintTransactionId,
-      req.walletAddress.toLowerCase(),
-      serverSignature,
-      txHash,
-    );
-  }
-
-  @UseGuards(AuthGuard)
   @Post('/upgrade-character')
   async upgradeCharacter(
     @Request() req,
@@ -197,20 +180,6 @@ export class CharacterController {
     return this.characterService.upgradeCharacter(
       req.walletAddress.toLowerCase(),
       characterId,
-    );
-  }
-
-  @UseGuards(AuthGuard)
-  @Post('/verify-upgrade-transaction')
-  async verifyUpgradeTransaction(
-    @Request() req,
-    @Body('upgradeTransactionId') upgradeTransactionId: number,
-    @Body('txHash') txHash: string,
-  ) {
-    upgradeTransactionId = parseInt(upgradeTransactionId.toString());
-    return this.characterService.verifyUpgradeTransaction(
-      upgradeTransactionId,
-      txHash,
     );
   }
 
