@@ -61,15 +61,9 @@ export class ItemsController {
     return this.itemsService.setDailyRewards(rewards);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   @Get('/get-daily-rewards')
   async getDailyRewards() {
     return this.itemsService.getDailyRewards();
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('/claim-daily-reward')
-  async claimDailyReward(@Request() req) {
-    return this.itemsService.claimDailyReward(req.walletAddress);
   }
 }

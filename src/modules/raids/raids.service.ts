@@ -74,79 +74,102 @@ export class RaidsService {
     });
   }
 
-  public async launchRaid(
-    raidId: number,
-    alienIds: number[],
-    characterIds: number[],
-    userWalletAddress: string,
-  ) {
-    const raid = await this.prisma.raid.findUnique({
-      where: { id: raidId },
-    });
-    if (!raid) {
-      throw new BadRequestException('Raid not found');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { walletAddress: userWalletAddress },
-    });
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
-    const aliens = await this.prisma.alien.findMany({
-      where: {
-        id: { in: alienIds },
-        userId: user.id,
-      },
-    });
-    if (aliens.length !== alienIds.length) {
-      throw new BadRequestException('Aliens not found');
-    }
-
-    for (const alien of aliens) {
-      if (alien.inRaid) {
-        throw new BadRequestException('An alien is already in raid');
+  public async launchRaid(raidId: number, userWalletAddress: string) {
+    try {
+      const raid = await this.prisma.raid.findUnique({
+        where: { id: raidId },
+      });
+      if (!raid) {
+        throw new BadRequestException('Raid not found');
       }
-    }
 
-    const characters = await this.prisma.userCharacter.findMany({
-      where: {
-        userId: user.id,
-        characterId: { in: characterIds },
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress: userWalletAddress },
+      });
+      if (!user) {
+        throw new BadRequestException('User not found');
       }
-    });
-    if (characters.length !== characterIds.length) {
-      throw new BadRequestException('Characters not found');
-    }
 
-    for (const character of characters) {
-      if (character.inRaid) {
-        throw new BadRequestException('A character is already in raid');
+      const aliens = await this.prisma.alien.findMany({
+        where: {
+          userId: user.id,
+          onTeam: true,
+        },
+      });
+      if (aliens.length === 0) {
+        throw new BadRequestException('No Aliens found in team');
       }
-    }
 
-    if (aliens.length + characters.length > 5) {
-      throw new BadRequestException('Too many aliens and characters selected. Maximum is 5');
-    }
+      for (const alien of aliens) {
+        if (alien.inRaid) {
+          throw new BadRequestException('An alien is already in raid');
+        }
+      }
 
-    const data: Prisma.RaidHistoryCreateInput = {
-      inProgress: true,
-      raid: {
-        connect: { id: raidId },
-      },
-      user: {
-        connect: { id: user.id },
-      },
-      aliens: {
-        connect: alienIds.map((id) => ({ id })),
-      },
-      characters: {
-        connect: characterIds.map((id) => ({ id })),
-      },
-    };
-    const raidHistory = await this.prisma.raidHistory.create({ data });
-    return raidHistory;
+      const characters = await this.prisma.userCharacter.findMany({
+        where: {
+          userId: user.id,
+          onTeam: true,
+        },
+      });
+      if (characters.length === 0) {
+        throw new BadRequestException('No Characters found in team');
+      }
+
+      for (const character of characters) {
+        if (character.inRaid) {
+          throw new BadRequestException('A character is already in raid');
+        }
+      }
+
+      if (aliens.length + characters.length > 5) {
+        throw new BadRequestException(
+          'Too many aliens and characters selected. Maximum is 5',
+        );
+      }
+
+      const alienIds = aliens.map((alien) => alien.id);
+      const characterIds = characters.map((character) => character.characterId);
+
+      const raidDuration = await this.calculateRaidDuration(
+        raidId,
+        aliens,
+        characters,
+        user,
+      );
+      if (!raidDuration) {
+        throw new BadRequestException('Error calculating raid duration');
+      }
+
+      const data: Prisma.RaidHistoryCreateInput = {
+        inProgress: true,
+        raid: {
+          connect: { id: raidId },
+        },
+        user: {
+          connect: { id: user.id },
+        },
+        aliens: {
+          connect: alienIds.map((id) => ({ id })),
+        },
+        characters: {
+          connect: characterIds.map((id) => ({ id })),
+        },
+        raidFinishTime: new Date(raidDuration * 1000 + Date.now()),
+      };
+
+      const raidHistory = await this.prisma.raidHistory.create({ data });
+
+      return {
+        success: true,
+        raidHistory,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
   }
 
   public async getRaidHistory(userWalletAddress: string) {
@@ -177,7 +200,7 @@ export class RaidsService {
         aliens: {
           include: {
             element: true,
-          }
+          },
         },
         characters: {
           include: {
@@ -186,7 +209,7 @@ export class RaidsService {
                 element: true,
               },
             },
-          }
+          },
         },
         raid: {
           include: {
@@ -205,37 +228,18 @@ export class RaidsService {
       const raidRewards = raid.raid.rewards;
       const raidUserId = raid.userId;
       const raidElementId = raid.raid.elementId;
-      const raidDuration = raid.raid.duration;
+      const raidDuration = await this.calculateRaidDuration(
+        raid.id,
+        raidAliens,
+        raidCharacters,
+        raid.user,
+      );
 
-      // Calculate new raid duration after all effects
-      let newRaidDuration = raidDuration;
-      for (const alien of raidAliens) {
-        const alienElement = alien.element;
-
-        if (alienElement.weaknessId === raidElementId) {
-          newRaidDuration += raidDuration * 0.02;
-        } else if (alienElement.strengthId === raidElementId) {
-          newRaidDuration -= raidDuration * 0.02;
-        }
-      }
-      for (const character of raidCharacters) {
-        const characterElement = character.character.element;
-
-        if (characterElement.weaknessId === raidElementId) {
-          newRaidDuration += raidDuration * 0.02;
-        } else if (characterElement.strengthId === raidElementId) {
-          newRaidDuration -= raidDuration * 0.02;
-        }
+      if (!raidDuration) {
+        throw new BadRequestException('Error calculating raid duration');
       }
 
-      if (
-        raid.user.lastRaidBoost &&
-        raid.user.lastRaidBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
-      ) {
-        newRaidDuration -= raidDuration * raid.user.raidTimeBoost;
-      }
-
-      if (raid.createdAt.getTime() + newRaidDuration * 1000 < Date.now()) {
+      if (raid.raidFinishTime.getTime() < Date.now()) {
         console.log('Raid completed:', raid.id);
         await this.prisma.raidHistory.update({
           where: { id: raid.id },
@@ -259,7 +263,8 @@ export class RaidsService {
             rewardType = 'stars';
             if (
               raid.user.lastStarBoost &&
-              raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
+              raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 >
+                Date.now()
             ) {
               rewardAmount += reward.amount * raid.user.starsBoost;
             }
@@ -289,9 +294,13 @@ export class RaidsService {
         }
 
         // Reward Reputation points
-        const teamStrength = raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
-          raidCharacters.reduce((acc, character) => acc + character.character.power, 0);
-        const raidDurationInMinutes = Math.floor(newRaidDuration / 60);
+        const teamStrength =
+          raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
+          raidCharacters.reduce(
+            (acc, character) => acc + character.character.power,
+            0,
+          );
+        const raidDurationInMinutes = Math.floor(raidDuration / 60);
         const reputationPoints = raidDurationInMinutes * teamStrength;
         console.log('Reputation points rewarded:', reputationPoints);
 
@@ -303,10 +312,9 @@ export class RaidsService {
           where: { id: raidUserId },
           data: {
             reputation: { increment: reputationPoints },
-            ... (runeWon && { runes: { push: runeWon } }),
+            ...(runeWon && { runes: { push: runeWon } }),
           },
         });
-
       }
     }
   }
@@ -335,4 +343,55 @@ export class RaidsService {
     return null;
   }
 
+  private async calculateRaidDuration(
+    raidId: number,
+    raidAliens: any[],
+    raidCharacters: any[],
+    user: User,
+  ) {
+    try {
+      const raid = await this.prisma.raid.findUnique({
+        where: { id: raidId },
+      });
+      if (!raid) {
+        throw new BadRequestException('Raid not found');
+      }
+
+      const raidElementId = raid.elementId;
+      const raidDuration = raid.duration;
+
+      // Calculate new raid duration after all effects
+      let newRaidDuration = raidDuration;
+      for (const alien of raidAliens) {
+        const alienElement = alien.element;
+
+        if (alienElement.weaknessId === raidElementId) {
+          newRaidDuration += raidDuration * 0.02;
+        } else if (alienElement.strengthId === raidElementId) {
+          newRaidDuration -= raidDuration * 0.02;
+        }
+      }
+      for (const character of raidCharacters) {
+        const characterElement = character.character.element;
+
+        if (characterElement.weaknessId === raidElementId) {
+          newRaidDuration += raidDuration * 0.02;
+        } else if (characterElement.strengthId === raidElementId) {
+          newRaidDuration -= raidDuration * 0.02;
+        }
+      }
+
+      if (
+        user.lastRaidBoost &&
+        user.lastRaidBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
+      ) {
+        newRaidDuration -= raidDuration * user.raidTimeBoost;
+      }
+
+      return newRaidDuration;
+    } catch (error) {
+      console.log('Error calculating raid duration:', error);
+      return null;
+    }
+  }
 }

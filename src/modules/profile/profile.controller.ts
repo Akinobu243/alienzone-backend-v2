@@ -101,9 +101,9 @@ export class ProfileController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/award-daily-rewards')
-  async awardDailyRewards(@Request() req) {
-    return this.profileService.awardDailyRewards(req.walletAddress);
+  @Get('/claim-daily-reward')
+  async claimDailyReward(@Request() req) {
+    return this.profileService.claimDailyReward(req.walletAddress);
   }
 
   @Post('/update-star-balance-from-v1')

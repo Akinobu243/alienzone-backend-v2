@@ -146,16 +146,17 @@ model RaidReward {
 }
 
 model RaidHistory {
-  id         Int             @id @default(autoincrement())
-  raid       Raid            @relation(fields: [raidId], references: [id])
-  raidId     Int
-  user       User            @relation(fields: [userId], references: [id])
-  userId     Int
-  aliens     Alien[]
-  characters UserCharacter[]
-  inProgress Boolean         @default(true)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id                Int             @id @default(autoincrement())
+  raid              Raid            @relation(fields: [raidId], references: [id])
+  raidId            Int
+  user              User            @relation(fields: [userId], references: [id])
+  userId            Int
+  aliens            Alien[]
+  characters        UserCharacter[]
+  inProgress        Boolean         @default(true)
+  raidFinishTime    DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([raidId, userId])
 }

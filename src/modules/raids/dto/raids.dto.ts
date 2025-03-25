@@ -70,10 +70,4 @@ export class LaunchRaidDTO {
   @ApiProperty()
   @IsNumber()
   raidId: number;
-
-  @ApiProperty()
-  alienIds: number[];
-
-  @ApiProperty()
-  characterIds: number[];
 }

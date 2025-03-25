@@ -59,8 +59,6 @@ export class RaidsController {
   async launchRaid(@Body() launchRaidDTO: LaunchRaidDTO, @Request() req) {
     return this.raidsService.launchRaid(
       launchRaidDTO.raidId,
-      launchRaidDTO.alienIds,
-      launchRaidDTO.characterIds,
       req.walletAddress,
     );
   }

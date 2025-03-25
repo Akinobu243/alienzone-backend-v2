@@ -252,7 +252,10 @@ export class CharacterService {
         isNew: !existingUserCharacter,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
@@ -290,7 +293,10 @@ export class CharacterService {
 
       return { success: true, userCharacters };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
@@ -415,7 +421,10 @@ export class CharacterService {
         summonResults,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
@@ -482,11 +491,13 @@ export class CharacterService {
         serverSignature,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
-  // TODO: fix image
   public async summonGear(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -598,7 +609,10 @@ export class CharacterService {
         gear: rewardedGear,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
@@ -719,7 +733,10 @@ export class CharacterService {
         gears: rewardedGears,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
@@ -820,7 +837,10 @@ export class CharacterService {
         character,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 
@@ -897,7 +917,10 @@ export class CharacterService {
         serverSignature: serverSignature,
       };
     } catch (error) {
-      throw error;
+      return {
+        success: false,
+        error,
+      };
     }
   }
 

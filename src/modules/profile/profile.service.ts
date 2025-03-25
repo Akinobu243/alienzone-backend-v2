@@ -389,72 +389,8 @@ export class ProfileService {
   }
 
   public async getDailyRewards(walletAddress: string) {
-    const dailyRewards = await this.prisma.dailyReward.findMany({
-      orderBy: {
-        id: 'asc',
-      },
-    });
     const user = await this.prisma.user.findUnique({
-      where: {
-        walletAddress,
-      },
-      include: {
-        lastDailyReward: true,
-      },
-    });
-
-    const hours24 = 24 * 60 * 60 * 1000;
-    const hours48 = 48 * 60 * 60 * 1000;
-    const currentTime = new Date().getTime();
-    const lastClaimedTime = user.lastDailyClaimed.getTime();
-    const timeSinceLastClaim = currentTime - lastClaimedTime;
-    const rewards = [];
-    let nextRewardMarked = false;
-    const lastClaimedReward = user.lastDailyReward;
-    const lastClaimedRewardIndex = dailyRewards.findIndex(
-      (reward) => reward.id === lastClaimedReward?.id,
-    );
-
-    dailyRewards.forEach((reward, index) => {
-      const isClaimed = user.dailyStreak >= index + 1;
-
-
-      // Three scenarios for availability:
-      // 1. Last claimed reward available if within 24h
-      // 2. Next unclaimed reward available if last claim was more than 24h ago
-      // 3. First reward available if no rewards claimed (dailyStreak = 0)
-      const isAvailable =
-        (isClaimed &&
-          index === lastClaimedRewardIndex &&
-          timeSinceLastClaim < hours24) || // Last claimed reward within 24h
-        (!isClaimed &&
-          !nextRewardMarked &&
-          index === lastClaimedRewardIndex + 1 &&
-          timeSinceLastClaim >= hours24) || // Next unclaimed reward after 24h
-        (!isClaimed &&
-          !nextRewardMarked &&
-          index === 0 &&
-          user.dailyStreak === 0); // First reward for new users
-
-      if (isAvailable) {
-        nextRewardMarked = true;
-      }
-
-      rewards.push({
-        ...reward,
-        claimed: isClaimed,
-        current: isAvailable,
-      });
-    });
-
-    return rewards;
-  }
-
-  public async awardDailyRewards(walletAddress: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        walletAddress,
-      },
+      where: { walletAddress },
     });
 
     if (!user) {
@@ -462,70 +398,261 @@ export class ProfileService {
     }
 
     const dailyRewards = await this.prisma.dailyReward.findMany();
-    dailyRewards.sort((a, b) => a.id - b.id);
-    let reward;
 
-    const hours24 = 24 * 60 * 60 * 1000;
-    const hours48 = 48 * 60 * 60 * 1000;
-    const currentTime = new Date().getTime();
-    const lastClaimedTime = user.lastDailyClaimed.getTime();
-    const timeSinceLastClaim = currentTime - lastClaimedTime;
+    return {
+      dailyRewards,
+      dailyStreak: user.dailyStreak,
+      lastDailyClaimed: user.lastDailyClaimed,
+    };
+  }
 
-    if (timeSinceLastClaim < hours24) {
-      throw new BadRequestException('No daily rewards available yet.');
-    } else if (timeSinceLastClaim >= hours24 && timeSinceLastClaim < hours48) {
-      reward = dailyRewards[user.dailyStreak];
-      await this.prisma.user.update({
+  private async rewardItem(walletAddress: string, itemId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    const userItem = await this.prisma.userItem.findFirst({
+      where: {
+        userId: user.id,
+        itemId: itemId,
+      },
+    });
+
+    await this.prisma.userItem.upsert({
+      where: {
+        id: userItem?.id,
+      },
+      update: {
+        quantity: userItem?.quantity + 1,
+      },
+      create: {
+        user: {
+          connect: { id: user.id },
+        },
+        item: {
+          connect: { id: itemId },
+        },
+        quantity: 1,
+      },
+    });
+  }
+
+  private async rewardAlienPart(walletAddress: string, alienPartId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+      include: {
+        AlienPartGroups: true,
+      },
+    });
+
+    const alienPart = await this.prisma.alienPart.findFirst({
+      where: {
+        id: alienPartId,
+      },
+    });
+
+    const userAlienPartGroup = await this.prisma.alienPartGroup.findFirst({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        parts: true,
+      },
+    });
+
+    await this.prisma.alienPartGroup.update({
+      where: {
+        id: userAlienPartGroup.id,
+      },
+      data: {
+        parts: {
+          set: [...userAlienPartGroup.parts, alienPart],
+        },
+      },
+    });
+  }
+
+  private async rewardGearItem(walletAddress: string, gearItemId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    const userGearItem = await this.prisma.userGearItem.findFirst({
+      where: {
+        userId: user.id,
+        gearItemId: gearItemId,
+      },
+    });
+
+    await this.prisma.userGearItem.upsert({
+      where: {
+        id: userGearItem?.id,
+      },
+      update: {
+        quantity: userGearItem?.quantity + 1,
+      },
+      create: {
+        user: {
+          connect: { id: user.id },
+        },
+        gearItem: {
+          connect: { id: gearItemId },
+        },
+        quantity: 1,
+      },
+    });
+  }
+
+  private async rewardStars(walletAddress: string, amount: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        stars: {
+          increment: amount,
+        },
+      },
+    });
+  }
+
+  private async rewardXp(walletAddress: string, amount: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress,
+      },
+    });
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        experience: {
+          increment: amount,
+        },
+      },
+    });
+  }
+
+  // TODO: fix this daily reward
+  public async claimDailyReward(walletAddress: string) {
+    try {
+      var user = await this.prisma.user.findUnique({
         where: {
           walletAddress,
         },
-        data: {
-          dailyStreak: user.dailyStreak + 1,
-          lastDailyClaimed: new Date(),
-          lastDailyRewardId: reward.id,
-        },
       });
-    } else {
-      reward = dailyRewards[0];
-      await this.prisma.user.update({
-        where: {
-          walletAddress,
-        },
-        data: {
-          dailyStreak: 1,
-          lastDailyClaimed: new Date(),
-          lastDailyRewardId: reward.id,
-        },
-      });
-    }
 
-    if (reward.type === DailyRewardType.ITEM) {
-      await this.prisma.userItem.create({
-        data: {
-          user: {
-            connect: {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const dailyReward = await this.prisma.dailyReward.findFirst({
+        where: {
+          rewardDate: today,
+        },
+      });
+
+      if (!dailyReward) {
+        throw new Error('No daily reward available');
+      }
+
+      if (user.lastDailyClaimed) {
+        const lastClaimed = new Date(user.lastDailyClaimed);
+        lastClaimed.setHours(0, 0, 0, 0);
+
+        if (lastClaimed.getTime() === today.getTime()) {
+          throw new Error('Daily reward already claimed');
+        }
+
+        const timeDifference = today.getTime() - lastClaimed.getTime();
+        if (
+          timeDifference > 24 * 60 * 60 * 1000 &&
+          timeDifference <= 48 * 60 * 60 * 1000
+        ) {
+          user = await this.prisma.user.update({
+            where: {
               id: user.id,
             },
-          },
-          item: {
-            connect: {
-              id: reward.itemId,
+            data: {
+              dailyStreak: {
+                increment: 1,
+              },
             },
-          },
-          quantity: reward.amount,
-        },
-      });
-    } else {
-      await this.prisma.user.update({
+          });
+        } else if (timeDifference > 48 * 60 * 60 * 1000) {
+          user = await this.prisma.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              dailyStreak: 0,
+            },
+          });
+        }
+      }
+
+      user = await this.prisma.user.update({
         where: {
-          walletAddress,
+          id: user.id,
         },
         data: {
-          stars: {
-            increment: reward.amount,
+          dailyStreak: {
+            increment: 1,
           },
         },
       });
+
+      switch (dailyReward.type) {
+        case DailyRewardType.STARS:
+          await this.rewardStars(
+            walletAddress,
+            dailyReward.amount * user.dailyStreak,
+          );
+          break;
+        case DailyRewardType.XP:
+          await this.rewardXp(
+            walletAddress,
+            dailyReward.amount * user.dailyStreak,
+          );
+          break;
+        case DailyRewardType.ITEM:
+          await this.rewardItem(walletAddress, dailyReward.itemId);
+          break;
+        case DailyRewardType.PARTS:
+          await this.rewardAlienPart(walletAddress, dailyReward.alienPartId);
+          break;
+        case DailyRewardType.GEAR:
+          await this.rewardGearItem(walletAddress, dailyReward.gearItemId);
+          break;
+      }
+
+      user = await this.prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          lastDailyClaimed: new Date(),
+        },
+      });
+
+      return {
+        message: 'Reward claimed',
+      };
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
