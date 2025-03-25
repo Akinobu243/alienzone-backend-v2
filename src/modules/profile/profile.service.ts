@@ -27,6 +27,9 @@ export class ProfileService {
         where: {
           walletAddress: walletAddress.toLowerCase(),
         },
+        include: {
+          claimedDailyRewards: true,
+        },
       });
 
       if (!user) {
@@ -74,6 +77,7 @@ export class ProfileService {
         starsBoost: isStarBoostActive ? user.starsBoost : 0,
         xpBoost: isXpBoostActive ? user.xpBoost : 0,
         raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
+        claimedDailyRewards: user.claimedDailyRewards,
       };
     } catch (error) {
       return {
@@ -426,6 +430,9 @@ export class ProfileService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
+        include: {
+          claimedDailyRewards: true,
+        },
       });
 
       if (!user) {
@@ -439,6 +446,7 @@ export class ProfileService {
         dailyRewards,
         dailyStreak: user.dailyStreak,
         lastDailyClaimed: user.lastDailyClaimed,
+        claimedDailyRewards: user.claimedDailyRewards,
       };
     } catch (error) {
       return {
@@ -610,6 +618,10 @@ export class ProfileService {
         throw new Error('No daily reward available');
       }
 
+      if (user.claimedDailyRewardIds.includes(dailyReward.id)) {
+        throw new Error('Daily reward already claimed');
+      }
+
       if (user.lastDailyClaimed) {
         const lastClaimed = new Date(user.lastDailyClaimed);
         lastClaimed.setHours(0, 0, 0, 0);
@@ -620,7 +632,7 @@ export class ProfileService {
 
         const timeDifference = today.getTime() - lastClaimed.getTime();
         if (
-          timeDifference > 24 * 60 * 60 * 1000 &&
+          timeDifference >= 24 * 60 * 60 * 1000 &&
           timeDifference <= 48 * 60 * 60 * 1000
         ) {
           user = await this.prisma.user.update({
@@ -686,6 +698,9 @@ export class ProfileService {
         },
         data: {
           lastDailyClaimed: new Date(),
+          claimedDailyRewardIds: {
+            push: dailyReward.id,
+          },
         },
       });
 

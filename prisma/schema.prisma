@@ -106,8 +106,8 @@ model User {
   role                  Role                   @default(USER)
   dailyStreak           Int                    @default(0)
   lastDailyClaimed      DateTime               @default(now())
-  lastDailyReward       DailyReward?           @relation(fields: [lastDailyRewardId], references: [id])
-  lastDailyRewardId     Int?
+  claimedDailyRewards   DailyReward[]
+  claimedDailyRewardIds Int[]                  @default([])
   likedUserIds          Int[]                  @default([])
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
