@@ -116,7 +116,7 @@ export class ProfileController {
       throw new UnauthorizedException('Invalid password');
     }
     amount = parseInt(amount.toString());
-    return this.profileService.updateStarBalance(walletAddress, amount);
+    return this.profileService.updateStarBalanceV1(walletAddress, amount);
   }
 
   @Get('/get-onboarding-data')

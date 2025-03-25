@@ -27,29 +27,36 @@ export class RaidsService {
     elementId: number,
     rewards: RaidReward[],
   ) {
-    const element = await this.prisma.element.findUnique({
-      where: {
-        id: elementId,
-      },
-    });
-    if (!element) {
-      throw new BadRequestException('Element not found');
-    }
-    const data: Prisma.RaidCreateInput = {
-      title,
-      description,
-      duration,
-      image,
-      element: {
-        connect: {
+    try {
+      const element = await this.prisma.element.findUnique({
+        where: {
           id: elementId,
         },
-      },
-      rewards: {
-        create: rewards,
-      },
-    };
-    await this.prisma.raid.create({ data });
+      });
+      if (!element) {
+        throw new BadRequestException('Element not found');
+      }
+      const data: Prisma.RaidCreateInput = {
+        title,
+        description,
+        duration,
+        image,
+        element: {
+          connect: {
+            id: elementId,
+          },
+        },
+        rewards: {
+          create: rewards,
+        },
+      };
+      await this.prisma.raid.create({ data });
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
   }
 
   public async editRaid(
@@ -173,149 +180,161 @@ export class RaidsService {
   }
 
   public async getRaidHistory(userWalletAddress: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { walletAddress: userWalletAddress },
-    });
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress: userWalletAddress },
+      });
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
 
-    return await this.prisma.raidHistory.findMany({
-      where: {
-        userId: user.id,
-      },
-      include: {
-        aliens: true,
-      },
-    });
+      return await this.prisma.raidHistory.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          aliens: true,
+        },
+      });
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async processRaidRewards() {
-    const raids = await this.prisma.raidHistory.findMany({
-      where: {
-        inProgress: true,
-      },
-      include: {
-        aliens: {
-          include: {
-            element: true,
-          },
+    try {
+      const raids = await this.prisma.raidHistory.findMany({
+        where: {
+          inProgress: true,
         },
-        characters: {
-          include: {
-            character: {
-              include: {
-                element: true,
+        include: {
+          aliens: {
+            include: {
+              element: true,
+            },
+          },
+          characters: {
+            include: {
+              character: {
+                include: {
+                  element: true,
+                },
               },
             },
           },
-        },
-        raid: {
-          include: {
-            rewards: true,
-            element: true,
+          raid: {
+            include: {
+              rewards: true,
+              element: true,
+            },
           },
+          user: true,
         },
-        user: true,
-      },
-    });
-    // console.log('Raids found:', raids.length);
+      });
+      // console.log('Raids found:', raids.length);
 
-    for (const raid of raids) {
-      const raidAliens = raid.aliens;
-      const raidCharacters = raid.characters;
-      const raidRewards = raid.raid.rewards;
-      const raidUserId = raid.userId;
-      const raidElementId = raid.raid.elementId;
-      const raidDuration = await this.calculateRaidDuration(
-        raid.id,
-        raidAliens,
-        raidCharacters,
-        raid.user,
-      );
+      for (const raid of raids) {
+        const raidAliens = raid.aliens;
+        const raidCharacters = raid.characters;
+        const raidRewards = raid.raid.rewards;
+        const raidUserId = raid.userId;
+        const raidElementId = raid.raid.elementId;
+        const raidDuration = await this.calculateRaidDuration(
+          raid.id,
+          raidAliens,
+          raidCharacters,
+          raid.user,
+        );
 
-      if (!raidDuration) {
-        throw new BadRequestException('Error calculating raid duration');
-      }
+        if (!raidDuration) {
+          throw new BadRequestException('Error calculating raid duration');
+        }
 
-      if (raid.raidFinishTime.getTime() < Date.now()) {
-        console.log('Raid completed:', raid.id);
-        await this.prisma.raidHistory.update({
-          where: { id: raid.id },
-          data: {
-            inProgress: false,
-          },
-        });
+        if (raid.raidFinishTime.getTime() < Date.now()) {
+          console.log('Raid completed:', raid.id);
+          await this.prisma.raidHistory.update({
+            where: { id: raid.id },
+            data: {
+              inProgress: false,
+            },
+          });
 
-        for (const reward of raidRewards) {
-          let rewardAmount = reward.amount;
-          let rewardType: string;
-          if (reward.type === RewardType.XP) {
-            rewardType = 'experience';
-            if (
-              raid.user.lastXpBoost &&
-              raid.user.lastXpBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
-            ) {
-              rewardAmount += reward.amount * raid.user.xpBoost;
+          for (const reward of raidRewards) {
+            let rewardAmount = reward.amount;
+            let rewardType: string;
+            if (reward.type === RewardType.XP) {
+              rewardType = 'experience';
+              if (
+                raid.user.lastXpBoost &&
+                raid.user.lastXpBoost.getTime() + 24 * 60 * 60 * 1000 >
+                  Date.now()
+              ) {
+                rewardAmount += reward.amount * raid.user.xpBoost;
+              }
+            } else if (reward.type === RewardType.STARS) {
+              rewardType = 'stars';
+              if (
+                raid.user.lastStarBoost &&
+                raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 >
+                  Date.now()
+              ) {
+                rewardAmount += reward.amount * raid.user.starsBoost;
+              }
             }
-          } else if (reward.type === RewardType.STARS) {
-            rewardType = 'stars';
-            if (
-              raid.user.lastStarBoost &&
-              raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 >
-                Date.now()
-            ) {
-              rewardAmount += reward.amount * raid.user.starsBoost;
+            await this.prisma.user.update({
+              where: { id: raidUserId },
+              data: {
+                [rewardType]: {
+                  increment: rewardAmount,
+                },
+              },
+            });
+            console.log('Reward processed:', reward.type, reward.amount);
+
+            const user = await this.prisma.user.findUnique({
+              where: { id: raidUserId },
+            });
+            const userLevel = user.level;
+            const levelRequirement = levelRequirements[userLevel];
+            if (user.experience >= levelRequirement.requiredPoints) {
+              console.log('User level up:', userLevel + 1);
+              await this.prisma.user.update({
+                where: { id: raidUserId },
+                data: { level: userLevel + 1 },
+              });
             }
           }
+
+          // Reward Reputation points
+          const teamStrength =
+            raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
+            raidCharacters.reduce(
+              (acc, character) => acc + character.character.power,
+              0,
+            );
+          const raidDurationInMinutes = Math.floor(raidDuration / 60);
+          const reputationPoints = raidDurationInMinutes * teamStrength;
+          console.log('Reputation points rewarded:', reputationPoints);
+
+          // Reward runes
+          const runeWon = this.getRewardedRune(Math.random());
+          console.log('Rune rewarded:', runeWon);
+
           await this.prisma.user.update({
             where: { id: raidUserId },
             data: {
-              [rewardType]: {
-                increment: rewardAmount,
-              },
+              reputation: { increment: reputationPoints },
+              ...(runeWon && { runes: { push: runeWon } }),
             },
           });
-          console.log('Reward processed:', reward.type, reward.amount);
-
-          const user = await this.prisma.user.findUnique({
-            where: { id: raidUserId },
-          });
-          const userLevel = user.level;
-          const levelRequirement = levelRequirements[userLevel];
-          if (user.experience >= levelRequirement.requiredPoints) {
-            console.log('User level up:', userLevel + 1);
-            await this.prisma.user.update({
-              where: { id: raidUserId },
-              data: { level: userLevel + 1 },
-            });
-          }
         }
-
-        // Reward Reputation points
-        const teamStrength =
-          raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
-          raidCharacters.reduce(
-            (acc, character) => acc + character.character.power,
-            0,
-          );
-        const raidDurationInMinutes = Math.floor(raidDuration / 60);
-        const reputationPoints = raidDurationInMinutes * teamStrength;
-        console.log('Reputation points rewarded:', reputationPoints);
-
-        // Reward runes
-        const runeWon = this.getRewardedRune(Math.random());
-        console.log('Rune rewarded:', runeWon);
-
-        await this.prisma.user.update({
-          where: { id: raidUserId },
-          data: {
-            reputation: { increment: reputationPoints },
-            ...(runeWon && { runes: { push: runeWon } }),
-          },
-        });
       }
+    } catch (error) {
+      console.log('Error processing raid rewards:', error);
     }
   }
 

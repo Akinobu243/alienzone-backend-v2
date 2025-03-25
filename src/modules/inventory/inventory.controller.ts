@@ -22,7 +22,7 @@ export class InventoryController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUserInventory(@Request() req): Promise<InventoryResponseDto[]> {
+  async getUserInventory(@Request() req) {
     return this.inventoryService.getUserInventory(
       req.walletAddress.toLowerCase(),
     );
