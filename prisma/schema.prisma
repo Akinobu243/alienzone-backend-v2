@@ -120,6 +120,7 @@ model User {
   gearItems             UserGearItem[]
   UserElement           UserElement[]
   characterTransactions CharacterTransaction[]
+  UserSpin              UserSpin[]
 }
 
 model Raid {
@@ -465,4 +466,12 @@ model CharacterTransaction {
 
   @@index([userId])
   @@index([txHash])
+}
+
+model UserSpin {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  result    Json
+  createdAt DateTime @default(now())
 }

@@ -20,6 +20,7 @@ import { PacksModule } from '../packs/packs.module';
 import { StripeModule } from '../stripe/stripe.module';
 import { ElementModule } from '../element/element.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { WheelModule } from '../wheel/wheel.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     StripeModule,
     ElementModule,
     InventoryModule,
+    WheelModule,
   ],
   controllers: [AppController],
   providers: [AppService],
