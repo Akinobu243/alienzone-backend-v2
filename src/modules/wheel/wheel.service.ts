@@ -182,15 +182,15 @@ export class WheelService {
 
   public getRewards() {
     return [
-      { name: 'Stars', amount: 20, image: '' },
-      { name: 'Bronze Cut', amount: 1, image: '' },
-      { name: 'Silver Knife', amount: 1, image: '' },
-      { name: 'Golden Shears', amount: 1, image: '' },
-      { name: 'Uncommon Rune', amount: 1, image: '' },
-      { name: 'Common Rune', amount: 1, image: '' },
-      { name: 'Rare Rune', amount: 1, image: '' },
-      { name: 'Epic Rune', amount: 1, image: '' },
-      { name: 'Legendary Rune', amount: 1, image: '' },
+      { name: 'Stars', amount: 20 },
+      { name: 'Bronze Cut', amount: 1 },
+      { name: 'Silver Knife', amount: 1 },
+      { name: 'Golden Shears', amount: 1 },
+      { name: 'Uncommon Rune', amount: 1 },
+      { name: 'Common Rune', amount: 1 },
+      { name: 'Rare Rune', amount: 1 },
+      { name: 'Epic Rune', amount: 1 },
+      { name: 'Legendary Rune', amount: 1 },
     ];
   }
 }
