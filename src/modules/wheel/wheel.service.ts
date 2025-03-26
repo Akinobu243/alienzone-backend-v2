@@ -179,4 +179,18 @@ export class WheelService {
       throw new BadRequestException('Error updating user rewards');
     }
   }
+
+  public getRewards() {
+    return [
+      { name: 'Stars', amount: 20, image: '' },
+      { name: 'Bronze Cut', amount: 1, image: '' },
+      { name: 'Silver Knife', amount: 1, image: '' },
+      { name: 'Golden Shears', amount: 1, image: '' },
+      { name: 'Uncommon Rune', amount: 1, image: '' },
+      { name: 'Common Rune', amount: 1, image: '' },
+      { name: 'Rare Rune', amount: 1, image: '' },
+      { name: 'Epic Rune', amount: 1, image: '' },
+      { name: 'Legendary Rune', amount: 1, image: '' },
+    ];
+  }
 }

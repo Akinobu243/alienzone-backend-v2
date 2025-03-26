@@ -48,4 +48,14 @@ export class WheelController {
   async getSpinHistory(@Request() req) {
     return this.wheelService.getSpinHistory(req.walletAddress.toLowerCase());
   }
+
+  @Get('/rewards')
+  @ApiOperation({ summary: 'Get all possible rewards' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all possible rewards',
+  })
+  async getRewards() {
+    return this.wheelService.getRewards();
+  }
 }
