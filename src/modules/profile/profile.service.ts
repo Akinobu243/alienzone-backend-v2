@@ -607,10 +607,22 @@ export class ProfileService {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const dailyReward = await this.prisma.dailyReward.findFirst({
         where: {
-          rewardDate: today,
+          AND: [
+            {
+              rewardDate: {
+                gte: today,
+              },
+            },
+            {
+              rewardDate: {
+                lte: tomorrow,
+              },
+            },
+          ],
         },
       });
 
