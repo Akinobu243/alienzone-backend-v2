@@ -170,4 +170,36 @@ export class ProfileController {
     let walletAddress = req.query.walletAddress ?? req.walletAddress;
     return this.profileService.getTeam(walletAddress);
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/get-equipped-alien-parts')
+  async getEquippedAlienParts(
+    @Request() req,
+    @Body('alienId') alienId: number,
+  ) {
+    return this.profileService.getEquippedAlienParts(
+      req.walletAddress,
+      alienId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/get-owned-alien-parts')
+  async getOwnedAlienParts(@Request() req) {
+    return this.profileService.getOwnedAlienParts(req.walletAddress);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/equip-alien-part')
+  async equipAlienPart(
+    @Request() req,
+    @Body('alienId') alienId: number,
+    @Body('partId') partId: number,
+  ) {
+    return this.profileService.equipAlienPart(
+      req.walletAddress,
+      alienId,
+      partId,
+    );
+  }
 }

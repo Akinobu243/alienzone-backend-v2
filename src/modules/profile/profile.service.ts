@@ -1184,4 +1184,176 @@ export class ProfileService {
       };
     }
   }
+
+  public async getEquippedAlienParts(walletAddress: string, alienId: number) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alien = await this.prisma.alien.findFirst({
+        where: {
+          id: alienId,
+          userId: user.id,
+        },
+        include: {
+          body: true,
+          clothes: true,
+          head: true,
+          eyes: true,
+          mouth: true,
+          hair: true,
+          marks: true,
+          powers: true,
+          accessories: true,
+          face: true,
+        },
+      });
+
+      if (!alien) {
+        throw new BadRequestException('Alien not found');
+      }
+
+      const parts = {
+        body: alien.body,
+        clothes: alien.clothes,
+        head: alien.head,
+        eyes: alien.eyes,
+        mouth: alien.mouth,
+        hair: alien.hair,
+        marks: alien.marks,
+        powers: alien.powers,
+        accessories: alien.accessories,
+        face: alien.face,
+      };
+
+      return parts;
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async getOwnedAlienParts(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const userAlienParts = await this.prisma.alienPartGroup.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          parts: true,
+        },
+      });
+
+      return userAlienParts;
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async equipAlienPart(
+    walletAddress: string,
+    alienId: number,
+    partId: number,
+  ) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alien = await this.prisma.alien.findFirst({
+        where: {
+          id: alienId,
+          userId: user.id,
+        },
+      });
+
+      if (!alien) {
+        throw new BadRequestException('Alien not found');
+      }
+
+      const part = await this.prisma.alienPart.findUnique({
+        where: { id: partId },
+      });
+
+      if (!part) {
+        throw new BadRequestException('Alien part not found');
+      }
+
+      const userAlienPartGroup = await this.prisma.alienPartGroup.findFirst({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          parts: true,
+        },
+      });
+
+      const userAlienParts = userAlienPartGroup.parts;
+
+      if (!userAlienParts.some((userPart) => userPart.id === partId)) {
+        throw new BadRequestException('Alien part not found in user inventory');
+      }
+
+      // Determine the field to update based on the part type
+      const partFieldMap = {
+        BODY: 'bodyId',
+        CLOTHES: 'clothesId',
+        HEAD: 'headId',
+        EYES: 'eyesId',
+        MOUTH: 'mouthId',
+        HAIR: 'hairId',
+        MARKS: 'marksId',
+        POWERS: 'powersId',
+        ACCESSORIES: 'accessoriesId',
+        FACE: 'faceId',
+      };
+
+      const partField = partFieldMap[part.type];
+      if (!partField) {
+        throw new BadRequestException('Invalid part type');
+      }
+
+      // Update the alien with the new part
+      await this.prisma.alien.update({
+        where: { id: alien.id },
+        data: {
+          [partField]: part.id,
+        },
+      });
+
+      // TODO: Update alien image with new equipped parts by updating the metadata and then generating a new image
+
+      return {
+        success: true,
+        message: `Part of type ${part.type} equipped successfully`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
 }

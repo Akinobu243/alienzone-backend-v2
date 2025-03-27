@@ -177,6 +177,26 @@ model Alien {
   updatedAt      DateTime      @updatedAt
   element        Element       @relation(fields: [elementId], references: [id])
   elementId      Int
+  body           AlienPart?    @relation("BodyPart", fields: [bodyId], references: [id])
+  bodyId         Int?
+  clothes        AlienPart?    @relation("ClothesPart", fields: [clothesId], references: [id])
+  clothesId      Int?
+  head           AlienPart?    @relation("HeadPart", fields: [headId], references: [id])
+  headId         Int?
+  eyes           AlienPart?    @relation("EyesPart", fields: [eyesId], references: [id])
+  eyesId         Int?
+  mouth          AlienPart?    @relation("MouthPart", fields: [mouthId], references: [id])
+  mouthId        Int?
+  hair           AlienPart?    @relation("HairPart", fields: [hairId], references: [id])
+  hairId         Int?
+  marks          AlienPart?    @relation("MarksPart", fields: [marksId], references: [id])
+  marksId        Int?
+  powers         AlienPart?    @relation("PowersPart", fields: [powersId], references: [id])
+  powersId       Int?
+  accessories    AlienPart?    @relation("AccessoriesPart", fields: [accessoriesId], references: [id])
+  accessoriesId  Int?
+  face           AlienPart?    @relation("FacePart", fields: [faceId], references: [id])
+  faceId         Int?
 }
 
 model Element {
@@ -341,7 +361,7 @@ model ReferralReward {
   starsEarned Int
   seen        Boolean  @default(false)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
 
   @@index([referrerId])
   @@index([refereeId])
@@ -375,6 +395,16 @@ model AlienPart {
   transactions   Transaction[]
   AlienPartGroup AlienPartGroup[]
   dailyRewards   DailyReward[]
+  bodyAliens        Alien[] @relation("BodyPart")
+  clothesAliens     Alien[] @relation("ClothesPart")
+  headAliens        Alien[] @relation("HeadPart")
+  eyesAliens        Alien[] @relation("EyesPart")
+  mouthAliens       Alien[] @relation("MouthPart")
+  hairAliens        Alien[] @relation("HairPart")
+  marksAliens       Alien[] @relation("MarksPart")
+  powersAliens      Alien[] @relation("PowersPart")
+  accessoriesAliens Alien[] @relation("AccessoriesPart")
+  faceAliens        Alien[] @relation("FacePart")
 }
 
 model AlienPartGroup {
@@ -386,7 +416,7 @@ model AlienPartGroup {
   userId      Int?
   user        User?       @relation(fields: [userId], references: [id])
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  updatedAt   DateTime    @default(now())
   elementId   Int?
 }
 
