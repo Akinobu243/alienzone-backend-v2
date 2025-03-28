@@ -121,6 +121,7 @@ model User {
   UserElement           UserElement[]
   characterTransactions CharacterTransaction[]
   UserSpin              UserSpin[]
+  userQuests            UserQuest[]
 }
 
 model Raid {
@@ -274,7 +275,7 @@ model UnmintedCharacter {
   user        User      @relation(fields: [userId], references: [id])
   character   Character @relation(fields: [characterId], references: [id])
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now())
 
   @@unique([userId, characterId])
   @@index([userId, characterId])
@@ -504,4 +505,28 @@ model UserSpin {
   user      User     @relation(fields: [userId], references: [id])
   result    Json
   createdAt DateTime @default(now())
+}
+
+model Quest {
+  id             Int       @id @default(autoincrement())
+  type           String
+  frequency      String
+  description    String
+  requiredNumber Int
+  rewards        Json
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  userQuests     UserQuest[]
+}
+
+model UserQuest {
+  id             Int       @id @default(autoincrement())
+  userId         Int
+  questId        Int
+  currentProgress Int      @default(0)
+  isCompleted    Boolean   @default(false)
+  user           User      @relation(fields: [userId], references: [id])
+  quest          Quest     @relation(fields: [questId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }

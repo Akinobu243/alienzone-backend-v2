@@ -12,6 +12,7 @@ import {
   multiCharacterSummonCost,
   singleCharacterSummonCost,
 } from 'src/configs/global.config';
+import { CharacterContractABI } from './character.contract.abi';
 
 @Injectable()
 export class CharacterService {
@@ -42,13 +43,9 @@ export class CharacterService {
       if (!element) {
         throw new BadRequestException('Element not found');
       }
-      const abi = [
-        'function createToken() external',
-        'function getCurrentTokenID() public view returns (uint256)',
-      ];
       const contract = new ethers.Contract(
         this.contractAddress,
-        abi,
+        CharacterContractABI,
         this.adminWallet,
       );
 
@@ -269,6 +266,40 @@ export class CharacterService {
           characters: true,
         },
       });
+
+      const ownedCharacters = [];
+
+      const contract = new ethers.Contract(
+        this.contractAddress,
+        CharacterContractABI,
+        this.adminWallet,
+      );
+
+      const currentTokenId = Number(await contract.getCurrentTokenID());
+
+      const allTokenIds = Array.from(
+        { length: currentTokenId },
+        (_, i) => i + 1,
+      );
+      for (const tokenId of allTokenIds) {
+        const tokenBalance = Number(
+          await contract.balanceOf(walletAddress, tokenId),
+        );
+        if (tokenBalance > 0) {
+          const character = await this.prisma.character.findFirst({
+            where: {
+              tokenId,
+            },
+            include: {
+              element: true,
+            },
+          });
+          ownedCharacters.push({
+            ...character,
+            quantity: tokenBalance.toNumber(),
+          });
+        }
+      }
 
       const userCharacters = await Promise.all(
         user.characters.map(async (userChar) => {
