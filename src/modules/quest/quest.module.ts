@@ -8,5 +8,6 @@ import { ScheduleModule } from '@nestjs/schedule';
   imports: [ScheduleModule.forRoot()],
   controllers: [QuestController],
   providers: [QuestService, PrismaService],
+  exports: [QuestService],
 })
 export class QuestModule {}

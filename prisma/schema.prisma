@@ -109,6 +109,7 @@ model User {
   claimedDailyRewards   DailyReward[]
   claimedDailyRewardIds Int[]                  @default([])
   likedUserIds          Int[]                  @default([])
+  lastDailyLogin        DateTime               @default(now())
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   referrerRewards       ReferralReward[]       @relation("ReferrerRewards")

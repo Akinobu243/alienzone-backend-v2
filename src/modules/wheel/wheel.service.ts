@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ItemType, ItemQuality, RuneType } from '@prisma/client'; // Assuming these enums are defined in your Prisma schema
+import { QuestService } from '../quest/quest.service';
+import { ItemType, ItemQuality, RuneType } from '@prisma/client';
 
 @Injectable()
 export class WheelService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private questService: QuestService,
+  ) {}
 
   public async spinWheel(walletAddress: string) {
     try {
@@ -41,6 +45,8 @@ export class WheelService {
           result,
         },
       });
+
+      await this.questService.progressWheelQuest(walletAddress);
 
       return { success: true, result };
     } catch (error) {

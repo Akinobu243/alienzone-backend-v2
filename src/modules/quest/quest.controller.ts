@@ -33,4 +33,12 @@ export class QuestController {
       questId,
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Get('/login')
+  @ApiOperation({ summary: 'Login for login quest progression' })
+  @ApiResponse({ status: 200, description: 'Login quest progression updated' })
+  async login(@Request() req) {
+    return this.questService.login(req.walletAddress.toLowerCase());
+  }
 }

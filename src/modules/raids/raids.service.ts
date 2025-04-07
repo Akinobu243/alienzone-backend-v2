@@ -8,7 +8,7 @@ import { levelRequirements } from 'src/configs/global.config';
 
 @Injectable()
 export class RaidsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private questService: any) {}
 
   public async getRaidsList() {
     return await this.prisma.raid.findMany({
@@ -167,6 +167,9 @@ export class RaidsService {
 
       const raidHistory = await this.prisma.raidHistory.create({ data });
 
+      // Call progressRaidQuest
+      await this.questService.progressRaidQuest(userWalletAddress);
+
       return {
         success: true,
         raidHistory,
@@ -306,6 +309,9 @@ export class RaidsService {
                 where: { id: raidUserId },
                 data: { level: userLevel + 1 },
               });
+
+              // Call progressLevelQuest
+              await this.questService.progressLevelQuest(user.walletAddress);
             }
           }
 

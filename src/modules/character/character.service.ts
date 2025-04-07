@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestService } from '../quest/quest.service'; // Import QuestService
 import {
   CharacterRarity,
   CharacterTransactionType,
@@ -16,7 +17,10 @@ import { CharacterContractABI } from './character.contract.abi';
 
 @Injectable()
 export class CharacterService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private questService: QuestService,
+  ) {}
   private contractAddress = process.env.CONTRACT_ADDRESS;
   private provider = new ethers.JsonRpcProvider(process.env.RPC_PROVIDER);
   private adminWallet = new ethers.Wallet(
@@ -243,6 +247,11 @@ export class CharacterService {
         },
       });
 
+      // Call progressURCharactersQuest if a UR character is summoned
+      if (rolledRarity === 'UR') {
+        await this.questService.progressURCharactersQuest(walletAddress);
+      }
+
       return {
         success: true,
         character: randomCharacter,
@@ -296,7 +305,7 @@ export class CharacterService {
           });
           ownedCharacters.push({
             ...character,
-            quantity: tokenBalance.toNumber(),
+            quantity: tokenBalance,
           });
         }
       }
@@ -921,6 +930,11 @@ export class CharacterService {
 
       if (character.readyToUpgrade) {
         throw new BadRequestException('Character is already ready to upgrade');
+      }
+
+      // Call progressT3CharactersQuest if character is T3
+      if (character.character.tier === 3) {
+        await this.questService.progressT3CharactersQuest(walletAddress);
       }
 
       if (character.quantity < character.character.upgradeReq) {

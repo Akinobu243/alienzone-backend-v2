@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class QuestService {
   constructor(private prisma: PrismaService) {}
 
-  async listQuests(walletAddress: string) {
+  public async listQuests(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -42,7 +42,7 @@ export class QuestService {
     }
   }
 
-  async claimRewards(walletAddress: string, questId: number) {
+  public async claimRewards(walletAddress: string, questId: number) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -88,7 +88,7 @@ export class QuestService {
     }
   }
 
-  async assignDailyAndWeeklyQuests() {
+  public async assignDailyAndWeeklyQuests() {
     try {
       const users = await this.prisma.user.findMany();
 
@@ -143,7 +143,7 @@ export class QuestService {
     }
   }
 
-  async resetDailyQuests() {
+  public async resetDailyQuests() {
     try {
       const dailyQuests = await this.prisma.quest.findMany({
         where: { frequency: 'daily' },
@@ -162,7 +162,7 @@ export class QuestService {
     }
   }
 
-  async resetWeeklyQuests() {
+  public async resetWeeklyQuests() {
     try {
       const weeklyQuests = await this.prisma.quest.findMany({
         where: { frequency: 'weekly' },
@@ -176,6 +176,416 @@ export class QuestService {
       }
 
       return { success: true, message: 'Weekly quests reset successfully' };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async login(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      // Check if the user has already completed the login quest today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const lastDailyLogin = user.lastDailyLogin;
+      lastDailyLogin.setHours(0, 0, 0, 0);
+      if (lastDailyLogin >= today) {
+        return {
+          success: false,
+          message: 'Login quest already completed for today',
+        };
+      }
+
+      const loginQuests = await this.prisma.quest.findMany({
+        where: { type: 'login' },
+      });
+
+      if (loginQuests.length === 0) {
+        throw new BadRequestException('No login quests available');
+      }
+
+      const userLoginQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: loginQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userLoginQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastDailyLogin: today },
+      });
+
+      return {
+        success: true,
+        message: 'Login quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressMessageQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const messageQuests = await this.prisma.quest.findMany({
+        where: { type: 'message' },
+      });
+
+      if (messageQuests.length === 0) {
+        throw new BadRequestException('No message quests available');
+      }
+
+      const userMessageQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: messageQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userMessageQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Message quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressWheelQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const wheelQuests = await this.prisma.quest.findMany({
+        where: { type: 'wheel' },
+      });
+
+      if (wheelQuests.length === 0) {
+        throw new BadRequestException('No wheel quests available');
+      }
+
+      const userWheelQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: wheelQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userWheelQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Wheel quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressRaidQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const raidQuests = await this.prisma.quest.findMany({
+        where: { type: 'raid' },
+      });
+
+      if (raidQuests.length === 0) {
+        throw new BadRequestException('No raid quests available');
+      }
+
+      const userRaidQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: raidQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userRaidQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Raid quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressBuyQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const buyQuests = await this.prisma.quest.findMany({
+        where: { type: 'buy' },
+      });
+
+      if (buyQuests.length === 0) {
+        throw new BadRequestException('No buy quests available');
+      }
+
+      const userBuyQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: buyQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userBuyQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Buy quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressLevelQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const levelQuests = await this.prisma.quest.findMany({
+        where: { type: 'level' },
+      });
+
+      if (levelQuests.length === 0) {
+        throw new BadRequestException('No level quests available');
+      }
+
+      const userLevelQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: levelQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userLevelQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Level quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressT3CharactersQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const t3Quests = await this.prisma.quest.findMany({
+        where: { type: 'T3Characters' },
+      });
+
+      if (t3Quests.length === 0) {
+        throw new BadRequestException('No T3 characters quests available');
+      }
+
+      const userT3Quests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: t3Quests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userT3Quests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'T3 characters quest progress updated successfully',
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async progressURCharactersQuest(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const urQuests = await this.prisma.quest.findMany({
+        where: { type: 'URCharacters' },
+      });
+
+      if (urQuests.length === 0) {
+        throw new BadRequestException('No UR characters quests available');
+      }
+
+      const userURQuests = await this.prisma.userQuest.findMany({
+        where: {
+          userId: user.id,
+          questId: { in: urQuests.map((q) => q.id) },
+          isCompleted: false,
+        },
+        include: { quest: true },
+      });
+
+      for (const userQuest of userURQuests) {
+        await this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: {
+            currentProgress: {
+              increment: 1,
+            },
+            isCompleted:
+              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'UR characters quest progress updated successfully',
+      };
     } catch (error) {
       return { success: false, error };
     }
