@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class CreateAlienDTO {
   @IsString()
@@ -13,4 +13,12 @@ export class CreateAlienDTO {
   @IsString()
   @ApiProperty()
   strengthPoints: string;
+
+  @IsString()
+  @ApiProperty()
+  faceId: string;
+
+  @IsString()
+  @ApiProperty()
+  hairId: string;
 }
