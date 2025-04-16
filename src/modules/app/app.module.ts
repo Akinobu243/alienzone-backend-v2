@@ -21,6 +21,9 @@ import { StripeModule } from '../stripe/stripe.module';
 import { ElementModule } from '../element/element.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { WheelModule } from '../wheel/wheel.module';
+import { QuestModule } from '../quest/quest.module';
+import { ChatModule } from '../chat/chat.module';
+import { FriendsModule } from '../friends/friends.module';
 
 @Module({
   imports: [
@@ -45,6 +48,9 @@ import { WheelModule } from '../wheel/wheel.module';
     ElementModule,
     InventoryModule,
     WheelModule,
+    QuestModule,
+    ChatModule,
+    FriendsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
