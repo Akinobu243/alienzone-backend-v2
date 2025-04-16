@@ -362,6 +362,24 @@ export async function seed(prisma: PrismaClient) {
     console.log('Seeding alien parts and elements...');
     // Clear existing data first
     await prisma.alienPart.deleteMany({});
+
+    // First, find all characters
+    const characters = await prisma.character.findMany();
+
+    if (characters.length > 0) {
+      // Delete characters first since they depend on elements
+      await prisma.character.deleteMany({});
+    }
+
+    // Find aliens that reference elements
+    const aliens = await prisma.alien.findMany();
+
+    if (aliens.length > 0) {
+      // Delete aliens first since they depend on elements
+      await prisma.alien.deleteMany({});
+    }
+
+    // Now it's safe to delete elements
     await prisma.element.deleteMany({});
 
     // Create new records
