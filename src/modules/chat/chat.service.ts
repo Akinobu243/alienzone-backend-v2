@@ -36,7 +36,7 @@ export class ChatService {
           { senderId: friendId, receiverId: userId },
         ],
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
     });
@@ -45,7 +45,7 @@ export class ChatService {
   async getGlobalMessages(offset: number, limit: number) {
     return this.prisma.message.findMany({
       where: { receiverId: null },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
     });
