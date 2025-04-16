@@ -15,19 +15,22 @@ export class FriendsController {
 
   @UseGuards(AuthGuard)
   @Post('/add')
-  async addFriend(@Request() req, @Body('friendId') friendId: number) {
-    return this.friendsService.addFriend(req.user.id, friendId);
+  async addFriend(@Request() req, @Body('friendWallet') friendWallet: string) {
+    return this.friendsService.addFriend(req.walletAddress, friendWallet);
   }
 
   @UseGuards(AuthGuard)
   @Post('/remove')
-  async removeFriend(@Request() req, @Body('friendId') friendId: number) {
-    return this.friendsService.removeFriend(req.user.id, friendId);
+  async removeFriend(
+    @Request() req,
+    @Body('friendWallet') friendWallet: string,
+  ) {
+    return this.friendsService.removeFriend(req.walletAddress, friendWallet);
   }
 
   @UseGuards(AuthGuard)
   @Get('/list')
   async getFriends(@Request() req) {
-    return this.friendsService.getFriends(req.user.id);
+    return this.friendsService.getFriends(req.walletAddress);
   }
 }
