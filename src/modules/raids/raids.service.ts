@@ -5,10 +5,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RaidReward } from './dto/raids.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { levelRequirements } from 'src/configs/global.config';
+import { QuestService } from '../quest/quest.service';
 
 @Injectable()
 export class RaidsService {
-  constructor(private prisma: PrismaService, private questService: any) {}
+  constructor(
+    private prisma: PrismaService,
+    private questService: QuestService,
+  ) {}
 
   public async getRaidsList() {
     return await this.prisma.raid.findMany({
