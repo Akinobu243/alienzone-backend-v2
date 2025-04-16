@@ -359,6 +359,7 @@ export async function seed(prisma: PrismaClient) {
   ];
 
   try {
+    console.log('Seeding alien parts and elements...');
     // Clear existing data first
     await prisma.alienPart.deleteMany({});
     await prisma.element.deleteMany({});
