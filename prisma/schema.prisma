@@ -169,6 +169,7 @@ model Alien {
   name           String
   image          String?
   strengthPoints Int
+  equipmentPower Int
   user           User          @relation(fields: [userId], references: [id])
   userId         Int
   inRaid         Boolean

@@ -111,6 +111,7 @@ export class ProfileService {
             },
           },
           strengthPoints: Number(createAlienDTO.strengthPoints),
+          equipmentPower: 0,
           inRaid: false,
           selected: true,
           onTeam: true,
