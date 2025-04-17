@@ -239,6 +239,9 @@ export class FriendsService {
         aliens: {
           where: { selected: true },
           take: 1,
+          include: {
+            element: true,
+          },
         },
       },
     });
@@ -285,6 +288,7 @@ export class FriendsService {
       name: friend.name,
       level: friend.level,
       image: friend.aliens.length > 0 ? friend.aliens[0].image : null,
+      element: friend.aliens.length > 0 ? friend.aliens[0].element.image : null,
       message: messageMap.get(friend.id) || { content: '', timestamp: '' },
     }));
   }
