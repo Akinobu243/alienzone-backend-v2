@@ -127,55 +127,6 @@ export class FriendsService {
     });
   }
 
-  // ... existing code ...
-
-  async getFriends(walletAddress: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { walletAddress },
-    });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-    const userId = user.id;
-
-    const friendships = await this.prisma.friendship.findMany({
-      where: {
-        OR: [{ userId }, { friendId: userId }],
-      },
-      include: {
-        user: true,
-        friend: true,
-      },
-    });
-
-    // Get friend IDs
-    const friendIds = friendships.map((f) =>
-      f.userId === userId ? f.friendId : f.userId,
-    );
-
-    // Fetch friends with their aliens
-    const friends = await this.prisma.user.findMany({
-      where: {
-        id: { in: friendIds },
-      },
-      include: {
-        aliens: {
-          where: { selected: true },
-          take: 1,
-        },
-      },
-    });
-
-    // Map to the required format
-    return friends.map((friend) => ({
-      id: friend.id,
-      name: friend.name,
-      level: friend.level,
-      image: friend.aliens.length > 0 ? friend.aliens[0].image : null,
-    }));
-  }
-
   async searchUsers(walletAddress: string, query: string, limit = 10) {
     if (!query || query.trim() === '') {
       return [];
@@ -254,24 +205,105 @@ export class FriendsService {
     }));
   }
 
-  // async getFriends(walletAddress: string) {
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { walletAddress },
-  //   });
+  async getFriends(walletAddress: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress },
+    });
 
-  //   if (!user) {
-  //     throw new BadRequestException('User not found');
-  //   }
-  //   const userId = user.id;
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    const userId = user.id;
 
-  //   const friendships = await this.prisma.friendship.findMany({
-  //     where: {
-  //       OR: [{ userId }, { friendId: userId }],
-  //     },
-  //   });
+    const friendships = await this.prisma.friendship.findMany({
+      where: {
+        OR: [{ userId }, { friendId: userId }],
+      },
+      include: {
+        user: true,
+        friend: true,
+      },
+    });
 
-  //   return friendships.map((f) =>
-  //     f.userId === userId ? f.friendId : f.userId,
-  //   );
-  // }
+    // Get friend IDs
+    const friendIds = friendships.map((f) =>
+      f.userId === userId ? f.friendId : f.userId,
+    );
+
+    // Fetch friends with their aliens
+    const friends = await this.prisma.user.findMany({
+      where: {
+        id: { in: friendIds },
+      },
+      include: {
+        aliens: {
+          where: { selected: true },
+          take: 1,
+        },
+      },
+    });
+
+    // Fetch last messages for each friend
+    const lastMessages = await Promise.all(
+      friendIds.map(async (friendId) => {
+        const message = await this.prisma.message.findFirst({
+          where: {
+            OR: [
+              { senderId: userId, receiverId: friendId },
+              { senderId: friendId, receiverId: userId },
+            ],
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            content: true,
+            createdAt: true,
+          },
+        });
+
+        return {
+          friendId,
+          message: message
+            ? {
+                content: message.content,
+                timestamp: this.formatRelativeTime(message.createdAt),
+              }
+            : null,
+        };
+      }),
+    );
+
+    // Create a map of friendId to last message for easy lookup
+    const messageMap = new Map(
+      lastMessages.map((item) => [item.friendId, item.message]),
+    );
+
+    // Map to the required format
+    return friends.map((friend) => ({
+      id: friend.id,
+      name: friend.name,
+      level: friend.level,
+      image: friend.aliens.length > 0 ? friend.aliens[0].image : null,
+      message: messageMap.get(friend.id) || { content: '', timestamp: '' },
+    }));
+  }
+
+  private formatRelativeTime(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    const diffMonth = Math.floor(diffDay / 30);
+    const diffYear = Math.floor(diffMonth / 12);
+
+    if (diffSec < 60) return `${diffSec}s`;
+    if (diffMin < 60) return `${diffMin}m`;
+    if (diffHour < 24) return `${diffHour}h`;
+    if (diffDay < 30) return `${diffDay}d`;
+    if (diffMonth < 12) return `${diffMonth}months`;
+    return `${diffYear}y`;
+  }
 }
