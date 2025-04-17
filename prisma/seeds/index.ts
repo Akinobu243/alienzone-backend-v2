@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 async function main() {
   try {
     console.log('Starting seed...');
-    // await seedParts(prisma);
+    await seedParts(prisma);
     await seedQuests(prisma);
     await seedCharacters(prisma);
     await seedAlienPartGroups(prisma);
