@@ -21,7 +21,7 @@ export class ChatController {
     @Body('receiverId') receiverId: number | null,
     @Body('content') content: string,
   ) {
-    return this.chatService.sendMessage(req.user.id, receiverId, content);
+    return this.chatService.sendMessage(req.walletAddress, receiverId, content);
   }
 
   @UseGuards(AuthGuard)
@@ -33,7 +33,7 @@ export class ChatController {
     @Query('limit') limit: number = 10,
   ) {
     return friendId
-      ? this.chatService.getMessages(req.user.id, friendId, offset, limit)
+      ? this.chatService.getMessages(req.walletAddress, friendId, offset, limit)
       : this.chatService.getGlobalMessages(offset, limit);
   }
 }
