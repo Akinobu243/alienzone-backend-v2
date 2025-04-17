@@ -9,8 +9,10 @@ import {
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('chat')
+@ApiTags('chat')
+@Controller('/chat')
 export class ChatController {
   constructor(private chatService: ChatService) {}
 

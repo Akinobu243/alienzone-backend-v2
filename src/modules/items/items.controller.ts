@@ -12,8 +12,10 @@ import { AdminGuard } from '../auth/guards/admin.guard';
 import { SetDailyRewardDto } from './dto/daily-rewards.dto';
 import { ItemQuality, ItemType } from '@prisma/client';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('items')
+@ApiTags('items')
+@Controller('/items')
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 

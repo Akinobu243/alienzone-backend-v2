@@ -8,8 +8,10 @@ import {
 } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('friends')
+@ApiTags('friends')
+@Controller('/friends')
 export class FriendsController {
   constructor(private friendsService: FriendsService) {}
 
