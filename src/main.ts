@@ -39,31 +39,9 @@ async function bootstrap() {
     new InvalidFormExceptionFilter(),
   );
 
-  // app.use(
-  //   cors({
-  //     origin: [process.env.FRONTEND_URL, process.env.FRONTEND_DEV_URL, '*'],
-  //     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  //     credentials: true,
-  //   }),
-  // );
-
   app.use(
     cors({
-      origin: (origin, callback) => {
-        const allowedOrigins = [
-          process.env.FRONTEND_URL,
-          process.env.FRONTEND_DEV_URL,
-          'https://nalikes-alienzone-frontend-v2.vercel.app',
-        ].filter(Boolean);
-
-        // Allow requests with no origin (like mobile apps, curl, etc.)
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-          callback(null, true);
-        } else {
-          console.log(`Blocked by CORS: ${origin}`);
-          callback(null, true); // Temporarily allow all origins while debugging
-        }
-      },
+      origin: [process.env.FRONTEND_URL, process.env.FRONTEND_DEV_URL, '*'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: true,
     }),
