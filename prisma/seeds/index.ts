@@ -11,7 +11,7 @@ async function main() {
     await seedParts(prisma);
     await seedQuests(prisma);
     await seedCharacters(prisma);
-    await seedAlienPartGroups(prisma);
+    // await seedAlienPartGroups(prisma);
     console.log('Seed completed successfully');
   } catch (error) {
     console.error('Error during seeding:', error);
