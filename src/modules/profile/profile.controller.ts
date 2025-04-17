@@ -10,8 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
-import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -167,19 +166,16 @@ export class ProfileController {
   @Get('/get-team')
   @ApiQuery({ name: 'walletAddress', type: String, required: false })
   async getTeam(@Request() req) {
-    let walletAddress = req.query.walletAddress ?? req.walletAddress;
+    const walletAddress = req.query.walletAddress ?? req.walletAddress;
     return this.profileService.getTeam(walletAddress);
   }
 
   @UseGuards(AuthGuard)
-  @Post('/get-equipped-alien-parts')
-  async getEquippedAlienParts(
-    @Request() req,
-    @Body('alienId') alienId: number,
-  ) {
+  @Get('/get-equipped-alien-parts')
+  async getEquippedAlienParts(@Request() req) {
     return this.profileService.getEquippedAlienParts(
       req.walletAddress,
-      alienId,
+      req.alienId,
     );
   }
 
@@ -194,12 +190,26 @@ export class ProfileController {
   async equipAlienPart(
     @Request() req,
     @Body('alienId') alienId: number,
-    @Body('partId') partId: number,
+    @Body('partIds') partIds: number[],
   ) {
     return this.profileService.equipAlienPart(
       req.walletAddress,
       alienId,
-      partId,
+      partIds,
     );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/update-alien-image')
+  @UseInterceptors(FileInterceptor('image'))
+  async updateAlienImage(
+    @Body('alienId') alienId: number,
+    @UploadedFile() image: Express.Multer.File,
+    @Request() req,
+  ) {
+    console.log('updateAlienImage', req.walletAddress, alienId, image);
+
+    const walletAddress = req.walletAddress.toLowerCase();
+    return this.profileService.updateAlienImage(walletAddress, alienId, image);
   }
 }

@@ -43,9 +43,9 @@ export class ProfileService {
         },
       });
 
-      var isStarBoostActive = false,
-        isXpBoostActive = false,
-        isRaidBoostActive = false;
+      let isStarBoostActive = false;
+      let isXpBoostActive = false;
+      let isRaidBoostActive = false;
       if (user.starsBoost > 0) {
         isStarBoostActive =
           new Date().getTime() - user.lastStarBoost.getTime() <
@@ -98,10 +98,33 @@ export class ProfileService {
           id: Number(createAlienDTO.elementId),
         },
       });
+
       if (!element) {
         throw new BadRequestException('Element not found');
       }
 
+      // Check if face and hair parts exist if provided
+      if (createAlienDTO.faceId) {
+        const face = await this.prisma.alienPart.findUnique({
+          where: { id: Number(createAlienDTO.faceId) },
+        });
+
+        if (!face) {
+          throw new BadRequestException('Face part not found');
+        }
+      }
+
+      if (createAlienDTO.hairId) {
+        const hair = await this.prisma.alienPart.findUnique({
+          where: { id: Number(createAlienDTO.hairId) },
+        });
+
+        if (!hair) {
+          throw new BadRequestException('Hair part not found');
+        }
+      }
+
+      // Create alien with face and hair if provided
       const alien = await this.prisma.alien.create({
         data: {
           name: createAlienDTO.name,
@@ -118,6 +141,16 @@ export class ProfileService {
           user: {
             connect: { walletAddress },
           },
+          ...(createAlienDTO.faceId && {
+            face: {
+              connect: { id: Number(createAlienDTO.faceId) },
+            },
+          }),
+          ...(createAlienDTO.hairId && {
+            hair: {
+              connect: { id: Number(createAlienDTO.hairId) },
+            },
+          }),
         },
       });
 
@@ -600,7 +633,7 @@ export class ProfileService {
 
   public async claimDailyReward(walletAddress: string) {
     try {
-      var user = await this.prisma.user.findUnique({
+      let user = await this.prisma.user.findUnique({
         where: {
           walletAddress,
         },
@@ -644,6 +677,7 @@ export class ProfileService {
         }
 
         const timeDifference = today.getTime() - lastClaimed.getTime();
+
         if (
           timeDifference >= 24 * 60 * 60 * 1000 &&
           timeDifference <= 48 * 60 * 60 * 1000
@@ -1104,9 +1138,9 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      var isStarBoostActive = false,
-        isXpBoostActive = false,
-        isRaidBoostActive = false;
+      let isStarBoostActive = false;
+      let isXpBoostActive = false;
+      let isRaidBoostActive = false;
       if (user.starsBoost > 0) {
         isStarBoostActive =
           new Date().getTime() - user.lastStarBoost.getTime() <
@@ -1148,8 +1182,8 @@ export class ProfileService {
       });
 
       let teamStrengthPoints = 0;
-      let synergies = {};
-      let teamResponse = [];
+      const synergies = {};
+      const teamResponse = [];
       for (const character of characters) {
         teamStrengthPoints += character.character.power;
         synergies[character.character.element.name] =
@@ -1208,6 +1242,8 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
+      // console.log('user ====>', user);
+
       const alien = await this.prisma.alien.findFirst({
         where: {
           id: alienId,
@@ -1224,8 +1260,11 @@ export class ProfileService {
           powers: true,
           accessories: true,
           face: true,
+          element: true,
         },
       });
+
+      // console.log('alien ====>', alien);
 
       if (!alien) {
         throw new BadRequestException('Alien not found');
@@ -1242,6 +1281,7 @@ export class ProfileService {
         powers: alien.powers,
         accessories: alien.accessories,
         face: alien.face,
+        background: alien.element,
       };
 
       return parts;
@@ -1263,6 +1303,8 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
+      // console.log('user', user);
+
       const userAlienParts = await this.prisma.alienPartGroup.findMany({
         where: {
           userId: user.id,
@@ -1272,7 +1314,23 @@ export class ProfileService {
         },
       });
 
-      return userAlienParts;
+      const elements = await this.prisma.userElement.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          element: true,
+        },
+      });
+
+      const elementsArray = elements.map((element) => element.element);
+      // console.log('userAlienParts', userAlienParts);
+
+      return {
+        success: true,
+        userAlienParts,
+        elements: elementsArray,
+      };
     } catch (error) {
       return {
         success: false,
@@ -1284,7 +1342,7 @@ export class ProfileService {
   public async equipAlienPart(
     walletAddress: string,
     alienId: number,
-    partId: number,
+    partIds: number[],
   ) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -1293,6 +1351,14 @@ export class ProfileService {
 
       if (!user) {
         throw new BadRequestException('User not found');
+      }
+
+      if (user.stars < 150) {
+        return {
+          success: false,
+          message:
+            "You don't have enough stars. 150 stars required to equip parts.",
+        };
       }
 
       const alien = await this.prisma.alien.findFirst({
@@ -1306,14 +1372,6 @@ export class ProfileService {
         throw new BadRequestException('Alien not found');
       }
 
-      const part = await this.prisma.alienPart.findUnique({
-        where: { id: partId },
-      });
-
-      if (!part) {
-        throw new BadRequestException('Alien part not found');
-      }
-
       const userAlienPartGroup = await this.prisma.alienPartGroup.findFirst({
         where: {
           userId: user.id,
@@ -1323,13 +1381,20 @@ export class ProfileService {
         },
       });
 
+      // Get user's elements
+      const userElements = await this.prisma.userElement.findMany({
+        where: {
+          userId: user.id,
+        },
+        select: {
+          elementId: true,
+        },
+      });
+
+      const userElementIds = userElements.map((ue) => ue.elementId);
+
       const userAlienParts = userAlienPartGroup.parts;
 
-      if (!userAlienParts.some((userPart) => userPart.id === partId)) {
-        throw new BadRequestException('Alien part not found in user inventory');
-      }
-
-      // Determine the field to update based on the part type
       const partFieldMap = {
         BODY: 'bodyId',
         CLOTHES: 'clothesId',
@@ -1343,16 +1408,83 @@ export class ProfileService {
         FACE: 'faceId',
       };
 
-      const partField = partFieldMap[part.type];
-      if (!partField) {
-        throw new BadRequestException('Invalid part type');
+      // Prepare update data
+      const updateData = {};
+
+      // Process each part ID
+      for (const partId of partIds) {
+        // First check if it's an element
+        const element = await this.prisma.element.findUnique({
+          where: { id: partId },
+        });
+
+        if (element) {
+          // This is an element ID
+          if (!userElementIds.includes(partId)) {
+            throw new BadRequestException(
+              `Element with ID ${partId} not found in user inventory`,
+            );
+          }
+
+          // Update the element
+          updateData['elementId'] = partId;
+          continue; // Skip to next iteration
+        }
+
+        const part = await this.prisma.alienPart.findUnique({
+          where: { id: partId },
+        });
+
+        if (!part) {
+          throw new BadRequestException(
+            `Alien part with ID ${partId} not found`,
+          );
+        }
+
+        if (!userAlienParts.some((userPart) => userPart.id === partId)) {
+          throw new BadRequestException(
+            `Alien part with ID ${partId} not found in user inventory`,
+          );
+        }
+
+        const partField = partFieldMap[part.type];
+
+        if (!partField) {
+          throw new BadRequestException(
+            `Invalid part type for part ID ${partId}`,
+          );
+        }
+
+        // Add to update data
+        updateData[partField] = part.id;
       }
 
-      // Update the alien with the new part
-      await this.prisma.alien.update({
+      // Update the alien with all the new parts in a single operation
+      const updatedAlien = await this.prisma.alien.update({
         where: { id: alien.id },
+        data: updateData,
+        include: {
+          body: true,
+          clothes: true,
+          head: true,
+          eyes: true,
+          mouth: true,
+          hair: true,
+          marks: true,
+          powers: true,
+          accessories: true,
+          face: true,
+          element: true,
+        },
+      });
+
+      // Deduct stars from user after successful equipping
+      await this.prisma.user.update({
+        where: { id: user.id },
         data: {
-          [partField]: part.id,
+          stars: {
+            decrement: 150,
+          },
         },
       });
 
@@ -1360,7 +1492,75 @@ export class ProfileService {
 
       return {
         success: true,
-        message: `Part of type ${part.type} equipped successfully`,
+        message: `${partIds.length} parts equipped successfully`,
+        alien: updatedAlien,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async updateAlienImage(
+    walletAddress: string,
+    alienId: number,
+    image: Express.Multer.File,
+  ) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alien = await this.prisma.alien.findFirst({
+        where: {
+          id: Number(alienId),
+          userId: user.id,
+        },
+      });
+
+      console.log('alien ====>', alien);
+      if (!alien) {
+        throw new BadRequestException(
+          'Alien not found or does not belong to this user',
+        );
+      }
+
+      // Upload new image to S3
+      try {
+        const uploadParams = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: `aliens/${alien.id}_${alien.name}.png`,
+          Body: image.buffer,
+          ContentType: 'image/png',
+        };
+        const uploadCommand = new PutObjectCommand(uploadParams);
+        await this.s3.send(uploadCommand);
+      } catch (error) {
+        console.error(`Error uploading image to S3: ${error}`);
+        throw new BadRequestException('Failed to upload image to S3');
+      }
+
+      console.log('image uploaded to S3');
+
+      // Update alien record with new image URL
+      const updatedAlien = await this.prisma.alien.update({
+        where: {
+          id: alien.id,
+        },
+        data: {
+          image: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${alien.name}.png`,
+        },
+      });
+
+      return {
+        success: true,
+        alien: updatedAlien,
       };
     } catch (error) {
       return {

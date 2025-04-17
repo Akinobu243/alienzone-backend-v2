@@ -16,7 +16,10 @@ import { InvalidFormExceptionFilter } from './filters/invalid.form.exception.fil
 import { AllExceptionsFilter } from './filters/all.exceptions.filter';
 
 async function bootstrap() {
-  const useSSL = process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH && process.env.HTTPS_PORT;
+  const useSSL =
+    process.env.SSL_KEY_PATH &&
+    process.env.SSL_CERT_PATH &&
+    process.env.HTTPS_PORT;
   let httpsOptions = null;
   if (useSSL) {
     httpsOptions = {
@@ -36,9 +39,31 @@ async function bootstrap() {
     new InvalidFormExceptionFilter(),
   );
 
+  // app.use(
+  //   cors({
+  //     origin: [process.env.FRONTEND_URL, process.env.FRONTEND_DEV_URL, '*'],
+  //     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  //     credentials: true,
+  //   }),
+  // );
+
   app.use(
     cors({
-      origin: [process.env.FRONTEND_URL, '*'],
+      origin: (origin, callback) => {
+        const allowedOrigins = [
+          process.env.FRONTEND_URL,
+          process.env.FRONTEND_DEV_URL,
+          'https://nalikes-alienzone-frontend-v2.vercel.app',
+        ].filter(Boolean);
+
+        // Allow requests with no origin (like mobile apps, curl, etc.)
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          console.log(`Blocked by CORS: ${origin}`);
+          callback(null, true); // Temporarily allow all origins while debugging
+        }
+      },
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: true,
     }),
@@ -79,7 +104,10 @@ async function bootstrap() {
     SwaggerModule.setup(swaggerConfig.path || 'api', app, document);
   }
 
-  const PORT =  (useSSL ? process.env.HTTPS_PORT : null) || process.env.PORT || GLOBAL_CONFIG.nest.port;
+  const PORT =
+    (useSSL ? process.env.HTTPS_PORT : null) ||
+    process.env.PORT ||
+    GLOBAL_CONFIG.nest.port;
   await app.listen(PORT, '0.0.0.0', async () => {
     const myLogger = await app.resolve(MyLogger);
     myLogger.log(`Server started listening: ${PORT}`);
