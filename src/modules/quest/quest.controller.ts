@@ -10,8 +10,8 @@ import { QuestService } from './quest.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('quest')
-@Controller('quest')
+@ApiTags('quests')
+@Controller('quests')
 export class QuestController {
   constructor(private readonly questService: QuestService) {}
 
