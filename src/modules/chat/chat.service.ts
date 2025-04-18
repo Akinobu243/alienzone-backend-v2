@@ -62,8 +62,8 @@ export class ChatService {
         },
       },
       orderBy: { createdAt: 'asc' },
-      skip: offset,
-      take: limit,
+      // skip: offset,
+      // take: limit,
     });
 
     // Convert createdAt to Unix timestamp in milliseconds
