@@ -36,6 +36,19 @@ export class QuestService {
           currentProgress: quest.userQuests[0]?.currentProgress || 0,
           isCompleted: quest.userQuests[0]?.isCompleted || false,
         })),
+        dailyResetTime: new Date(
+          new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        weeklyResetTime: (() => {
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const daysUntilNextMonday = (8 - dayOfWeek) % 7 || 7;
+          const nextMonday = new Date(
+            now.setHours(0, 0, 0, 0) +
+              daysUntilNextMonday * 24 * 60 * 60 * 1000,
+          );
+          return nextMonday.toISOString();
+        })(),
       };
     } catch (error) {
       return { success: false, error };
