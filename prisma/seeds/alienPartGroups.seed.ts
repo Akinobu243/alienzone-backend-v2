@@ -72,7 +72,7 @@ export async function seed(prisma: PrismaClient) {
     // Find the user with the specified wallet address
     const user = await prisma.user.findUnique({
       where: {
-        walletAddress: '0x955c7030b8312495a2f7113d145f70368cfddc5e',
+        walletAddress: '0x5e5f66760933bf543db9c6cc6096ad30ceadabbc',
       },
     });
 
@@ -82,6 +82,20 @@ export async function seed(prisma: PrismaClient) {
       );
       return;
     }
+
+    // Award 200 stars to the user
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        stars: {
+          increment: 200,
+        },
+      },
+    });
+
+    console.log(`Awarded 200 stars to user ${user.name}`);
 
     // Find elements to associate with the groups - don't create new ones
     const elements = await prisma.element.findMany();
