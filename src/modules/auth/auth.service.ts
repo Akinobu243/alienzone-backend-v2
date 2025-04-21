@@ -19,6 +19,7 @@ import {
 } from 'src/shared/constants/strings';
 import { ADMIN_ROLE, USER_ROLE } from './auth.constants';
 import { ethers } from 'ethers';
+import { QuestService } from '../quest/quest.service';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,7 @@ export class AuthService {
     private userService: UserService,
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private questService: QuestService,
   ) {}
 
   public async authenticate(
@@ -107,7 +109,6 @@ export class AuthService {
         },
       });
 
-
       if (totalReferals === parseInt(process.env.MAX_REFFERAL_COUNT || '5')) {
         referrer = null;
       }
@@ -162,6 +163,12 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: GLOBAL_CONFIG.security.expiresIn,
     });
+
+    try {
+      await this.questService.progressLoginQuest(user.walletAddress);
+    } catch (error) {
+      console.error('Error progressing login quest:', error);
+    }
 
     return {
       walletAddress: user.walletAddress,

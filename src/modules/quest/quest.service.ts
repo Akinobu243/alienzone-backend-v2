@@ -194,7 +194,7 @@ export class QuestService {
     }
   }
 
-  public async login(walletAddress: string) {
+  public async progressLoginQuest(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -614,7 +614,7 @@ export class QuestService {
     }
   }
 
-  @Cron(CronExpression.EVERY_WEEK)
+  @Cron('0 0 * * 1') // Every Monday at midnight
   async handleWeeklyQuestReset() {
     try {
       await this.resetWeeklyQuests();

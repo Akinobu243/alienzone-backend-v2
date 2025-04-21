@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtStrategy } from './auth.jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { QuestModule } from '../quest/quest.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuthService } from './auth.service';
       secret: JWT_SECRET,
     }),
     PrismaModule,
+    QuestModule,
   ],
   providers: [UserService, AuthService, JwtStrategy, PrismaService],
   controllers: [AuthController],
