@@ -408,6 +408,7 @@ export class QuestService {
     }
   }
 
+  // TODO: implement this function
   public async progressBuyQuest(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({

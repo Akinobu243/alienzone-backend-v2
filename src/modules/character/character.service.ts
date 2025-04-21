@@ -247,9 +247,12 @@ export class CharacterService {
         },
       });
 
-      // Call progressURCharactersQuest if a UR character is summoned
-      if (rolledRarity === 'UR') {
-        await this.questService.progressURCharactersQuest(walletAddress);
+      try {
+        if (rolledRarity === 'UR') {
+          await this.questService.progressURCharactersQuest(walletAddress);
+        }
+      } catch (error) {
+        console.error('Error progressing UR characters quest:', error);
       }
 
       return {
@@ -932,9 +935,12 @@ export class CharacterService {
         throw new BadRequestException('Character is already ready to upgrade');
       }
 
-      // Call progressT3CharactersQuest if character is T3
-      if (character.character.tier === 3) {
-        await this.questService.progressT3CharactersQuest(walletAddress);
+      try {
+        if (character.character.tier === 3) {
+          await this.questService.progressT3CharactersQuest(walletAddress);
+        }
+      } catch (error) {
+        console.error('Error progressing T3 characters quest:', error);
       }
 
       if (character.quantity < character.character.upgradeReq) {

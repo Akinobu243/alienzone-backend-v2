@@ -171,8 +171,11 @@ export class RaidsService {
 
       const raidHistory = await this.prisma.raidHistory.create({ data });
 
-      // Call progressRaidQuest
-      await this.questService.progressRaidQuest(userWalletAddress);
+      try {
+        await this.questService.progressRaidQuest(userWalletAddress);
+      } catch (error) {
+        console.error('Error progressing raid quest:', error);
+      }
 
       return {
         success: true,
@@ -314,8 +317,11 @@ export class RaidsService {
                 data: { level: userLevel + 1 },
               });
 
-              // Call progressLevelQuest
-              await this.questService.progressLevelQuest(user.walletAddress);
+              try {
+                await this.questService.progressLevelQuest(user.walletAddress);
+              } catch (error) {
+                console.error('Error progressing level quest:', error);
+              }
             }
           }
 

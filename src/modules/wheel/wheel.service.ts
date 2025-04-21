@@ -46,7 +46,11 @@ export class WheelService {
         },
       });
 
-      await this.questService.progressWheelQuest(walletAddress);
+      try {
+        await this.questService.progressWheelQuest(walletAddress);
+      } catch (error) {
+        console.error('Error progressing wheel quest:', error);
+      }
 
       return { success: true, result };
     } catch (error) {
