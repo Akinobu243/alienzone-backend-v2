@@ -379,6 +379,9 @@ export async function seed(prisma: PrismaClient) {
       await prisma.alien.deleteMany({});
     }
 
+    // Delete UserElement records first since they reference elements
+    await prisma.userElement.deleteMany({});
+
     // Now it's safe to delete elements
     await prisma.element.deleteMany({});
 
