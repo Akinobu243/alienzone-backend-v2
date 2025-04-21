@@ -1,9 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestService } from '../quest/quest.service';
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly questService: QuestService,
+  ) {}
 
   async sendMessage(
     walletAddress: string,
@@ -18,6 +22,12 @@ export class ChatService {
 
     if (!content.trim()) {
       throw new BadRequestException('Message content cannot be empty');
+    }
+
+    try {
+      await this.questService.progressMessageQuest(walletAddress);
+    } catch (error) {
+      console.error('Error progressing message quest:', error);
     }
 
     return this.prisma.message.create({
