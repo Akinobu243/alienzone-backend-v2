@@ -1242,8 +1242,6 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      // console.log('user ====>', user);
-
       const alien = await this.prisma.alien.findFirst({
         where: {
           id: alienId,
@@ -1263,8 +1261,6 @@ export class ProfileService {
           element: true,
         },
       });
-
-      // console.log('alien ====>', alien);
 
       if (!alien) {
         throw new BadRequestException('Alien not found');
@@ -1303,8 +1299,6 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      // console.log('user', user);
-
       const userAlienParts = await this.prisma.alienPartGroup.findMany({
         where: {
           userId: user.id,
@@ -1324,7 +1318,6 @@ export class ProfileService {
       });
 
       const elementsArray = elements.map((element) => element.element);
-      // console.log('userAlienParts', userAlienParts);
 
       return {
         success: true,
@@ -1372,7 +1365,7 @@ export class ProfileService {
         throw new BadRequestException('Alien not found');
       }
 
-      const userAlienPartGroup = await this.prisma.alienPartGroup.findFirst({
+      const userAlienPartGroup = await this.prisma.alienPartGroup.findMany({
         where: {
           userId: user.id,
         },
@@ -1393,7 +1386,7 @@ export class ProfileService {
 
       const userElementIds = userElements.map((ue) => ue.elementId);
 
-      const userAlienParts = userAlienPartGroup.parts;
+      const userAlienParts = userAlienPartGroup.flatMap((group) => group.parts);
 
       const partFieldMap = {
         BODY: 'bodyId',
