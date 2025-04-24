@@ -8,10 +8,14 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { StoreService } from '../store/store.service';
 
 @Injectable()
 export class ProfileService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storeService: StoreService,
+  ) {}
 
   private s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -1303,9 +1307,7 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      // console.log('user', user);
-
-      const userAlienParts = await this.prisma.alienPartGroup.findMany({
+      const userAlienPartGroups = await this.prisma.alienPartGroup.findMany({
         where: {
           userId: user.id,
         },
@@ -1324,7 +1326,20 @@ export class ProfileService {
       });
 
       const elementsArray = elements.map((element) => element.element);
-      // console.log('userAlienParts', userAlienParts);
+
+      // Fetch owned wearables and their associated alien parts
+      const ownedWearables = await this.storeService.getUserWearables(
+        walletAddress,
+      );
+      const wearableAlienParts = ownedWearables
+        .filter((wearable) => wearable.alienPart)
+        .map((wearable) => wearable.alienPart);
+
+      // Combine userAlienParts and wearableAlienParts into a single array
+      const userAlienParts = [
+        ...userAlienPartGroups.flatMap((group) => group.parts),
+        ...wearableAlienParts,
+      ];
 
       return {
         success: true,
