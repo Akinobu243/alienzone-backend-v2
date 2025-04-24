@@ -473,7 +473,11 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      const dailyRewards = await this.prisma.dailyReward.findMany();
+      const dailyRewards = await this.prisma.dailyReward.findMany({
+        orderBy: {
+          id: 'asc',
+        },
+      });
 
       return {
         success: true,

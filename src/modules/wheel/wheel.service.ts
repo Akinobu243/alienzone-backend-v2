@@ -112,6 +112,7 @@ export class WheelService {
 
   private getWheelResult() {
     const random = Math.random() * 100;
+
     if (random < 20) return { type: 'stars', amount: 20 };
     if (random < 50)
       return {
@@ -154,6 +155,7 @@ export class WheelService {
               quality: result.itemQuality,
             },
           });
+
           if (item) {
             const userItem = await this.prisma.userItem.findFirst({
               where: {

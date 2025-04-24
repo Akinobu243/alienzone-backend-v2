@@ -33,6 +33,7 @@ export class QuestService {
           description: quest.description,
           requiredNumber: quest.requiredNumber,
           rewards: quest.rewards,
+          isClaimed: quest.userQuests[0]?.isClaimed || false,
           currentProgress: quest.userQuests[0]?.currentProgress || 0,
           isCompleted: quest.userQuests[0]?.isCompleted || false,
         })),
@@ -66,7 +67,7 @@ export class QuestService {
       }
 
       const userQuest = await this.prisma.userQuest.findFirst({
-        where: { userId: user.id, questId },
+        where: { userId: user.id, questId: Number(questId) },
         include: { quest: true },
       });
 
@@ -80,6 +81,7 @@ export class QuestService {
       };
 
       const updateData: any = {};
+
       if (rewards.stars) {
         updateData.stars = { increment: rewards.stars };
       }
@@ -92,7 +94,11 @@ export class QuestService {
           where: { id: user.id },
           data: updateData,
         }),
-        this.prisma.userQuest.delete({ where: { id: userQuest.id } }),
+        this.prisma.userQuest.update({
+          where: { id: userQuest.id },
+          data: { isClaimed: true },
+        }),
+        // this.prisma.userQuest.delete({ where: { id: userQuest.id } }),
       ]);
 
       return { success: true, message: 'Rewards claimed successfully' };
@@ -165,7 +171,7 @@ export class QuestService {
       for (const quest of dailyQuests) {
         await this.prisma.userQuest.updateMany({
           where: { questId: quest.id, isCompleted: true },
-          data: { currentProgress: 0, isCompleted: false },
+          data: { currentProgress: 0, isCompleted: false, isClaimed: false },
         });
       }
 
@@ -184,7 +190,7 @@ export class QuestService {
       for (const quest of weeklyQuests) {
         await this.prisma.userQuest.updateMany({
           where: { questId: quest.id, isCompleted: true },
-          data: { currentProgress: 0, isCompleted: false },
+          data: { currentProgress: 0, isCompleted: false, isClaimed: false },
         });
       }
 
