@@ -95,6 +95,19 @@ export async function seed(prisma: PrismaClient) {
       },
     });
 
+    // console.log(`Awarded 200 stars to user ${user.name}`);
+
+    // // Find elements to associate with the groups - don't create new ones
+    // const elements = await prisma.element.findMany();
+
+    // const elementMap = elements.reduce((map, element) => {
+    //   map[element.name] = element.id;
+    //   return map;
+    // }, {});
+
+    // // Find alien parts to include in the groups
+    // const alienParts = await prisma.alienPart.findMany();
+
     console.log(`Awarded 200 stars to user ${user.name}`);
 
     // Find elements to associate with the groups - don't create new ones
@@ -107,6 +120,41 @@ export async function seed(prisma: PrismaClient) {
 
     // Find alien parts to include in the groups
     const alienParts = await prisma.alienPart.findMany();
+
+    // Get the user with their alien parts
+    const userWithParts = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      include: {
+        AlienParts: true,
+      },
+    });
+
+    // Get IDs of parts the user already has
+    const userAlienPartIds = userWithParts.AlienParts.map((part) => part.id);
+
+    // Find parts that need to be added to user inventory
+    const partsToAdd = alienParts
+      .filter((part) => !userAlienPartIds.includes(part.id))
+      .map((part) => ({ id: part.id }));
+
+    // Add missing parts to user inventory
+    if (partsToAdd.length > 0) {
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          AlienParts: {
+            connect: partsToAdd,
+          },
+        },
+      });
+      console.log(
+        `Added ${partsToAdd.length} missing alien parts to user inventory`,
+      );
+    }
 
     // Group parts by type
     const partsByType = alienParts.reduce((acc, part) => {

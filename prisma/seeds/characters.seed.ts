@@ -3,6 +3,7 @@ import { PrismaClient, CharacterRarity } from '@prisma/client';
 export async function seed(prisma: PrismaClient) {
   // First, get element IDs to reference
   const elements = await prisma.element.findMany();
+  await prisma.character.deleteMany();
   if (elements.length === 0) {
     throw new Error('Elements must be seeded first');
   }
@@ -13,7 +14,7 @@ export async function seed(prisma: PrismaClient) {
       name: 'Character 1',
       rarity: CharacterRarity.R,
       power: 100,
-      image: 'character1.png',
+      image: 'https://alienzone-v2.s3.amazonaws.com/characters/zion.jpg',
       video: null,
       tokenId: 1,
       upgradeReq: null,
@@ -24,7 +25,7 @@ export async function seed(prisma: PrismaClient) {
       name: 'Character 2',
       rarity: CharacterRarity.SR,
       power: 200,
-      image: 'character2.png',
+      image: 'https://alienzone-v2.s3.amazonaws.com/characters/zoe.jpg',
       video: 'character2.mp4',
       tokenId: 2,
       upgradeReq: 3,
