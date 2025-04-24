@@ -532,6 +532,7 @@ model UserQuest {
   questId        Int
   currentProgress Int      @default(0)
   isCompleted    Boolean   @default(false)
+  isClaimed      Boolean   @default(false)
   user           User      @relation(fields: [userId], references: [id])
   quest          Quest     @relation(fields: [questId], references: [id])
   createdAt      DateTime  @default(now())
