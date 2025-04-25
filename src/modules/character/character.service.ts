@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { QuestService } from '../quest/quest.service'; // Import QuestService
+import { QuestService } from '../quest/quest.service';
 import {
   CharacterRarity,
   CharacterTransactionType,
@@ -13,7 +13,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   multiCharacterSummonCost,
   singleCharacterSummonCost,
-} from 'src/configs/global.config';
+} from '../../configs/global.config';
 import { CharacterContractABI } from './character.contract.abi';
 import * as AWS from 'aws-sdk';
 
