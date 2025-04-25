@@ -1,4 +1,5 @@
 import {
+  AlienPartType,
   DailyRewardType,
   ItemQuality,
   ItemType,
@@ -112,14 +113,14 @@ export class ProfileService {
         throw new BadRequestException('Element not found');
       }
 
-      // Check if face and hair parts exist if provided
-      if (createAlienDTO.faceId) {
+      // Check if eyes and hair parts exist if provided
+      if (createAlienDTO.eyesId) {
         const face = await this.prisma.alienPart.findUnique({
-          where: { id: Number(createAlienDTO.faceId) },
+          where: { id: Number(createAlienDTO.eyesId) },
         });
 
         if (!face) {
-          throw new BadRequestException('Face part not found');
+          throw new BadRequestException('Eyes part not found');
         }
       }
 
@@ -130,6 +131,16 @@ export class ProfileService {
 
         if (!hair) {
           throw new BadRequestException('Hair part not found');
+        }
+      }
+
+      if (createAlienDTO.mouthId) {
+        const mouth = await this.prisma.alienPart.findUnique({
+          where: { id: Number(createAlienDTO.mouthId) },
+        });
+
+        if (!mouth) {
+          throw new BadRequestException('Mouth part not found');
         }
       }
 
@@ -147,11 +158,14 @@ export class ProfileService {
           user: {
             connect: { walletAddress },
           },
-          face: {
-            connect: { id: Number(createAlienDTO.faceId) },
+          eyes: {
+            connect: { id: Number(createAlienDTO.eyesId) },
           },
           hair: {
             connect: { id: Number(createAlienDTO.hairId) },
+          },
+          mouth: {
+            connect: { id: Number(createAlienDTO.mouthId) },
           },
         },
       });
@@ -1703,6 +1717,9 @@ export class ProfileService {
         where: {
           isDefault: true,
           isForgeable: false,
+          type: {
+            in: [AlienPartType.HAIR, AlienPartType.EYES, AlienPartType.MOUTH],
+          },
         },
       });
 

@@ -16,9 +16,13 @@ export class CreateAlienDTO {
 
   @IsNumber()
   @ApiProperty()
-  faceId: number;
+  eyesId: number;
 
   @IsNumber()
   @ApiProperty()
   hairId: number;
+
+  @IsNumber()
+  @ApiProperty()
+  mouthId: number;
 }
