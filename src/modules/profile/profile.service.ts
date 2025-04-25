@@ -133,7 +133,6 @@ export class ProfileService {
         }
       }
 
-      // Create alien with face and hair if provided
       const alien = await this.prisma.alien.create({
         data: {
           name: createAlienDTO.name,
@@ -148,16 +147,12 @@ export class ProfileService {
           user: {
             connect: { walletAddress },
           },
-          ...(createAlienDTO.faceId && {
-            face: {
-              connect: { id: Number(createAlienDTO.faceId) },
-            },
-          }),
-          ...(createAlienDTO.hairId && {
-            hair: {
-              connect: { id: Number(createAlienDTO.hairId) },
-            },
-          }),
+          face: {
+            connect: { id: Number(createAlienDTO.faceId) },
+          },
+          hair: {
+            connect: { id: Number(createAlienDTO.hairId) },
+          },
         },
       });
 
@@ -1689,6 +1684,46 @@ export class ProfileService {
       });
 
       return { success: true };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async getDefaultAlienParts(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alienParts = await this.prisma.alienPart.findMany({
+        where: {
+          isDefault: true,
+          isForgeable: false,
+        },
+      });
+
+      if (!alienParts || alienParts.length === 0) {
+        throw new BadRequestException('Alien parts not found');
+      }
+
+      const alienPartData = alienParts.map((part) => {
+        return {
+          id: part.id,
+          name: part.name,
+          description: part.description,
+          type: part.type,
+          image: part.image,
+        };
+      });
+
+      return {
+        success: true,
+        alienParts: alienPartData,
+      };
     } catch (error) {
       return { success: false, error };
     }

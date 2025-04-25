@@ -1,24 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 export class CreateAlienDTO {
   @IsString()
   @ApiProperty()
   name: string;
 
-  @IsString()
+  @IsNumber()
   @ApiProperty()
-  elementId: string;
+  elementId: number;
 
   @IsString()
   @ApiProperty()
   strengthPoints: string;
 
-  @IsString()
+  @IsNumber()
   @ApiProperty()
-  faceId: string;
+  faceId: number;
 
-  @IsString()
+  @IsNumber()
   @ApiProperty()
-  hairId: string;
+  hairId: number;
 }

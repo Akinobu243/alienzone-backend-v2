@@ -259,4 +259,12 @@ export class ProfileController {
       alienPartId,
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Get('/get-default-alien-parts')
+  async getDefaultAlienParts(@Request() req) {
+    return this.profileService.getDefaultAlienParts(
+      req.walletAddress.toLowerCase(),
+    );
+  }
 }
