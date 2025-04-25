@@ -205,8 +205,6 @@ model Alien {
   powersId       Int?
   accessories    AlienPart?    @relation("AccessoriesPart", fields: [accessoriesId], references: [id])
   accessoriesId  Int?
-  face           AlienPart?    @relation("FacePart", fields: [faceId], references: [id])
-  faceId         Int?
 }
 
 model Element {
@@ -410,7 +408,6 @@ model AlienPart {
   marksAliens       Alien[] @relation("MarksPart")
   powersAliens      Alien[] @relation("PowersPart")
   accessoriesAliens Alien[] @relation("AccessoriesPart")
-  faceAliens        Alien[] @relation("FacePart")
 }
 
 model AlienPartGroup {
