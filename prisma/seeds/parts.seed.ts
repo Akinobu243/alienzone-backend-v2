@@ -1,4 +1,4 @@
-import { PrismaClient, AlienPartType } from '@prisma/client';
+import { PrismaClient, AlienPartType, RuneType } from '@prisma/client';
 
 export async function seed(prisma: PrismaClient) {
   const elements = [
@@ -469,6 +469,18 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/marks/ninja.png',
         price: 1,
         isDefault: false,
+      },
+      {
+        type: AlienPartType.HAIR,
+        name: 'Prisoner Alien Hair',
+        description: 'The hair of an prisoner alien',
+        image:
+          'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/prisoner.png',
+        price: 1,
+        isDefault: false,
+        isForgeable: true,
+        forgeRuneType: RuneType.COMMON,
+        forgeRuneAmount: 10,
       },
     ];
 

@@ -93,7 +93,11 @@ model User {
   stars                 Int
   RaidHistory           RaidHistory[]
   aliens                Alien[]
-  characters            UserCharacter[]
+  characterIds          Int[]                 @default([])
+  teamCharacterIds      Int[]                 @default([])
+  teamAlienIds          Int[]                 @default([])
+  raidAlienIds          Int[]                 @default([])
+  raidCharacterIds      Int[]                 @default([])
   unmintedCharacters    UnmintedCharacter[]
   items                 UserItem[]
   runes                 RuneType[]
@@ -141,6 +145,7 @@ model Raid {
   RaidHistory RaidHistory[]
   element     Element       @relation(fields: [elementId], references: [id])
   elementId   Int
+  isHunt      Boolean      @default(false)
 }
 
 model RaidReward {
@@ -159,7 +164,7 @@ model RaidHistory {
   user              User            @relation(fields: [userId], references: [id])
   userId            Int
   aliens            Alien[]
-  characters        UserCharacter[]
+  characterIds      Int[]
   inProgress        Boolean         @default(true)
   raidFinishTime    DateTime
   createdAt         DateTime        @default(now())
@@ -176,8 +181,6 @@ model Alien {
   equipmentPower Int
   user           User          @relation(fields: [userId], references: [id])
   userId         Int
-  inRaid         Boolean
-  onTeam         Boolean       @default(false)
   selected       Boolean       @default(false)
   raidHistory    RaidHistory[]
   createdAt      DateTime      @default(now())
@@ -246,32 +249,14 @@ model Character {
   upgradeReq         Int?
   upgradesToId       Int?
   tier               Int
+  isPortal2          Boolean            @default(false)
   PackReward         PackReward[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
-  users              UserCharacter[]
   unmintedCharacters UnmintedCharacter[]
   element            Element             @relation(fields: [elementId], references: [id])
   elementId          Int
   gearItem           GearItem[]
-}
-
-model UserCharacter {
-  id             Int           @id @default(autoincrement())
-  userId         Int
-  characterId    Int
-  quantity       Int           @default(1)
-  inRaid         Boolean       @default(false)
-  onTeam         Boolean       @default(false)
-  readyToUpgrade Boolean       @default(false)
-  user           User          @relation(fields: [userId], references: [id])
-  character      Character     @relation(fields: [characterId], references: [id])
-  raidHistory    RaidHistory[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  @@unique([userId, characterId])
-  @@index([userId, characterId])
 }
 
 model UnmintedCharacter {
@@ -322,10 +307,20 @@ enum GearItemRarity {
   RARE
 }
 
+enum GearItemType {
+  DANTE
+  TWINS
+  TEMBIN
+  NIKOLA
+  KARUSHI
+  SHISHI
+}
+
 model GearItem {
   id                    Int           @id @default(autoincrement())
   rarity                GearItemRarity
   image                 String
+  type                  GearItemType
   users                 UserGearItem[]
   summonedCharacter     Character?    @relation(fields: [summonedCharacterId], references: [id])
   summonedCharacterId   Int?
@@ -396,6 +391,9 @@ model AlienPart {
   price          Float?
   power          Int              @default(0)
   isDefault      Boolean          @default(false)
+  isForgeable   Boolean          @default(false)
+  forgeRuneType RuneType?
+  forgeRuneAmount Int?
   users          User[]
   packs          PackReward[]
   createdAt      DateTime         @default(now())

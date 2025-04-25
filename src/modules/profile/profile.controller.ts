@@ -50,12 +50,6 @@ export class ProfileController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('/get-characters')
-  async getCharacters(@Request() req) {
-    return this.profileService.getCharacters(req.walletAddress.toLowerCase());
-  }
-
-  @UseGuards(AuthGuard)
   @Get('/get-items')
   async getItems(@Request() req) {
     return this.profileService.getItems(req.walletAddress.toLowerCase());

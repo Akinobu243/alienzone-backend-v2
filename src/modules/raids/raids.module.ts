@@ -6,9 +6,10 @@ import { QuestModule } from '../quest/quest.module';
 
 import { RaidsController } from './raids.controller';
 import { RaidsService } from './raids.service';
+import { CharacterModule } from '../character/character.module';
 
 @Module({
-  imports: [PrismaModule, QuestModule],
+  imports: [PrismaModule, QuestModule, CharacterModule],
   controllers: [RaidsController],
   providers: [RaidsService, PrismaService],
   exports: [RaidsService],

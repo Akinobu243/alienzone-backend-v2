@@ -11,13 +11,13 @@ const prisma = new PrismaClient();
 async function main() {
   try {
     console.log('Starting seed...');
-    // await seedParts(prisma);
-    // await seedQuests(prisma);
-    // await seedCharacters(prisma);
-    // await seedAlienPartGroups(prisma);
-    // await seedRaid(prisma);
-    // await seedPacks(prisma);
-    // await seedItems(prisma);
+    await seedParts(prisma);
+    await seedQuests(prisma);
+    await seedCharacters(prisma);
+    await seedAlienPartGroups(prisma);
+    await seedRaid(prisma);
+    await seedPacks(prisma);
+    await seedItems(prisma);
     console.log('Seed completed successfully');
   } catch (error) {
     console.error('Error during seeding:', error);

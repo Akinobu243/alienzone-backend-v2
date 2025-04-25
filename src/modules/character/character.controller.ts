@@ -69,6 +69,7 @@ export class CharacterController {
     @Body('image') image?: string,
     @Body('upgradeAmountRequired') upgradeAmountRequired?: number,
     @Body('upgradesToId') upgradesToId?: number,
+    @Body('tokenId') tokenId?: number,
   ) {
     id = parseInt(id.toString());
     if (power !== undefined) {
@@ -91,6 +92,7 @@ export class CharacterController {
       image,
       upgradeAmountRequired,
       upgradesToId,
+      tokenId,
     );
   }
 
@@ -99,6 +101,13 @@ export class CharacterController {
   async deleteCharacter(@Body('id') id: number) {
     id = parseInt(id.toString());
     return this.characterService.deleteCharacter(id);
+  }
+
+  // Fetches metadata from the blockchain and s3 and updates the character list in the database
+  @UseGuards(AdminGuard)
+  @Post('/update-character-list')
+  async updateCharacterList() {
+    return this.characterService.updateCharacterList();
   }
 
   @UseGuards(AdminGuard)
@@ -180,6 +189,15 @@ export class CharacterController {
     return this.characterService.upgradeCharacter(
       req.walletAddress.toLowerCase(),
       characterId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/forge-parts')
+  async forgeParts(@Request() req, @Body('alienPartId') alienPartId: number) {
+    return this.characterService.forgeParts(
+      req.walletAddress.toLowerCase(),
+      alienPartId,
     );
   }
 

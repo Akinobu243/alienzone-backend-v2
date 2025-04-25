@@ -5,42 +5,16 @@ export async function seed(prisma: PrismaClient) {
   const elements = await prisma.element.findMany();
   await prisma.raid.deleteMany({
     where: {
-      isHunt: false,
+      isHunt: true,
     },
   });
-  await prisma.raidReward.deleteMany();
 
   if (elements.length === 0) {
     throw new Error('Elements must be seeded first');
   }
 
   // Create raid rewards
-  const raidRewards = [
-    {
-      type: RewardType.STARS,
-      amount: 100,
-    },
-    {
-      type: RewardType.XP,
-      amount: 50,
-    },
-    {
-      type: RewardType.STARS,
-      amount: 200,
-    },
-    {
-      type: RewardType.XP,
-      amount: 100,
-    },
-  ];
-
-  const createdRewards = [];
-  for (const reward of raidRewards) {
-    const createdReward = await prisma.raidReward.create({
-      data: reward,
-    });
-    createdRewards.push(createdReward);
-  }
+  const raidRewards = await prisma.raidReward.findMany();
 
   // Create raids
   const raids = [
@@ -51,7 +25,7 @@ export async function seed(prisma: PrismaClient) {
       image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
       elementId: elements.find((e) => e.name === 'Water')?.id || elements[0].id,
       rewards: {
-        connect: [{ id: createdRewards[0].id }, { id: createdRewards[1].id }],
+        connect: [{ id: raidRewards[0].id }, { id: raidRewards[1].id }],
       },
     },
     {
@@ -61,7 +35,7 @@ export async function seed(prisma: PrismaClient) {
       image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
       elementId: elements.find((e) => e.name === 'Fire')?.id || elements[1].id,
       rewards: {
-        connect: [{ id: createdRewards[2].id }, { id: createdRewards[3].id }],
+        connect: [{ id: raidRewards[2].id }, { id: raidRewards[3].id }],
       },
     },
     {
@@ -73,8 +47,19 @@ export async function seed(prisma: PrismaClient) {
       elementId:
         elements.find((e) => e.name === 'Thunder')?.id || elements[2].id,
       rewards: {
-        connect: [{ id: createdRewards[0].id }, { id: createdRewards[3].id }],
+        connect: [{ id: raidRewards[0].id }, { id: raidRewards[3].id }],
       },
+    },
+    {
+      title: 'Hunt 1',
+      description: 'Hunt for rare items in the forest',
+      duration: 1800, // 30 minutes in seconds
+      elementId: elements.find((e) => e.name === 'Earth')?.id || elements[3].id,
+      image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
+      rewards: {
+        connect: [{ id: raidRewards[0].id }, { id: raidRewards[1].id }],
+      },
+      isHunt: true,
     },
   ];
 

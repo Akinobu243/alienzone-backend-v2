@@ -3,6 +3,7 @@ import {
   ItemType,
   ItemQuality,
   GearItemRarity,
+  GearItemType,
 } from '@prisma/client';
 
 export async function seed(prisma: PrismaClient) {
@@ -77,31 +78,37 @@ export async function seed(prisma: PrismaClient) {
       rarity: GearItemRarity.COMMON,
       image:
         'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
-      summonedCharacterId: characters.length > 0 ? characters[0].id : null,
+      type: GearItemType.TEMBIN,
     },
     {
       rarity: GearItemRarity.UNCOMMON,
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
-      summonedCharacterId: null,
+        'https://alienzone-v2.s3.amazonaws.com/gear-items/Eternal%20Ice%20(The Twins).png',
+      type: GearItemType.TWINS,
     },
     {
       rarity: GearItemRarity.RARE,
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
-      summonedCharacterId: characters.length > 1 ? characters[1].id : null,
+        'https://alienzone-v2.s3.amazonaws.com/gear-items/Flask%20(Dante).png',
+      type: GearItemType.DANTE,
     },
     {
       rarity: GearItemRarity.COMMON,
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
-      summonedCharacterId: null,
+        'https://alienzone-v2.s3.amazonaws.com/gear-items/Nano-Quantic%20Reactor%20(Nikola).png',
+      type: GearItemType.NIKOLA,
     },
     {
       rarity: GearItemRarity.UNCOMMON,
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
-      summonedCharacterId: null,
+        'https://alienzone-v2.s3.amazonaws.com/gear-items/Seal%20of%20the%20mystic%20guard%20(Karushi).png',
+      type: GearItemType.KARUSHI,
+    },
+    {
+      rarity: GearItemRarity.COMMON,
+      image:
+        'https://alienzone-v2.s3.amazonaws.com/gear-items/Woolball%20(Shishi%20Cat).png',
+      type: GearItemType.SHISHI,
     },
   ];
 

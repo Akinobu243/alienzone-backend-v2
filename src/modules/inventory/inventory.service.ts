@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InventoryResponseDto } from './dto/inventory.dto';
+import { CharacterService } from '../character/character.service';
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private characterService: CharacterService,
+  ) {}
 
   /**
    * Get all inventory items for a user including characters, elements, and alien parts
@@ -29,18 +33,9 @@ export class InventoryService {
       }
 
       // Get user characters with their details
-      const userCharacters = await this.prisma.userCharacter.findMany({
-        where: {
-          userId: user.id,
-        },
-        include: {
-          character: {
-            include: {
-              element: true,
-            },
-          },
-        },
-      });
+      const userCharacters = (
+        await this.characterService.getUserCharacters(walletAddress)
+      ).userCharacters;
 
       // Get user elements
       const userElements = await this.prisma.userElement.findMany({
@@ -77,14 +72,16 @@ export class InventoryService {
       });
 
       // Format the characters to match InventoryGroupsDto
-      const formattedCharacters = userCharacters.map((userChar) => ({
-        id: userChar.character.id,
-        name: userChar.character.name,
-        quantity: userChar.quantity,
-        image: userChar.character.image,
-        description: `${userChar.character.rarity} character with power ${userChar.character.power}`,
-        type: 'CHARACTER' as const,
-      }));
+      const formattedCharacters = userCharacters.map((userChar) => {
+        return {
+          id: userChar.id,
+          name: userChar.name,
+          quantity: userChar.quantity,
+          image: userChar.image,
+          description: `${userChar.rarity} character with power ${userChar.power}`,
+          type: 'CHARACTER' as const,
+        };
+      });
 
       // Format elements to match InventoryGroupsDto
       const formattedElements = userElements.map((userElem) => ({

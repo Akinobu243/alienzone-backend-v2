@@ -8,10 +8,14 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { CharacterService } from '../character/character.service';
 
 @Injectable()
 export class ProfileService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private characterService: CharacterService,
+  ) {}
 
   private s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -135,9 +139,7 @@ export class ProfileService {
           },
           strengthPoints: Number(createAlienDTO.strengthPoints),
           equipmentPower: 0,
-          inRaid: false,
           selected: true,
-          onTeam: true,
           user: {
             connect: { walletAddress },
           },
@@ -201,21 +203,6 @@ export class ProfileService {
     });
 
     return aliens;
-  }
-
-  public async getCharacters(walletAddress: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        walletAddress,
-      },
-    });
-    const characters = await this.prisma.userCharacter.findMany({
-      where: {
-        userId: user.id,
-      },
-    });
-
-    return characters;
   }
 
   public async getItems(walletAddress: string) {
@@ -1051,11 +1038,9 @@ export class ProfileService {
         );
       }
 
-      const characters = await this.prisma.userCharacter.findMany({
-        where: {
-          userId: user.id,
-        },
-      });
+      const userCharacters = (
+        await this.characterService.getUserCharacters(walletAddress)
+      ).userCharacters;
 
       const aliens = await this.prisma.alien.findMany({
         where: {
@@ -1063,9 +1048,7 @@ export class ProfileService {
         },
       });
       for (const characterId of characterIds) {
-        if (
-          !characters.some((character) => character.characterId === characterId)
-        ) {
+        if (!userCharacters.some((character) => character.id === characterId)) {
           throw new BadRequestException(
             `Character with ID ${characterId} not found in user's characters.`,
           );
@@ -1080,50 +1063,18 @@ export class ProfileService {
         }
       }
 
-      // Remove all characters and aliens from team
-      const userCharacters = await this.prisma.userCharacter.updateMany({
-        where: {
-          userId: user.id,
-        },
-        data: {
-          onTeam: false,
-        },
-      });
-
-      await this.prisma.alien.updateMany({
-        where: {
-          userId: user.id,
-        },
-        data: {
-          onTeam: false,
-        },
-      });
-
       // Add selected characters and aliens to team
-      for (const characterId of characterIds) {
-        await this.prisma.userCharacter.update({
-          where: {
-            userId_characterId: {
-              userId: user.id,
-              characterId: characterId,
-            },
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          teamCharacterIds: {
+            set: characterIds,
           },
-          data: {
-            onTeam: true,
+          teamAlienIds: {
+            set: [],
           },
-        });
-      }
-
-      for (const alienId of alienIds) {
-        await this.prisma.alien.update({
-          where: {
-            id: alienId,
-          },
-          data: {
-            onTeam: true,
-          },
-        });
-      }
+        },
+      });
     } catch (error) {
       return {
         success: false,
@@ -1161,48 +1112,65 @@ export class ProfileService {
           24 * 60 * 60 * 1000;
       }
 
-      const characters = await this.prisma.userCharacter.findMany({
-        where: {
-          userId: user.id,
-          onTeam: true,
-        },
-        include: {
-          character: {
-            include: {
-              element: true,
-            },
-          },
-        },
-      });
+      const userCharacters = (
+        await this.characterService.getUserCharacters(walletAddress)
+      ).userCharacters;
 
-      const aliens = await this.prisma.alien.findMany({
+      const teamCharacters = userCharacters.filter((character) =>
+        user.teamCharacterIds.includes(character.id),
+      );
+      const teamAliens = await this.prisma.alien.findMany({
         where: {
           userId: user.id,
-          onTeam: true,
+          id: { in: user.teamAlienIds },
         },
         include: {
           element: true,
         },
       });
 
+      // const characters = await this.prisma.userCharacter.findMany({
+      //   where: {
+      //     userId: user.id,
+      //     onTeam: true,
+      //   },
+      //   include: {
+      //     character: {
+      //       include: {
+      //         element: true,
+      //       },
+      //     },
+      //   },
+      // });
+
+      // const aliens = await this.prisma.alien.findMany({
+      //   where: {
+      //     userId: user.id,
+      //     onTeam: true,
+      //   },
+      //   include: {
+      //     element: true,
+      //   },
+      // });
+
       let teamStrengthPoints = 0;
       const synergies = {};
       const teamResponse = [];
-      for (const character of characters) {
-        teamStrengthPoints += character.character.power;
-        synergies[character.character.element.name] =
-          synergies[character.character.element.name] || 0;
-        synergies[character.character.element.name] += 1;
+      for (const character of teamCharacters) {
+        teamStrengthPoints += character.power;
+        synergies[character.element.name] =
+          synergies[character.element.name] || 0;
+        synergies[character.element.name] += 1;
         teamResponse.push({
           id: character.id,
-          name: character.character.name,
-          strengthPoints: character.character.power,
-          element: character.character.element,
-          image: character.character.image,
+          name: character.name,
+          strengthPoints: character.power,
+          element: character.element,
+          image: character.image,
           type: 'character',
         });
       }
-      for (const alien of aliens) {
+      for (const alien of teamAliens) {
         teamStrengthPoints += alien.strengthPoints;
         synergies[alien.element.name] = synergies[alien.element.name] || 0;
         synergies[alien.element.name] += 1;

@@ -6,12 +6,14 @@ import { RaidReward } from './dto/raids.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { levelRequirements } from 'src/configs/global.config';
 import { QuestService } from '../quest/quest.service';
+import { CharacterService } from '../character/character.service';
 
 @Injectable()
 export class RaidsService {
   constructor(
     private prisma: PrismaService,
     private questService: QuestService,
+    private characterService: CharacterService,
   ) {}
 
   public async getRaidsList() {
@@ -103,49 +105,63 @@ export class RaidsService {
 
       const aliens = await this.prisma.alien.findMany({
         where: {
-          userId: user.id,
-          onTeam: true,
+          id: { in: user.teamAlienIds, notIn: user.raidAlienIds },
         },
       });
       if (aliens.length === 0) {
-        throw new BadRequestException('No Aliens found in team');
+        throw new BadRequestException(
+          'No Aliens found in team or team alien is in a raid',
+        );
       }
 
-      for (const alien of aliens) {
-        if (alien.inRaid) {
-          throw new BadRequestException('An alien is already in raid');
-        }
-      }
+      const userCharacters = await (
+        await this.characterService.getUserCharacters(userWalletAddress)
+      ).userCharacters;
 
-      const characters = await this.prisma.userCharacter.findMany({
-        where: {
-          userId: user.id,
-          onTeam: true,
-        },
-      });
-      if (characters.length === 0) {
+      const teamCharacters = userCharacters.filter(
+        (character) => character.onTeam,
+      );
+
+      if (teamCharacters.length === 0) {
         throw new BadRequestException('No Characters found in team');
       }
 
-      for (const character of characters) {
+      for (const character of teamCharacters) {
         if (character.inRaid) {
           throw new BadRequestException('A character is already in raid');
         }
       }
 
-      if (aliens.length + characters.length > 5) {
+      if (aliens.length + teamCharacters.length > 5) {
         throw new BadRequestException(
           'Too many aliens and characters selected. Maximum is 5',
         );
       }
 
+      if (raid.isHunt) {
+        for (const alien of aliens) {
+          if (alien.elementId !== raid.elementId) {
+            throw new BadRequestException(
+              'Alien element does not match Hunt element',
+            );
+          }
+        }
+        for (const character of teamCharacters) {
+          if (character.element.id !== raid.elementId) {
+            throw new BadRequestException(
+              'Character element does not match Hunt element',
+            );
+          }
+        }
+      }
+
       const alienIds = aliens.map((alien) => alien.id);
-      const characterIds = characters.map((character) => character.characterId);
+      const characterIds = teamCharacters.map((character) => character.id);
 
       const raidDuration = await this.calculateRaidDuration(
         raidId,
         aliens,
-        characters,
+        teamCharacters,
         user,
       );
       if (!raidDuration) {
@@ -163,9 +179,7 @@ export class RaidsService {
         aliens: {
           connect: alienIds.map((id) => ({ id })),
         },
-        characters: {
-          connect: characterIds.map((id) => ({ id })),
-        },
+        characterIds,
         raidFinishTime: new Date(raidDuration * 1000 + Date.now()),
       };
 
@@ -227,15 +241,15 @@ export class RaidsService {
               element: true,
             },
           },
-          characters: {
-            include: {
-              character: {
-                include: {
-                  element: true,
-                },
-              },
-            },
-          },
+          // characters: {
+          //   include: {
+          //     character: {
+          //       include: {
+          //         element: true,
+          //       },
+          //     },
+          //   },
+          // },
           raid: {
             include: {
               rewards: true,
@@ -248,11 +262,17 @@ export class RaidsService {
       // console.log('Raids found:', raids.length);
 
       for (const raid of raids) {
+        const raidCharacters = await this.prisma.character.findMany({
+          where: {
+            id: { in: raid.characterIds },
+          },
+          include: {
+            element: true,
+          },
+        });
         const raidAliens = raid.aliens;
-        const raidCharacters = raid.characters;
         const raidRewards = raid.raid.rewards;
         const raidUserId = raid.userId;
-        const raidElementId = raid.raid.elementId;
         const raidDuration = await this.calculateRaidDuration(
           raid.id,
           raidAliens,
@@ -328,10 +348,7 @@ export class RaidsService {
           // Reward Reputation points
           const teamStrength =
             raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
-            raidCharacters.reduce(
-              (acc, character) => acc + character.character.power,
-              0,
-            );
+            raidCharacters.reduce((acc, character) => acc + character.power, 0);
           const raidDurationInMinutes = Math.floor(raidDuration / 60);
           const reputationPoints = raidDurationInMinutes * teamStrength;
           console.log('Reputation points rewarded:', reputationPoints);
