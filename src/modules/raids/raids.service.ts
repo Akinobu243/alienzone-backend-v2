@@ -1,4 +1,4 @@
-import { Element, Prisma, RewardType, RuneType, User } from '@prisma/client';
+import { Prisma, RewardType, RuneType, User } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -39,6 +39,7 @@ export class RaidsService {
           id: elementId,
         },
       });
+
       if (!element) {
         throw new BadRequestException('Element not found');
       }
@@ -92,6 +93,7 @@ export class RaidsService {
       const raid = await this.prisma.raid.findUnique({
         where: { id: raidId },
       });
+
       if (!raid) {
         throw new BadRequestException('Raid not found');
       }
@@ -99,6 +101,7 @@ export class RaidsService {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress: userWalletAddress },
       });
+
       if (!user) {
         throw new BadRequestException('User not found');
       }
@@ -108,6 +111,7 @@ export class RaidsService {
           id: { in: user.teamAlienIds, notIn: user.raidAlienIds },
         },
       });
+
       if (aliens.length === 0) {
         throw new BadRequestException(
           'No Aliens found in team or team alien is in a raid',
@@ -154,6 +158,8 @@ export class RaidsService {
           }
         }
       }
+      console.log('aliens ====>', aliens);
+      console.log('characters ====>', teamCharacters);
 
       const alienIds = aliens.map((alien) => alien.id);
       const characterIds = teamCharacters.map((character) => character.id);
@@ -164,6 +170,7 @@ export class RaidsService {
         teamCharacters,
         user,
       );
+
       if (!raidDuration) {
         throw new BadRequestException('Error calculating raid duration');
       }
@@ -191,6 +198,7 @@ export class RaidsService {
         console.error('Error progressing raid quest:', error);
       }
 
+      console.log('raidHistory ====>', raidHistory);
       return {
         success: true,
         raidHistory,
@@ -208,6 +216,7 @@ export class RaidsService {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress: userWalletAddress },
       });
+
       if (!user) {
         throw new BadRequestException('User not found');
       }
@@ -330,6 +339,7 @@ export class RaidsService {
             });
             const userLevel = user.level;
             const levelRequirement = levelRequirements[userLevel];
+
             if (user.experience >= levelRequirement.requiredPoints) {
               console.log('User level up:', userLevel + 1);
               await this.prisma.user.update({
@@ -405,6 +415,7 @@ export class RaidsService {
       const raid = await this.prisma.raid.findUnique({
         where: { id: raidId },
       });
+
       if (!raid) {
         throw new BadRequestException('Raid not found');
       }
