@@ -113,7 +113,6 @@ export class ProfileService {
         throw new BadRequestException('Element not found');
       }
 
-      // Check if eyes and hair parts exist if provided
       if (createAlienDTO.eyesId) {
         const face = await this.prisma.alienPart.findUnique({
           where: { id: Number(createAlienDTO.eyesId) },
@@ -1243,7 +1242,6 @@ export class ProfileService {
           marks: true,
           powers: true,
           accessories: true,
-          face: true,
           element: true,
         },
       });
@@ -1262,7 +1260,6 @@ export class ProfileService {
         marks: alien.marks,
         powers: alien.powers,
         accessories: alien.accessories,
-        face: alien.face,
         background: alien.element,
       };
 
@@ -1452,7 +1449,6 @@ export class ProfileService {
           marks: true,
           powers: true,
           accessories: true,
-          face: true,
           element: true,
         },
       });

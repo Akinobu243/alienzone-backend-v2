@@ -32,10 +32,20 @@ export class ProfileController {
   @Post('/create-alien')
   @UseInterceptors(FileInterceptor('image'))
   async createAlien(
-    @Body() createAlienDTO: CreateAlienDTO,
+    @Body() body: any,
     @UploadedFile() image: Express.Multer.File,
     @Request() req,
   ) {
+    // Parse numeric fields from strings to numbers
+    const createAlienDTO: CreateAlienDTO = {
+      name: body.name,
+      elementId: parseInt(body.elementId, 10),
+      strengthPoints: body.strengthPoints,
+      eyesId: parseInt(body.eyesId, 10),
+      hairId: parseInt(body.hairId, 10),
+      mouthId: parseInt(body.mouthId, 10),
+    };
+
     return this.profileService.createAlien(
       req.walletAddress.toLowerCase(),
       createAlienDTO,

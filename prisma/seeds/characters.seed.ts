@@ -20,6 +20,7 @@ export async function seed(prisma: PrismaClient) {
   try {
     // Call updateCharacterList to seed characters
     const result = await characterService.updateCharacterList();
+
     if (result.success) {
       console.log('Characters seeded successfully');
     } else {

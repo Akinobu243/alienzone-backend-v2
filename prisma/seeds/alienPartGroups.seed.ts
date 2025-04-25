@@ -72,13 +72,13 @@ export async function seed(prisma: PrismaClient) {
     // Find the user with the specified wallet address
     const user = await prisma.user.findUnique({
       where: {
-        walletAddress: '0x5e5f66760933bf543db9c6cc6096ad30ceadabbc',
+        walletAddress: '0xe909059141ecc0e88181405d6a716292d5bd14cd',
       },
     });
 
     if (!user) {
       console.error(
-        'User with wallet address 0x3f1962b14640883d70ea33439f8f8826ef0cd6e7 not found',
+        'User with wallet address 0xe909059141ecc0e88181405d6a716292d5bd14cd not found',
       );
       return;
     }
@@ -176,65 +176,10 @@ export async function seed(prisma: PrismaClient) {
           connect: alienParts
             .filter(
               (part) =>
-                (part.type === AlienPartType.EYES &&
-                  (part.name.includes('Fukai') ||
-                    part.name.includes('Majime'))) ||
-                (part.type === AlienPartType.HAIR &&
-                  (part.name.includes('Mijikai') ||
-                    part.name.includes('Raito'))) ||
-                (part.type === AlienPartType.MOUTH &&
-                  (part.name.includes('Tsuujou') ||
-                    part.name.includes('Hiraku'))),
+                part.type === AlienPartType.EYES ||
+                part.type === AlienPartType.HAIR ||
+                part.type === AlienPartType.MOUTH,
             )
-            .map((part) => ({ id: part.id })),
-        },
-      },
-      {
-        name: 'Fire Alien Collection',
-        description: 'A collection of fire-themed alien parts',
-        userId: user.id,
-        elementId: elementMap['Fire'] || null,
-        parts: {
-          connect: alienParts
-            .filter(
-              (part) =>
-                (part.type === AlienPartType.EYES &&
-                  (part.name.includes('Nanpo') ||
-                    part.name.includes('Konryoku'))) ||
-                (part.type === AlienPartType.HAIR &&
-                  (part.name.includes('Teppa') ||
-                    part.name.includes('Kusege'))) ||
-                (part.type === AlienPartType.MOUTH &&
-                  (part.name.includes('Nidari') ||
-                    part.name.includes('Niyaniya'))),
-            )
-            .map((part) => ({ id: part.id })),
-        },
-      },
-      {
-        name: 'Special Alien Collection',
-        description: 'A collection of special alien parts',
-        userId: user.id,
-        elementId: null, // No specific element
-        parts: {
-          connect: alienParts
-            .filter(
-              (part) =>
-                part.name.includes('Elf') ||
-                part.name.includes('Ninja') ||
-                part.name.includes('Prisoner'),
-            )
-            .map((part) => ({ id: part.id })),
-        },
-      },
-      {
-        name: 'Face Collection',
-        description: 'A collection of alien face parts',
-        userId: user.id,
-        elementId: null, // No specific element
-        parts: {
-          connect: alienParts
-            .filter((part) => part.type === AlienPartType.FACE)
             .map((part) => ({ id: part.id })),
         },
       },
@@ -270,57 +215,6 @@ export async function seed(prisma: PrismaClient) {
     });
 
     if (elementCollection) {
-      // Delete existing element background parts
-      // const existingBackgroundParts = await prisma.alienPart.findMany({
-      //   where: {
-      //     type: AlienPartType.BACKGROUND,
-      //     name: {
-      //       startsWith: 'Element:',
-      //     },
-      //   },
-      // });
-
-      // if (existingBackgroundParts.length > 0) {
-      //   // Find all groups that have these parts
-      //   for (const part of existingBackgroundParts) {
-      //     // Find groups that contain this part
-      //     const groupsWithPart = await prisma.alienPartGroup.findMany({
-      //       where: {
-      //         parts: {
-      //           some: {
-      //             id: part.id,
-      //           },
-      //         },
-      //       },
-      //     });
-
-      //     // Disconnect the part from each group
-      //     for (const group of groupsWithPart) {
-      //       await prisma.alienPartGroup.update({
-      //         where: { id: group.id },
-      //         data: {
-      //           parts: {
-      //             disconnect: { id: part.id },
-      //           },
-      //         },
-      //       });
-      //     }
-      //   }
-
-      //   // Now delete the parts
-      //   await prisma.alienPart.deleteMany({
-      //     where: {
-      //       id: {
-      //         in: existingBackgroundParts.map((part) => part.id),
-      //       },
-      //     },
-      //   });
-
-      //   console.log(
-      //     `Deleted ${existingBackgroundParts.length} existing background parts`,
-      //   );
-      // }
-
       const existingUserElements = await prisma.userElement.findMany({
         where: {
           userId: user.id,
