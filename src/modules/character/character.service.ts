@@ -227,6 +227,14 @@ export class CharacterService {
       const currentTokenID = Number(await contract.getCurrentTokenID());
 
       // Fetch metadata from the S3 bucket
+      const credentials = new AWS.Credentials(
+        process.env.AWS_ACCESS_KEY_ID,
+        process.env.AWS_SECRET_ACCESS_KEY,
+      );
+      AWS.config.update({
+        credentials,
+        region: process.env.AWS_REGION,
+      });
       const s3 = new AWS.S3();
       const bucketName = process.env.AWS_BUCKET_NAME;
 
