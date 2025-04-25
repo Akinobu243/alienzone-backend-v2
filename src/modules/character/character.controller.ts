@@ -193,15 +193,6 @@ export class CharacterController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/forge-parts')
-  async forgeParts(@Request() req, @Body('alienPartId') alienPartId: number) {
-    return this.characterService.forgeParts(
-      req.walletAddress.toLowerCase(),
-      alienPartId,
-    );
-  }
-
-  @UseGuards(AuthGuard)
   @Get('/tiers')
   async getTiers(@Query('characterId') characterId: number) {
     characterId = parseInt(characterId.toString());

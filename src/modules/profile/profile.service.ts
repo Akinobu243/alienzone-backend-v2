@@ -1,4 +1,9 @@
-import { DailyRewardType, ItemQuality, ItemType } from '@prisma/client';
+import {
+  DailyRewardType,
+  ItemQuality,
+  ItemType,
+  RuneType,
+} from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -1532,6 +1537,160 @@ export class ProfileService {
         success: false,
         error,
       };
+    }
+  }
+
+  public async getForgeParts(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const commonRunes = user.runes.filter((rune) => rune === RuneType.COMMON);
+      const rareRunes = user.runes.filter((rune) => rune === RuneType.RARE);
+      const epicRunes = user.runes.filter((rune) => rune === RuneType.EPIC);
+      const legendaryRunes = user.runes.filter(
+        (rune) => rune === RuneType.LEGENDARY,
+      );
+
+      const alienParts = await this.prisma.alienPart.findMany({
+        where: {
+          isForgeable: true,
+        },
+      });
+
+      if (!alienParts || alienParts.length === 0) {
+        throw new BadRequestException('Alien parts not found');
+      }
+
+      const alienPartData = alienParts.map((part) => {
+        return {
+          id: part.id,
+          name: part.name,
+          description: part.description,
+          power: part.power,
+          type: part.type,
+          image: part.image,
+          forgeRuneType: part.forgeRuneType,
+          forgeRuneAmount: part.forgeRuneAmount,
+        };
+      });
+
+      const userRuneData = {
+        [RuneType.COMMON]: commonRunes.length,
+        [RuneType.RARE]: rareRunes.length,
+        [RuneType.EPIC]: epicRunes.length,
+        [RuneType.LEGENDARY]: legendaryRunes.length,
+      };
+
+      return {
+        success: true,
+        alienParts: alienPartData,
+        userRuneAmounts: userRuneData,
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async forgeParts(
+    walletAddress: string,
+    alienPartId: number,
+  ): Promise<{
+    success: boolean;
+    error?: any;
+  }> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alienPart = await this.prisma.alienPart.findUnique({
+        where: {
+          id: alienPartId,
+        },
+      });
+
+      if (!alienPart) {
+        throw new BadRequestException('Alien part not found');
+      }
+
+      const runeType = alienPart.forgeRuneType;
+      const runeAmount = alienPart.forgeRuneAmount;
+      if (!runeType || !runeAmount) {
+        throw new BadRequestException('Alien part cannot be forged');
+      }
+
+      const userRunes = user.runes.filter((rune) => rune === runeType);
+
+      if (userRunes.length < runeAmount) {
+        throw new BadRequestException(
+          'Insufficient stars balance. Required: 100 stars',
+        );
+      }
+
+      const newUserRuneList = [];
+      let i = 0;
+      for (const rune in userRunes) {
+        if (rune !== runeType || i >= runeAmount) {
+          newUserRuneList.push(rune);
+        }
+        if (rune === runeType) {
+          i++;
+        }
+      }
+
+      // Deduct runes from user
+      await this.prisma.user.update({
+        where: {
+          walletAddress,
+        },
+        data: {
+          runes: newUserRuneList,
+        },
+      });
+
+      // Create a new alien part for the user
+      await this.prisma.alienPartGroup.upsert({
+        where: {
+          id: alienPartId,
+        },
+        update: {
+          parts: {
+            connect: {
+              id: alienPartId,
+            },
+          },
+        },
+        create: {
+          name: alienPart.name,
+          description: alienPart.description,
+          parts: {
+            connect: {
+              id: alienPartId,
+            },
+          },
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error };
     }
   }
 }

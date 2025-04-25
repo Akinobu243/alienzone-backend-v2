@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -205,5 +205,58 @@ export class ProfileController {
 
     const walletAddress = req.walletAddress.toLowerCase();
     return this.profileService.updateAlienImage(walletAddress, alienId, image);
+  }
+
+  @ApiOperation({ summary: 'Get forgeable alien parts and user rune amounts' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved forgeable parts and rune amounts',
+    schema: {
+      example: {
+        success: true,
+        alienParts: [
+          {
+            id: 1,
+            name: 'Alien Part A',
+            description: 'A powerful alien part.',
+            power: 50,
+            type: 'HEAD',
+            image: 'https://example.com/alien-part-a.png',
+            forgeRuneType: 'COMMON',
+            forgeRuneAmount: 5,
+          },
+          {
+            id: 2,
+            name: 'Alien Part B',
+            description: 'Another powerful alien part.',
+            power: 70,
+            type: 'BODY',
+            image: 'https://example.com/alien-part-b.png',
+            forgeRuneType: 'RARE',
+            forgeRuneAmount: 3,
+          },
+        ],
+        userRuneAmounts: {
+          COMMON: 10,
+          RARE: 5,
+          EPIC: 2,
+          LEGENDARY: 1,
+        },
+      },
+    },
+  })
+  @UseGuards(AuthGuard)
+  @Get('/get-forge-parts')
+  async getForgeParts(@Request() req) {
+    return this.profileService.getForgeParts(req.walletAddress.toLowerCase());
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/forge-parts')
+  async forgeParts(@Request() req, @Body('alienPartId') alienPartId: number) {
+    return this.profileService.forgeParts(
+      req.walletAddress.toLowerCase(),
+      alienPartId,
+    );
   }
 }
