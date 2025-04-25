@@ -14,7 +14,7 @@ async function main() {
     await seedParts(prisma);
     await seedQuests(prisma);
     await seedCharacters(prisma);
-    await seedAlienPartGroups(prisma);
+    // await seedAlienPartGroups(prisma);
     await seedRaid(prisma);
     await seedPacks(prisma);
     await seedItems(prisma);

@@ -15,7 +15,12 @@ import {
   singleCharacterSummonCost,
 } from '../../configs/global.config';
 import { CharacterContractABI } from './character.contract.abi';
-import * as AWS from 'aws-sdk';
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
 
 @Injectable()
 export class CharacterService {
@@ -49,15 +54,18 @@ export class CharacterService {
       if (!element) {
         throw new BadRequestException('Element not found');
       }
-      const s3 = new AWS.S3();
-      const bucketName = process.env.S3_BUCKET_NAME;
-      const metadataKey = 'characters/metadata.json';
+      const s3 = new S3Client({ region: process.env.AWS_REGION });
+      const bucketName = process.env.AWS_BUCKET_NAME;
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+      });
+      const response = await s3.send(command);
 
-      // Fetch existing metadata
-      const metadataObject = await s3
-        .getObject({ Bucket: bucketName, Key: metadataKey })
-        .promise();
-      const metadata = JSON.parse(metadataObject.Body.toString());
+      // Convert the response body to a string
+      const metadata = JSON.parse(
+        await streamToString(response.Body as Readable),
+      );
 
       // Interact with the contract to create a token
       const contract = new ethers.Contract(
@@ -83,14 +91,13 @@ export class CharacterService {
       });
 
       // Update metadata.json on S3
-      await s3
-        .putObject({
-          Bucket: bucketName,
-          Key: metadataKey,
-          Body: JSON.stringify(metadata),
-          ContentType: 'application/json',
-        })
-        .promise();
+      const putCommand = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+        Body: JSON.stringify(metadata),
+        ContentType: 'application/json',
+      });
+      await s3.send(putCommand);
 
       // Call updateCharacterList to sync database
       await this.updateCharacterList();
@@ -124,15 +131,18 @@ export class CharacterService {
           throw new BadRequestException('Element not found');
         }
       }
-      const s3 = new AWS.S3();
-      const bucketName = process.env.S3_BUCKET_NAME;
-      const metadataKey = 'characters/metadata.json';
+      const s3 = new S3Client({ region: process.env.AWS_REGION });
+      const bucketName = process.env.AWS_BUCKET_NAME;
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+      });
+      const response = await s3.send(command);
 
-      // Fetch existing metadata
-      const metadataObject = await s3
-        .getObject({ Bucket: bucketName, Key: metadataKey })
-        .promise();
-      const metadata = JSON.parse(metadataObject.Body.toString());
+      // Convert the response body to a string
+      const metadata = JSON.parse(
+        await streamToString(response.Body as Readable),
+      );
 
       // Find and update the character in metadata
       const characterIndex = metadata.findIndex((item) => item.tokenId === id);
@@ -153,14 +163,13 @@ export class CharacterService {
       };
 
       // Update metadata.json on S3
-      await s3
-        .putObject({
-          Bucket: bucketName,
-          Key: metadataKey,
-          Body: JSON.stringify(metadata),
-          ContentType: 'application/json',
-        })
-        .promise();
+      const putCommand = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+        Body: JSON.stringify(metadata),
+        ContentType: 'application/json',
+      });
+      await s3.send(putCommand);
 
       // Call updateCharacterList to sync database
       await this.updateCharacterList();
@@ -178,15 +187,18 @@ export class CharacterService {
           id: id,
         },
       });
-      const s3 = new AWS.S3();
-      const bucketName = process.env.S3_BUCKET_NAME;
-      const metadataKey = 'characters/metadata.json';
+      const s3 = new S3Client({ region: process.env.AWS_REGION });
+      const bucketName = process.env.AWS_BUCKET_NAME;
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+      });
+      const response = await s3.send(command);
 
-      // Fetch existing metadata
-      const metadataObject = await s3
-        .getObject({ Bucket: bucketName, Key: metadataKey })
-        .promise();
-      const metadata = JSON.parse(metadataObject.Body.toString());
+      // Convert the response body to a string
+      const metadata = JSON.parse(
+        await streamToString(response.Body as Readable),
+      );
 
       // Remove the character from metadata
       const updatedMetadata = metadata.filter(
@@ -194,14 +206,13 @@ export class CharacterService {
       );
 
       // Update metadata.json on S3
-      await s3
-        .putObject({
-          Bucket: bucketName,
-          Key: metadataKey,
-          Body: JSON.stringify(updatedMetadata),
-          ContentType: 'application/json',
-        })
-        .promise();
+      const putCommand = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+        Body: JSON.stringify(updatedMetadata),
+        ContentType: 'application/json',
+      });
+      await s3.send(putCommand);
 
       // Call updateCharacterList to sync database
       await this.updateCharacterList();
@@ -227,22 +238,25 @@ export class CharacterService {
       const currentTokenID = Number(await contract.getCurrentTokenID());
 
       // Fetch metadata from the S3 bucket
-      const credentials = new AWS.Credentials(
-        process.env.AWS_ACCESS_KEY_ID,
-        process.env.AWS_SECRET_ACCESS_KEY,
-      );
-      AWS.config.update({
-        credentials,
+
+      const s3 = new S3Client({
         region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
       });
-      const s3 = new AWS.S3();
       const bucketName = process.env.AWS_BUCKET_NAME;
 
-      const metadataObject = await s3
-        .getObject({ Bucket: bucketName, Key: 'characters/metadata.json' })
-        .promise();
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: 'characters/metadata.json',
+      });
+      const metadataObject = await s3.send(command);
 
-      const metadata = JSON.parse(metadataObject.Body.toString());
+      const metadata = JSON.parse(
+        await metadataObject.Body.transformToString(),
+      );
 
       // Filter out tokens with tokenId greater than currentTokenID
       const validMetadata = metadata.filter(
@@ -1365,4 +1379,13 @@ export class CharacterService {
       return { success: false, error };
     }
   }
+}
+
+// Helper function to convert stream to string
+async function streamToString(stream: Readable): Promise<string> {
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf-8');
 }
