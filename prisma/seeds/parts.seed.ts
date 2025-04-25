@@ -379,6 +379,9 @@ export async function seed(prisma: PrismaClient) {
       await prisma.alien.deleteMany({});
     }
 
+    // Delete Raid records first since they reference elements
+    await prisma.raid.deleteMany({});
+
     // Delete UserElement records first since they reference elements
     await prisma.userElement.deleteMany({});
 

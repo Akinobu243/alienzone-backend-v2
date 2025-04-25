@@ -12,7 +12,7 @@ export async function seed(prisma: PrismaClient) {
   const characterService = new CharacterService(prismaService, null);
 
   // Set environment variables for CharacterService
-  process.env.S3_BUCKET_NAME = configService.get('S3_BUCKET_NAME');
+  process.env.AWS_BUCKET_NAME = configService.get('AWS_BUCKET_NAME');
   process.env.CONTRACT_ADDRESS = configService.get('CONTRACT_ADDRESS');
   process.env.RPC_PROVIDER = configService.get('RPC_PROVIDER');
   process.env.ADMIN_PRIVATE_KEY = configService.get('ADMIN_PRIVATE_KEY');

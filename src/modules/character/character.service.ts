@@ -228,7 +228,7 @@ export class CharacterService {
 
       // Fetch metadata from the S3 bucket
       const s3 = new AWS.S3();
-      const bucketName = process.env.S3_BUCKET_NAME;
+      const bucketName = process.env.AWS_BUCKET_NAME;
 
       const metadataObject = await s3
         .getObject({ Bucket: bucketName, Key: 'characters/metadata.json' })
