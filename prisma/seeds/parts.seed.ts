@@ -274,6 +274,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/fukai-grey.png',
       price: 0,
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.LEGENDARY,
+      forgeRuneAmount: 10,
     },
     {
       type: AlienPartType.EYES,
@@ -282,6 +285,9 @@ export async function seed(prisma: PrismaClient) {
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/choroi.png',
       price: 0,
+      isForgeable: true,
+      forgeRuneType: RuneType.RARE,
+      forgeRuneAmount: 10,
       isDefault: true,
     },
     {
