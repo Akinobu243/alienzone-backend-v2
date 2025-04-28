@@ -276,7 +276,7 @@ export async function seed(prisma: PrismaClient) {
       isDefault: true,
       isForgeable: true,
       forgeRuneType: RuneType.LEGENDARY,
-      forgeRuneAmount: 10,
+      forgeRuneAmount: 1,
     },
     {
       type: AlienPartType.EYES,
@@ -287,7 +287,7 @@ export async function seed(prisma: PrismaClient) {
       price: 0,
       isForgeable: true,
       forgeRuneType: RuneType.RARE,
-      forgeRuneAmount: 10,
+      forgeRuneAmount: 1,
       isDefault: true,
     },
     {
@@ -300,7 +300,7 @@ export async function seed(prisma: PrismaClient) {
       isDefault: false,
       isForgeable: true,
       forgeRuneType: RuneType.COMMON,
-      forgeRuneAmount: 10,
+      forgeRuneAmount: 1,
     },
   ];
 

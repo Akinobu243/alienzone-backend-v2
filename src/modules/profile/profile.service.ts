@@ -1631,6 +1631,7 @@ export class ProfileService {
 
       const runeType = alienPart.forgeRuneType;
       const runeAmount = alienPart.forgeRuneAmount;
+
       if (!runeType || !runeAmount) {
         throw new BadRequestException('Alien part cannot be forged');
       }
