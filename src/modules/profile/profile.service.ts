@@ -1639,17 +1639,16 @@ export class ProfileService {
 
       if (userRunes.length < runeAmount) {
         throw new BadRequestException(
-          'Insufficient stars balance. Required: 100 stars',
+          `Insufficient ${runeType} runes. Required: ${runeAmount} ${runeType} runes`,
         );
       }
 
       const newUserRuneList = [];
       let i = 0;
-      for (const rune in userRunes) {
+      for (const rune of userRunes) {
         if (rune !== runeType || i >= runeAmount) {
           newUserRuneList.push(rune);
-        }
-        if (rune === runeType) {
+        } else {
           i++;
         }
       }
