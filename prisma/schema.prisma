@@ -377,7 +377,6 @@ enum AlienPartType {
   MARKS
   POWERS
   ACCESSORIES
-  FACE
 }
 
 model AlienPart {

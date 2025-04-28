@@ -114,11 +114,11 @@ export class ProfileService {
       }
 
       if (createAlienDTO.eyesId) {
-        const face = await this.prisma.alienPart.findUnique({
+        const eyes = await this.prisma.alienPart.findUnique({
           where: { id: Number(createAlienDTO.eyesId) },
         });
 
-        if (!face) {
+        if (!eyes) {
           throw new BadRequestException('Eyes part not found');
         }
       }
@@ -794,7 +794,7 @@ export class ProfileService {
   }
 
   public async getAllTraits() {
-    const traitFolders = ['Body', 'Elements', 'Eyes', 'Face', 'Hair', 'Mouth'];
+    const traitFolders = ['Body', 'Elements', 'Eyes', 'Hair', 'Mouth'];
     const allImages = {};
 
     try {
@@ -1381,7 +1381,6 @@ export class ProfileService {
         MARKS: 'marksId',
         POWERS: 'powersId',
         ACCESSORIES: 'accessoriesId',
-        FACE: 'faceId',
       };
 
       // Prepare update data
