@@ -665,11 +665,11 @@ export class ProfileService {
       });
 
       if (!dailyReward) {
-        throw new Error('No daily reward available');
+        throw new BadRequestException('No daily reward available');
       }
 
       if (user.claimedDailyRewardIds.includes(dailyReward.id)) {
-        throw new Error('Daily reward already claimed');
+        throw new BadRequestException('Daily reward already claimed');
       }
 
       if (user.lastDailyClaimed) {
@@ -677,7 +677,7 @@ export class ProfileService {
         lastClaimed.setHours(0, 0, 0, 0);
 
         if (lastClaimed.getTime() === today.getTime()) {
-          throw new Error('Daily reward already claimed');
+          throw new BadRequestException('Daily reward already claimed');
         }
 
         const timeDifference = today.getTime() - lastClaimed.getTime();
@@ -743,12 +743,13 @@ export class ProfileService {
           break;
       }
 
-      user = await this.prisma.user.update({
-        where: {
-          id: user.id,
-        },
+      await this.prisma.user.update({
+        where: { id: user.id },
         data: {
           lastDailyClaimed: new Date(),
+          claimedDailyRewards: {
+            connect: { id: dailyReward.id },
+          },
           claimedDailyRewardIds: {
             push: dailyReward.id,
           },
@@ -1505,7 +1506,6 @@ export class ProfileService {
         },
       });
 
-      console.log('alien ====>', alien);
       if (!alien) {
         throw new BadRequestException(
           'Alien not found or does not belong to this user',
@@ -1526,8 +1526,6 @@ export class ProfileService {
         console.error(`Error uploading image to S3: ${error}`);
         throw new BadRequestException('Failed to upload image to S3');
       }
-
-      console.log('image uploaded to S3');
 
       // Update alien record with new image URL
       const updatedAlien = await this.prisma.alien.update({
@@ -1638,6 +1636,7 @@ export class ProfileService {
 
       const runeType = alienPart.forgeRuneType;
       const runeAmount = alienPart.forgeRuneAmount;
+
       if (!runeType || !runeAmount) {
         throw new BadRequestException('Alien part cannot be forged');
       }
