@@ -1125,9 +1125,16 @@ export class ProfileService {
           24 * 60 * 60 * 1000;
       }
 
-      const userCharacters = (
-        await this.characterService.getUserCharacters(walletAddress)
-      ).userCharacters;
+      const userCharacterRequest =
+        await this.characterService.getUserCharacters(walletAddress);
+
+      if (!userCharacterRequest.success) {
+        throw new BadRequestException(
+          'Error fetching user characters: ' + userCharacterRequest.error,
+        );
+      }
+
+      const userCharacters = userCharacterRequest.userCharacters;
 
       const teamCharacters = userCharacters.filter((character) =>
         user.teamCharacterIds.includes(character.id),
@@ -1212,7 +1219,7 @@ export class ProfileService {
     } catch (error) {
       return {
         success: false,
-        error,
+        error: error.message,
       };
     }
   }

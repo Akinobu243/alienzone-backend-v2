@@ -473,10 +473,15 @@ export class CharacterService {
         { length: currentTokenId },
         (_, i) => i + 1,
       );
+      const accounts = Array(allTokenIds.length).fill(walletAddress);
+
+      const tokenBalances = await contract.balanceOfBatch(
+        accounts,
+        allTokenIds,
+      );
+
       for (const tokenId of allTokenIds) {
-        const tokenBalance = Number(
-          await contract.balanceOf(walletAddress, tokenId),
-        );
+        const tokenBalance = Number(tokenBalances[tokenId - 1]);
         if (tokenBalance > 0) {
           const character = await this.prisma.character.findFirst({
             where: {
@@ -534,9 +539,11 @@ export class CharacterService {
 
       return { success: true, userCharacters };
     } catch (error) {
+      console.error('Error fetching user characters:', error);
       return {
         success: false,
         error,
+        userCharacters: [],
       };
     }
   }
