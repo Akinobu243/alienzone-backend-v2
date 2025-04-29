@@ -109,7 +109,7 @@ model User {
   lastXpBoost           DateTime?
   role                  Role                   @default(USER)
   dailyStreak           Int                    @default(0)
-  lastDailyClaimed      DateTime               @default(now())
+  lastDailyClaimed      DateTime?               
   claimedDailyRewards   DailyReward[]
   claimedDailyRewardIds Int[]                  @default([])
   likedUserIds          Int[]                  @default([])
