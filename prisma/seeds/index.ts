@@ -6,6 +6,7 @@ import { seed as seedAlienPartGroups } from './alienPartGroups.seed';
 import { seed as seedRaid } from './raids.seed';
 import { seed as seedPacks } from './packs.seed';
 import { seed as seedItems } from './items.seed';
+import { seed as seedDailyRewards } from './dailyRewards.seed';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -14,10 +15,12 @@ async function main() {
     await seedParts(prisma);
     await seedQuests(prisma);
     await seedCharacters(prisma);
-    // await seedAlienPartGroups(prisma);
     await seedRaid(prisma);
     await seedPacks(prisma);
     await seedItems(prisma);
+    await seedDailyRewards(prisma);
+    await seedAlienPartGroups(prisma);
+
     console.log('Seed completed successfully');
   } catch (error) {
     console.error('Error during seeding:', error);
