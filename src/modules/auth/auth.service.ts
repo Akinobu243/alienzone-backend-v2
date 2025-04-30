@@ -40,6 +40,7 @@ export class AuthService {
       const user = await this.userService.findUser({
         walletAddress: payload.walletAddress,
       });
+
       if (!user) {
         throw new UnauthorizedException({
           success: false,
@@ -77,13 +78,13 @@ export class AuthService {
       });
     }
 
-    var user = await this.userService.findUser({
+    let user = await this.userService.findUser({
       walletAddress: userWalletAddress,
     });
 
     if (!user) {
-      var referralCode = Math.random().toString(36).substring(2, 8);
-      var existingUser = await this.userService.findUser({
+      let referralCode = Math.random().toString(36).substring(2, 8);
+      let existingUser = await this.userService.findUser({
         referralCode: referralCode,
       });
 
