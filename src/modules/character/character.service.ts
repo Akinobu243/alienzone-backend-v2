@@ -723,9 +723,11 @@ export class CharacterService {
         throw new BadRequestException('Invalid signature');
       }
 
+      const characterAmounts = characterIds.map(() => 1);
+
       const serverSignature = await this.generateServerSignature(
         characterIds,
-        1,
+        characterAmounts,
       );
 
       return {
@@ -734,6 +736,7 @@ export class CharacterService {
         serverSignature,
       };
     } catch (error) {
+      console.error('Error minting character:', error);
       return {
         success: false,
         error,
@@ -1046,7 +1049,7 @@ export class CharacterService {
 
       const serverSignature = await this.generateServerSignature(
         [character.tokenId],
-        1,
+        [1],
       );
 
       return {
@@ -1063,11 +1066,11 @@ export class CharacterService {
 
   private async generateServerSignature(
     ids: number[],
-    amount: number,
+    amounts: number[],
   ): Promise<string> {
     const hash = ethers.solidityPackedKeccak256(
-      ['address', 'uint256[]', 'uint256'],
-      [this.adminWallet.address, ids, amount],
+      ['address', 'uint256[]', 'uint256[]'],
+      [this.adminWallet.address, ids, amounts],
     );
     const signature = await this.adminWallet.signMessage(ethers.getBytes(hash));
     return signature;
@@ -1191,7 +1194,7 @@ export class CharacterService {
 
         const serverSignature = await this.generateServerSignature(
           [upgradedChar.tokenId],
-          1,
+          [1],
         );
 
         return {
@@ -1212,7 +1215,7 @@ export class CharacterService {
 
       const serverSignature = await this.generateServerSignature(
         [character.upgradesToId],
-        1,
+        [1],
       );
 
       return {
