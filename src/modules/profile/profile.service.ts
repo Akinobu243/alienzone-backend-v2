@@ -1713,6 +1713,9 @@ export class ProfileService {
       }
 
       const commonRunes = user.runes.filter((rune) => rune === RuneType.COMMON);
+      const uncommonRunes = user.runes.filter(
+        (rune) => rune === RuneType.UNCOMMON,
+      );
       const rareRunes = user.runes.filter((rune) => rune === RuneType.RARE);
       const epicRunes = user.runes.filter((rune) => rune === RuneType.EPIC);
       const legendaryRunes = user.runes.filter(
@@ -1744,6 +1747,7 @@ export class ProfileService {
 
       const userRuneData = {
         [RuneType.COMMON]: commonRunes.length,
+        [RuneType.UNCOMMON]: uncommonRunes.length,
         [RuneType.RARE]: rareRunes.length,
         [RuneType.EPIC]: epicRunes.length,
         [RuneType.LEGENDARY]: legendaryRunes.length,
