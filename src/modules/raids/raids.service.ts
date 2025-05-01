@@ -110,6 +110,9 @@ export class RaidsService {
         where: {
           id: { in: user.teamAlienIds, notIn: user.raidAlienIds },
         },
+        include: {
+          element: true,
+        },
       });
 
       if (aliens.length === 0) {
@@ -435,7 +438,7 @@ export class RaidsService {
         }
       }
       for (const character of raidCharacters) {
-        const characterElement = character.character.element;
+        const characterElement = character.element;
 
         if (characterElement.weaknessId === raidElementId) {
           newRaidDuration += raidDuration * 0.02;

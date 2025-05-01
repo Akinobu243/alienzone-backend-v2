@@ -1216,7 +1216,7 @@ export class ProfileService {
             set: characterIds,
           },
           teamAlienIds: {
-            set: [],
+            set: alienIds,
           },
         },
       });
