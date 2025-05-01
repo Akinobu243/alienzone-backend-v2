@@ -493,7 +493,7 @@ export class CharacterService {
           });
           ownedCharacters.push({
             ...character,
-            quantity: tokenBalance,
+            quantity: Number(tokenBalance),
           });
         }
       }
@@ -503,31 +503,27 @@ export class CharacterService {
         { character: any; quantity: number }
       >();
 
-      for (const charId of user.characterIds) {
+      for (const char of ownedCharacters) {
         const character = await this.prisma.character.findUnique({
           where: {
-            id: charId,
+            id: char.id,
           },
           include: {
             element: true,
           },
         });
 
-        const inRaid = user.raidCharacterIds.includes(charId);
-        const onTeam = user.teamCharacterIds.includes(charId);
+        const inRaid = user.raidCharacterIds.includes(char.id);
+        const onTeam = user.teamCharacterIds.includes(char.id);
 
-        if (userCharactersMap.has(character.tokenId)) {
-          userCharactersMap.get(character.tokenId).quantity++;
-        } else {
           userCharactersMap.set(character.tokenId, {
             character: {
               ...character,
               inRaid,
               onTeam,
             },
-            quantity: 1,
+          quantity: char.quantity,
           });
-        }
       }
 
       const userCharacters = Array.from(userCharactersMap.values()).map(
