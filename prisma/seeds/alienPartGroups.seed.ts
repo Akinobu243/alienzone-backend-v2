@@ -95,19 +95,6 @@ export async function seed(prisma: PrismaClient) {
       },
     });
 
-    // console.log(`Awarded 200 stars to user ${user.name}`);
-
-    // // Find elements to associate with the groups - don't create new ones
-    // const elements = await prisma.element.findMany();
-
-    // const elementMap = elements.reduce((map, element) => {
-    //   map[element.name] = element.id;
-    //   return map;
-    // }, {});
-
-    // // Find alien parts to include in the groups
-    // const alienParts = await prisma.alienPart.findMany();
-
     console.log(`Awarded 200 stars to user ${user.name}`);
 
     // Find elements to associate with the groups - don't create new ones
