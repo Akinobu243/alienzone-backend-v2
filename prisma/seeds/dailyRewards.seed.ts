@@ -11,50 +11,43 @@ export async function seed(prisma: PrismaClient) {
       // Day 1: Stars reward
       {
         type: DailyRewardType.STARS,
-        amount: 100,
+        amount: 2,
         rewardDate: new Date(Date.now() + 86400000 * 0), // Today
       },
 
       // Day 2: XP reward
       {
         type: DailyRewardType.STARS,
-        amount: 50,
+        amount: 4,
         rewardDate: new Date(Date.now() + 86400000 * 1), // Tomorrow
       },
 
       // Day 3: Item reward
       {
         type: DailyRewardType.STARS,
-        amount: 50,
+        amount: 6,
         rewardDate: new Date(Date.now() + 86400000 * 2),
       },
 
       // Day 4: Parts reward
       {
         type: DailyRewardType.STARS,
-        amount: 50,
+        amount: 8,
         rewardDate: new Date(Date.now() + 86400000 * 3),
       },
 
       // Day 5: Gear reward
       {
         type: DailyRewardType.STARS,
-        amount: 50,
+        amount: 10,
         rewardDate: new Date(Date.now() + 86400000 * 4),
       },
 
       // Day 6: Stars reward (bigger)
       {
         type: DailyRewardType.STARS,
-        amount: 200,
+        amount: 20,
         rewardDate: new Date(Date.now() + 86400000 * 5),
-      },
-
-      // Day 7: XP reward (bigger)
-      {
-        type: DailyRewardType.STARS,
-        amount: 200,
-        rewardDate: new Date(Date.now() + 86400000 * 6),
       },
     ];
 

@@ -635,7 +635,7 @@ export class ProfileService {
     });
   }
 
-  public async claimDailyReward(walletAddress: string) {
+  public async claimDailyRewardOld(walletAddress: string) {
     try {
       let user = await this.prisma.user.findUnique({
         where: {
@@ -764,6 +764,137 @@ export class ProfileService {
       return {
         success: false,
         error,
+      };
+    }
+  }
+
+  public async claimDailyReward(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      // Create today's and tomorrow's dates in UTC
+      const now = new Date();
+      const today = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
+      const tomorrow = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+      );
+
+      const dailyReward = await this.prisma.dailyReward.findFirst({
+        where: {
+          rewardDate: {
+            gte: today,
+            lt: tomorrow, // exclusive upper bound
+          },
+        },
+      });
+
+      if (!dailyReward) {
+        throw new BadRequestException('No daily reward available');
+      }
+
+      // Check if already claimed
+      if (user.claimedDailyRewardIds.includes(dailyReward.id)) {
+        throw new BadRequestException('Daily reward already claimed');
+      }
+
+      // Handle streak logic
+      let updatedStreak = 1;
+
+      if (user.lastDailyClaimed) {
+        const lastClaimed = new Date(user.lastDailyClaimed);
+        const lastClaimedUTC = Date.UTC(
+          lastClaimed.getUTCFullYear(),
+          lastClaimed.getUTCMonth(),
+          lastClaimed.getUTCDate(),
+        );
+        const todayUTC = Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate(),
+        );
+
+        const diffInDays = Math.floor(
+          (todayUTC - lastClaimedUTC) / (1000 * 60 * 60 * 24),
+        );
+
+        if (diffInDays === 0) {
+          throw new BadRequestException('Daily reward already claimed today');
+        } else if (diffInDays === 1) {
+          updatedStreak = user.dailyStreak + 1;
+        } else {
+          updatedStreak = 1;
+        }
+
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            dailyStreak: updatedStreak,
+          },
+        });
+      } else {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            dailyStreak: updatedStreak,
+          },
+        });
+      }
+
+      // Apply the reward
+      switch (dailyReward.type) {
+        case DailyRewardType.STARS:
+          await this.rewardStars(
+            walletAddress,
+            dailyReward.amount * updatedStreak,
+          );
+          break;
+        case DailyRewardType.XP:
+          await this.rewardXp(
+            walletAddress,
+            dailyReward.amount * updatedStreak,
+          );
+          break;
+        case DailyRewardType.ITEM:
+          await this.rewardItem(walletAddress, dailyReward.itemId);
+          break;
+        case DailyRewardType.PARTS:
+          await this.rewardAlienPart(walletAddress, dailyReward.alienPartId);
+          break;
+        case DailyRewardType.GEAR:
+          await this.rewardGearItem(walletAddress, dailyReward.gearItemId);
+          break;
+      }
+
+      // Mark reward as claimed
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          lastDailyClaimed: new Date(),
+          claimedDailyRewards: {
+            connect: { id: dailyReward.id },
+          },
+          claimedDailyRewardIds: {
+            push: dailyReward.id,
+          },
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Reward claimed',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || error,
       };
     }
   }
