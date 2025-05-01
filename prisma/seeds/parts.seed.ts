@@ -3,67 +3,91 @@ import { PrismaClient, AlienPartType, RuneType } from '@prisma/client';
 export async function seed(prisma: PrismaClient) {
   const elements = [
     {
+      id: 1,
+      name: 'Water',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/water.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/water-bg.png',
-      name: 'Water',
+      weaknessId: 3, // Thunder
+      strengthId: 2, // Fire
       isDefault: true,
     },
     {
+      id: 2,
+      name: 'Fire',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/fire.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/fire-bg.png',
-      name: 'Fire',
+      weaknessId: 1, // Water
+      strengthId: 5, // Love
       isDefault: true,
     },
     {
+      id: 3,
+      name: 'Thunder',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/thunder.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/thunder-bg.png',
-      name: 'Thunder',
+      weaknessId: 4, // Plasma
+      strengthId: 1, // Water
       isDefault: true,
     },
     {
+      id: 4,
+      name: 'Plasma',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/plasma.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/plasma-bg.png',
-      name: 'Plasma',
+      weaknessId: 7, // Gravity
+      strengthId: 3, // Thunder
       isDefault: true,
     },
     {
+      id: 5,
+      name: 'Love',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/love.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/love-bg.png',
-      name: 'Love',
+      weaknessId: 2, // Fire
+      strengthId: 8, // Gamma
       isDefault: true,
     },
     {
+      id: 6,
+      name: 'Life',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/life.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/life-bg.png',
-      name: 'Life',
+      weaknessId: 1, // Water
+      strengthId: 7, // Gravity
       isDefault: true,
     },
     {
+      id: 7,
+      name: 'Gravity',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/gravity.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/gravity-bg.png',
-      name: 'Gravity',
+      weaknessId: 6, // Life
+      strengthId: 4, // Plasma
       isDefault: true,
     },
     {
+      id: 8,
+      name: 'Gamma',
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/gamma.png',
       background:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/elements/gamma-bg.png',
-      name: 'Gamma',
+      weaknessId: 5, // Love
+      strengthId: 6, // Life
       isDefault: true,
     },
   ];
