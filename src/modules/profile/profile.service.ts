@@ -1281,6 +1281,28 @@ export class ProfileService {
         },
       });
 
+      if (teamAliens.length < 1) {
+        const userAlien = await this.prisma.alien.findFirst({
+          where: {
+            userId: user.id,
+          },
+          include: {
+            element: true,
+          },
+        });
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            teamAlienIds: {
+              set: [userAlien.id],
+            },
+          },
+        });
+        if (userAlien) {
+          teamAliens.push(userAlien);
+        }
+      }
+
       // const characters = await this.prisma.userCharacter.findMany({
       //   where: {
       //     userId: user.id,
