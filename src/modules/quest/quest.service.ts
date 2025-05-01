@@ -263,7 +263,7 @@ export class QuestService {
         message: 'Login quest progress updated successfully',
       };
     } catch (error) {
-      return { success: false, error };
+      return { success: false, message: error.message };
     }
   }
 

@@ -164,10 +164,21 @@ export class AuthService {
       expiresIn: GLOBAL_CONFIG.security.expiresIn,
     });
 
-    try {
-      await this.questService.progressLoginQuest(user.walletAddress);
-    } catch (error) {
-      console.error('Error progressing login quest:', error);
+    console.log('Progressing login quest for user:', user.walletAddress);
+    const progressResponse = await this.questService.progressLoginQuest(
+      user.walletAddress,
+    );
+
+    if (!progressResponse.success) {
+      console.error(
+        'Failed to progress login quest:',
+        progressResponse.message,
+      );
+    } else {
+      console.log(
+        'Login quest progressed successfully for user:',
+        user.walletAddress,
+      );
     }
 
     return {
