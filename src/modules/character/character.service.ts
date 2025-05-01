@@ -523,7 +523,7 @@ export class CharacterService {
             onTeam,
           },
           quantity: char.quantity,
-          });
+        });
       }
 
       const userCharacters = Array.from(userCharactersMap.values()).map(
