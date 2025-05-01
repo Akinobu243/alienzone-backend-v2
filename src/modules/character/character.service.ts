@@ -516,12 +516,12 @@ export class CharacterService {
         const inRaid = user.raidCharacterIds.includes(char.id);
         const onTeam = user.teamCharacterIds.includes(char.id);
 
-          userCharactersMap.set(character.tokenId, {
-            character: {
-              ...character,
-              inRaid,
-              onTeam,
-            },
+        userCharactersMap.set(character.tokenId, {
+          character: {
+            ...character,
+            inRaid,
+            onTeam,
+          },
           quantity: char.quantity,
           });
       }
