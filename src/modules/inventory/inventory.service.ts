@@ -47,19 +47,30 @@ export class InventoryService {
         },
       });
 
-      // Get alien parts - since AlienPart has a many-to-many relationship with User
-      const alienParts = await this.prisma.alienPart.findMany({
-        where: {
-          users: {
-            some: {
-              id: user.id,
-            },
+      // // Get alien parts - since AlienPart has a many-to-many relationship with User
+      // const alienParts = await this.prisma.alienPart.findMany({
+      //   where: {
+      //     users: {
+      //       some: {
+      //         id: user.id,
+      //       },
+      //     },
+      //   },
+      //   include: {
+      //     AlienPartGroup: true,
+      //   },
+      // });
+
+      const alienParts = (
+        await this.prisma.alienPartGroup.findFirst({
+          where: {
+            userId: user.id,
           },
-        },
-        include: {
-          AlienPartGroup: true,
-        },
-      });
+          include: {
+            parts: true,
+          },
+        })
+      ).parts;
 
       // Get user gear items
       const userGearItems = await this.prisma.userGearItem.findMany({
@@ -93,16 +104,25 @@ export class InventoryService {
         type: 'ELEMENT' as const,
       }));
 
-      // Format alien parts to match InventoryGroupsDto
+      // // Format alien parts to match InventoryGroupsDto
+      // const formattedAlienParts = alienParts.map((part) => ({
+      //   id: part.id,
+      //   name: part.name,
+      //   quantity: 1, // Assuming each alien part is counted as 1
+      //   image: part.image,
+      //   description:
+      //     part.AlienPartGroup.length > 0
+      //       ? part.AlienPartGroup[0].description
+      //       : '',
+      //   type: 'ALIEN_PART' as const,
+      // }));
+
       const formattedAlienParts = alienParts.map((part) => ({
         id: part.id,
         name: part.name,
-        quantity: 1, // Assuming each alien part is counted as 1
+        quantity: 1,
         image: part.image,
-        description:
-          part.AlienPartGroup.length > 0
-            ? part.AlienPartGroup[0].description
-            : '',
+        description: part.description,
         type: 'ALIEN_PART' as const,
       }));
 
