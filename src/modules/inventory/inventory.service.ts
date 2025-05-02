@@ -61,16 +61,19 @@ export class InventoryService {
       //   },
       // });
 
-      const alienParts = (
-        await this.prisma.alienPartGroup.findFirst({
-          where: {
-            userId: user.id,
-          },
-          include: {
-            parts: true,
-          },
-        })
-      ).parts;
+      const alienPartGroup = await this.prisma.alienPartGroup.findFirst({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          parts: true,
+        },
+      });
+
+      var alienParts = [];
+      if (alienPartGroup) {
+        alienParts = alienPartGroup.parts;
+      }
 
       // Get user gear items
       const userGearItems = await this.prisma.userGearItem.findMany({
