@@ -22,15 +22,11 @@ export async function seed(prisma: PrismaClient) {
     },
     {
       type: RewardType.XP,
-      amount: 50,
+      amount: 1000,
     },
     {
       type: RewardType.STARS,
-      amount: 200,
-    },
-    {
-      type: RewardType.XP,
-      amount: 100,
+      amount: 2000,
     },
   ];
 
@@ -47,7 +43,7 @@ export async function seed(prisma: PrismaClient) {
     {
       title: 'Water Temple Raid',
       description: 'Explore the ancient water temple and defeat the guardian',
-      duration: 3600, // 1 hour in seconds
+      duration: 10, // 1 hour in seconds
       image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
       elementId: elements.find((e) => e.name === 'Water')?.id || elements[0].id,
       rewards: {
