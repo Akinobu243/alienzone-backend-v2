@@ -28,6 +28,10 @@ export async function seed(prisma: PrismaClient) {
       type: RewardType.STARS,
       amount: 2000,
     },
+    {
+      type: RewardType.XP,
+      amount: 1000,
+    },
   ];
 
   const createdRewards = [];
