@@ -689,6 +689,9 @@ export class CharacterService {
           characterId: {
             in: characterIds,
           },
+          status: {
+            in: [TransactionStatus.INITIATED, TransactionStatus.FAILED],
+          },
         },
       });
 
@@ -729,11 +732,27 @@ export class CharacterService {
         user.walletAddress,
       );
 
+      const unmintedCharacterIds = unmintedCharacters.map(
+        (unminted) => unminted.id,
+      );
+
+      await this.prisma.unmintedCharacter.updateMany({
+        where: {
+          id: {
+            in: unmintedCharacterIds,
+          },
+        },
+        data: {
+          status: TransactionStatus.PENDING,
+        },
+      });
+
       return {
         success: true,
         characterIds,
         serverSignature,
         nonce,
+        unmintedCharacterIds,
       };
     } catch (error) {
       console.error('Error minting character:', error);
@@ -1296,6 +1315,46 @@ export class CharacterService {
         characters: allCharacters,
       };
     } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async handleFailedMintCharacter(
+    userWalletAddress: string,
+    unmintedCharacterId: string,
+  ) {
+    try {
+      const unmintedCharacter = await this.prisma.unmintedCharacter.findUnique({
+        where: {
+          id: unmintedCharacterId,
+        },
+        include: {
+          user: true,
+        },
+      });
+      if (!unmintedCharacter) {
+        throw new BadRequestException('Unminted character not found');
+      }
+
+      if (unmintedCharacter.user.walletAddress !== userWalletAddress) {
+        throw new BadRequestException('User not found');
+      }
+
+      await this.prisma.unmintedCharacter.update({
+        where: {
+          id: unmintedCharacterId,
+        },
+        data: {
+          status: TransactionStatus.FAILED,
+        },
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error in handleFailedMintCharacter:', error);
       return {
         success: false,
         error,

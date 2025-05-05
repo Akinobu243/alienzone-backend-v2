@@ -258,9 +258,10 @@ model Character {
 }
 
 model UnmintedCharacter {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(uuid())
   userId      Int
   characterId Int
+  status      TransactionStatus @default(INITIATED)
   user        User      @relation(fields: [userId], references: [id])
   character   Character @relation(fields: [characterId], references: [id])
   createdAt   DateTime  @default(now())

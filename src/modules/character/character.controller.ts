@@ -8,7 +8,7 @@ import {
   BadRequestException,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CharacterService } from './character.service';
@@ -197,5 +197,22 @@ export class CharacterController {
   async getTiers(@Query('characterId') characterId: number) {
     characterId = parseInt(characterId.toString());
     return this.characterService.getTiers(characterId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/handle-failed-mint')
+  @ApiOperation({ summary: 'Makes the character mintable again.' })
+  @ApiBody({
+    description: 'The UUID of the character that failed to mint.',
+    schema: { type: 'string' },
+  })
+  async handleFailedMint(
+    @Request() req,
+    @Body('unmintedCharacterId') unmintedCharacterId: string,
+  ) {
+    return this.characterService.handleFailedMintCharacter(
+      req.walletAddress.toLowerCase(),
+      unmintedCharacterId,
+    );
   }
 }
