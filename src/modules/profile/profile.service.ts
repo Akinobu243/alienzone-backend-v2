@@ -169,6 +169,35 @@ export class ProfileService {
         },
       });
 
+      // Loop over all parts and forge them
+      for (const part of [
+        createAlienDTO.eyesId,
+        createAlienDTO.hairId,
+        createAlienDTO.mouthId,
+      ]) {
+        if (part) {
+          await this.forgeDefaultAlienParts(
+            walletAddress,
+            part,
+            createAlienDTO.elementId,
+          );
+        }
+      }
+      if (createAlienDTO.elementId) {
+        const user = await this.prisma.user.findUnique({
+          where: {
+            walletAddress,
+          },
+        });
+
+        await this.prisma.userElement.create({
+          data: {
+            userId: user.id,
+            elementId: createAlienDTO.elementId,
+          },
+        });
+      }
+
       // upload image to s3
       try {
         const uploadParams = {
@@ -1832,6 +1861,66 @@ export class ProfileService {
           id: alienPartId,
         },
         update: {
+          parts: {
+            connect: {
+              id: alienPartId,
+            },
+          },
+        },
+        create: {
+          name: alienPart.name,
+          description: alienPart.description,
+          parts: {
+            connect: {
+              id: alienPartId,
+            },
+          },
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async forgeDefaultAlienParts(
+    walletAddress: string,
+    alienPartId: number,
+    elementId: number,
+  ): Promise<{
+    success: boolean;
+    error?: any;
+  }> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alienPart = await this.prisma.alienPart.findUnique({
+        where: {
+          id: alienPartId,
+        },
+      });
+
+      // Create a new alien part for the user
+      await this.prisma.alienPartGroup.upsert({
+        where: {
+          id: alienPartId,
+        },
+        update: {
+          elementId: elementId || null,
           parts: {
             connect: {
               id: alienPartId,
