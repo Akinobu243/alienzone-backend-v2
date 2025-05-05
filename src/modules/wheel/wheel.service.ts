@@ -113,30 +113,62 @@ export class WheelService {
   private getWheelResult() {
     const random = Math.random() * 100;
 
-    if (random < 20) return { type: 'stars', amount: 20 };
+    if (random < 20)
+      return {
+        type: 'stars',
+        amount: 20,
+        message: 'You won 20 stars!',
+      };
     if (random < 50)
       return {
         type: 'item',
         itemType: ItemType.CUT,
         itemQuality: ItemQuality.BRONZE,
+        message: 'You won a bronze cut!',
       };
     if (random < 65)
       return {
         type: 'item',
         itemType: ItemType.KNIFE,
         itemQuality: ItemQuality.SILVER,
+        message: 'You won a silver knife!',
       };
     if (random < 77)
       return {
         type: 'item',
         itemType: ItemType.SHEARS,
         itemQuality: ItemQuality.GOLDEN,
+        message: 'You won a golden shears!',
       };
-    if (random < 87) return { type: 'rune', runeType: RuneType.UNCOMMON };
-    if (random < 94) return { type: 'rune', runeType: RuneType.COMMON };
-    if (random < 97) return { type: 'rune', runeType: RuneType.RARE };
-    if (random < 99) return { type: 'rune', runeType: RuneType.EPIC };
-    return { type: 'rune', runeType: RuneType.LEGENDARY };
+    if (random < 87)
+      return {
+        type: 'rune',
+        itemType: RuneType.UNCOMMON,
+        message: 'You won an uncommon rune!',
+      };
+    if (random < 94)
+      return {
+        type: 'rune',
+        itemType: RuneType.COMMON,
+        message: 'You won a common rune!',
+      };
+    if (random < 97)
+      return {
+        type: 'rune',
+        itemType: RuneType.RARE,
+        message: 'You won a rare rune!',
+      };
+    if (random < 99)
+      return {
+        type: 'rune',
+        itemType: RuneType.EPIC,
+        message: 'You won an epic rune!',
+      };
+    return {
+      type: 'rune',
+      itemType: RuneType.LEGENDARY,
+      message: 'You won a legendary rune!',
+    };
   }
 
   private async updateUserRewards(userId: number, result: any) {

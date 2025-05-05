@@ -70,7 +70,8 @@ export class InventoryService {
         },
       });
 
-      var alienParts = [];
+      let alienParts = [];
+
       if (alienPartGroup) {
         alienParts = alienPartGroup.parts;
       }
