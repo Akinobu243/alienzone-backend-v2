@@ -714,22 +714,26 @@ export class CharacterService {
         characterIds.join(',').toString(),
         signature,
       );
-      console.log(signerAddress, walletAddress);
+      console.log(
+        `Signer: ${signerAddress} User (DB): ${walletAddress} Server: ${this.adminWallet.address}`,
+      );
       if (signerAddress.toLowerCase() !== walletAddress.toLowerCase()) {
         throw new BadRequestException('Invalid signature');
       }
 
       const characterAmounts = characterIds.map(() => 1);
 
-      const serverSignature = await this.generateServerSignature(
+      const { serverSignature, nonce } = await this.generateServerSignature(
         characterIds,
         characterAmounts,
+        user.walletAddress,
       );
 
       return {
         success: true,
         characterIds,
         serverSignature,
+        nonce,
       };
     } catch (error) {
       console.error('Error minting character:', error);
@@ -1043,14 +1047,16 @@ export class CharacterService {
 
       // TODO: burn character using blockchain instead of manually granting character.
 
-      const serverSignature = await this.generateServerSignature(
+      const { serverSignature, nonce } = await this.generateServerSignature(
         [character.tokenId],
         [1],
+        user.walletAddress,
       );
 
       return {
         success: true,
         serverSignature,
+        nonce,
       };
     } catch (error) {
       return {
@@ -1063,13 +1069,17 @@ export class CharacterService {
   private async generateServerSignature(
     ids: number[],
     amounts: number[],
-  ): Promise<string> {
+    walletAddress: string,
+  ): Promise<{ serverSignature: string; nonce: number }> {
+    const nonce = Date.now();
     const hash = ethers.solidityPackedKeccak256(
-      ['address', 'uint256[]', 'uint256[]'],
-      [this.adminWallet.address, ids, amounts],
+      ['address', 'uint256[]', 'uint256[]', 'uint256'],
+      [walletAddress, ids, amounts, nonce],
     );
-    const signature = await this.adminWallet.signMessage(ethers.getBytes(hash));
-    return signature;
+    const serverSignature = await this.adminWallet.signMessage(
+      ethers.getBytes(hash),
+    );
+    return { serverSignature, nonce };
   }
 
   public async upgradeCharacter(walletAddress: string, characterId: number) {
@@ -1188,14 +1198,16 @@ export class CharacterService {
           throw new BadRequestException('Upgraded character not found');
         }
 
-        const serverSignature = await this.generateServerSignature(
+        const { serverSignature, nonce } = await this.generateServerSignature(
           [upgradedChar.tokenId],
           [1],
+          user.walletAddress,
         );
 
         return {
           success: true,
           serverSignature,
+          nonce,
         };
       }
 
@@ -1209,14 +1221,16 @@ export class CharacterService {
         );
       }
 
-      const serverSignature = await this.generateServerSignature(
+      const { serverSignature, nonce } = await this.generateServerSignature(
         [character.upgradesToId],
         [1],
+        user.walletAddress,
       );
 
       return {
         success: true,
         serverSignature: serverSignature,
+        nonce,
       };
     } catch (error) {
       return {
