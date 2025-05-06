@@ -192,27 +192,27 @@ export class QuestService {
       const todayUTC = this.getTodayUTC();
 
       // Check if the user has already completed the login quest today
-      if (user.lastDailyLogin) {
-        const lastLoginUTC = new Date(user.lastDailyLogin);
-        const lastLoginDay = new Date(
-          Date.UTC(
-            lastLoginUTC.getUTCFullYear(),
-            lastLoginUTC.getUTCMonth(),
-            lastLoginUTC.getUTCDate(),
-            0,
-            0,
-            0,
-            0,
-          ),
-        );
+      // if (user.lastDailyLogin) {
+      //   const lastLoginUTC = new Date(user.lastDailyLogin);
+      //   const lastLoginDay = new Date(
+      //     Date.UTC(
+      //       lastLoginUTC.getUTCFullYear(),
+      //       lastLoginUTC.getUTCMonth(),
+      //       lastLoginUTC.getUTCDate(),
+      //       0,
+      //       0,
+      //       0,
+      //       0,
+      //     ),
+      //   );
 
-        if (lastLoginDay.getTime() === todayUTC.getTime()) {
-          return {
-            success: false,
-            message: 'Login quest already completed for today',
-          };
-        }
-      }
+      //   if (lastLoginDay.getTime() === todayUTC.getTime()) {
+      //     return {
+      //       success: false,
+      //       message: 'Login quest already completed for today',
+      //     };
+      //   }
+      // }
 
       // Get all login quests
       const loginQuests = await this.prisma.quest.findMany({
