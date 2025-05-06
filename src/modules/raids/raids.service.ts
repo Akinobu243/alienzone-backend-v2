@@ -1,4 +1,11 @@
-import { Prisma, RewardType, RuneType, User } from '@prisma/client';
+import {
+  Alien,
+  AlienPart,
+  Prisma,
+  RewardType,
+  RuneType,
+  User,
+} from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,6 +14,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { levelRequirements } from 'src/configs/global.config';
 import { QuestService } from '../quest/quest.service';
 import { CharacterService } from '../character/character.service';
+import { ProfileService } from '../profile/profile.service';
 
 @Injectable()
 export class RaidsService {
@@ -14,6 +22,7 @@ export class RaidsService {
     private prisma: PrismaService,
     private questService: QuestService,
     private characterService: CharacterService,
+    private profileService: ProfileService,
   ) {}
 
   public async getRaidsList() {
@@ -317,6 +326,19 @@ export class RaidsService {
               ) {
                 rewardAmount += reward.amount * raid.user.xpBoost;
               }
+
+              // Get raid aliens boosts
+              for (const alien of raidAliens) {
+                const equippedPartsResponse =
+                  await this.profileService.getEquippedAlienParts(
+                    raid.user.walletAddress,
+                    alien.id,
+                  );
+                for (const partType in equippedPartsResponse.parts) {
+                  const part: AlienPart = equippedPartsResponse.parts[partType];
+                  rewardAmount += reward.amount * part.xpBoost;
+                }
+              }
             } else if (reward.type === RewardType.STARS) {
               rewardType = 'stars';
               if (
@@ -325,6 +347,19 @@ export class RaidsService {
                   Date.now()
               ) {
                 rewardAmount += reward.amount * raid.user.starsBoost;
+              }
+
+              // Get raid aliens boosts
+              for (const alien of raidAliens) {
+                const equippedPartsResponse =
+                  await this.profileService.getEquippedAlienParts(
+                    raid.user.walletAddress,
+                    alien.id,
+                  );
+                for (const partType in equippedPartsResponse.parts) {
+                  const part: AlienPart = equippedPartsResponse.parts[partType];
+                  rewardAmount += reward.amount * part.starBoost;
+                }
               }
             }
             await this.prisma.user.update({
@@ -452,6 +487,19 @@ export class RaidsService {
         user.lastRaidBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
       ) {
         newRaidDuration -= raidDuration * user.raidTimeBoost;
+      }
+
+      // Calculate raid duration based on equipped parts on each alien in raid
+      for (const alien of raidAliens) {
+        const equippedPartsResponse =
+          await this.profileService.getEquippedAlienParts(
+            user.walletAddress,
+            alien.id,
+          );
+        for (const partType in equippedPartsResponse.parts) {
+          const part: AlienPart = equippedPartsResponse.parts[partType];
+          newRaidDuration -= raidDuration * part.raidTimeBoost;
+        }
       }
 
       return newRaidDuration;

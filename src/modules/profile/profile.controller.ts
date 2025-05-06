@@ -177,10 +177,15 @@ export class ProfileController {
   @UseGuards(AuthGuard)
   @Get('/get-equipped-alien-parts')
   async getEquippedAlienParts(@Request() req) {
-    return this.profileService.getEquippedAlienParts(
+    const response = await this.profileService.getEquippedAlienParts(
       req.walletAddress,
       req.alienId,
     );
+    if (response.success) {
+      return response.parts;
+    } else {
+      return response;
+    }
   }
 
   @UseGuards(AuthGuard)

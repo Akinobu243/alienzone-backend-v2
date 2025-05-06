@@ -1,4 +1,6 @@
 import {
+  Alien,
+  AlienPart,
   AlienPartType,
   DailyRewardType,
   ItemQuality,
@@ -1135,13 +1137,28 @@ export class ProfileService {
         },
         data: {
           ...(boostType === 'stars'
-            ? { starsBoost: boostAmount, lastStarBoost: new Date() }
+            ? {
+                starsBoost: {
+                  increment: boostAmount,
+                },
+                lastStarBoost: new Date(),
+              }
             : {}),
           ...(boostType === 'raidTimeBoost'
-            ? { raidTimeBoost: boostAmount, lastRaidBoost: new Date() }
+            ? {
+                raidTimeBoost: {
+                  increment: boostAmount,
+                },
+                lastRaidBoost: new Date(),
+              }
             : {}),
           ...(boostType === 'xpBoost'
-            ? { xpBoost: boostAmount, lastXpBoost: new Date() }
+            ? {
+                xpBoost: {
+                  increment: boostAmount,
+                },
+                lastXpBoost: new Date(),
+              }
             : {}),
         },
       });
@@ -1378,7 +1395,25 @@ export class ProfileService {
     }
   }
 
-  public async getEquippedAlienParts(walletAddress: string, alienId: number) {
+  public async getEquippedAlienParts(
+    walletAddress: string,
+    alienId: number,
+  ): Promise<{
+    success?: boolean;
+    parts?: {
+      body: AlienPart;
+      clothes: AlienPart;
+      head: AlienPart;
+      eyes: AlienPart;
+      mouth: AlienPart;
+      hair: AlienPart;
+      marks: AlienPart;
+      powers: AlienPart;
+      accessories: AlienPart;
+      background: Element;
+    };
+    error?: string;
+  }> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -1424,11 +1459,17 @@ export class ProfileService {
         background: alien.element,
       };
 
-      return parts;
+      return {
+        success: true,
+        parts: {
+          ...parts,
+          background: parts.background as unknown as Element,
+        },
+      };
     } catch (error) {
       return {
         success: false,
-        error,
+        error: error.message,
       };
     }
   }
