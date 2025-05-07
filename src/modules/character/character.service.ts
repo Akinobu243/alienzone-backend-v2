@@ -290,6 +290,7 @@ export class CharacterService {
             tokenId: item.tokenId,
             upgradeReq: item.upgradeReq,
             upgradesToId: item.upgradesToId,
+            isPortal2: item.isPortal2 || false,
           },
         });
       }
@@ -324,6 +325,9 @@ export class CharacterService {
       }
 
       const characters = await this.prisma.character.findMany({
+        where: {
+          isPortal2: false,
+        },
         include: {
           element: true,
         },
