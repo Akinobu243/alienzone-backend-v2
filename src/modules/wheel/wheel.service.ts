@@ -20,16 +20,26 @@ export class WheelService {
         throw new BadRequestException('User not found');
       }
 
+      // Get current date in UTC and reset to start of day
       const today = new Date();
-      today.setUTCHours(1, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0);
 
       const lastSpin = await this.prisma.userSpin.findFirst({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       });
 
-      if (lastSpin && lastSpin.createdAt >= today) {
-        throw new BadRequestException('You have already spun the wheel today');
+      if (lastSpin) {
+        // Create a date from lastSpin and reset to start of that day in UTC
+        const lastSpinDate = new Date(lastSpin.createdAt);
+        lastSpinDate.setUTCHours(0, 0, 0, 0);
+
+        // Compare the UTC dates
+        if (lastSpinDate.getTime() === today.getTime()) {
+          throw new BadRequestException(
+            'You have already spun the wheel today',
+          );
+        }
       }
 
       // Logic for spinning the wheel and determining the result
@@ -215,7 +225,7 @@ export class WheelService {
         case 'rune':
           await this.prisma.user.update({
             where: { id: userId },
-            data: { runes: { push: result.runeType } },
+            data: { runes: { push: result.itemType } },
           });
           break;
       }
