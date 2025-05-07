@@ -267,7 +267,6 @@ model UnmintedCharacter {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now())
 
-  @@unique([userId, characterId])
   @@index([userId, characterId])
 }
 
