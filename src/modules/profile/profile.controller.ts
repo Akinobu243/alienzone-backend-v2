@@ -181,6 +181,7 @@ export class ProfileController {
       req.walletAddress,
       req.alienId,
     );
+
     if (response.success) {
       return response.parts;
     } else {
@@ -199,14 +200,28 @@ export class ProfileController {
   async equipAlienPart(
     @Request() req,
     @Body('alienId') alienId: number,
-    @Body('partIds') partIds: number[],
+    @Body('parts') parts: { type: string; id: number }[],
   ) {
     return this.profileService.equipAlienPart(
       req.walletAddress,
       alienId,
-      partIds,
+      parts,
     );
   }
+
+  // @UseGuards(AuthGuard)
+  // @Post('/equip-alien-part')
+  // async equipAlienPart(
+  //   @Request() req,
+  //   @Body('alienId') alienId: number,
+  //   @Body('partIds') partIds: number[],
+  // ) {
+  //   return this.profileService.equipAlienPart(
+  //     req.walletAddress,
+  //     alienId,
+  //     partIds,
+  //   );
+  // }
 
   @UseGuards(AuthGuard)
   @Post('/update-alien-image')

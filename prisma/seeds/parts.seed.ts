@@ -100,6 +100,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/tsuujou.png',
       price: 0,
       isDefault: true,
+      starBoost: 5,
+      xpBoost: 5,
+      raidTimeBoost: 5,
     },
     {
       type: AlienPartType.MOUTH,
@@ -109,6 +112,12 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/shita.png',
       price: 0,
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
+      starBoost: 8,
+      xpBoost: 8,
+      raidTimeBoost: 4,
     },
     {
       type: AlienPartType.MOUTH,
@@ -118,6 +127,12 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/niyaniya.png',
       price: 0,
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
+      starBoost: 2,
+      xpBoost: 3,
+      raidTimeBoost: 4,
     },
     {
       type: AlienPartType.MOUTH,
@@ -127,6 +142,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/nidari.png',
       price: 0,
       isDefault: true,
+      starBoost: 10,
+      xpBoost: 7,
+      raidTimeBoost: 12,
     },
     {
       type: AlienPartType.MOUTH,
@@ -136,6 +154,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/ichida.png',
       price: 0,
       isDefault: true,
+      starBoost: 6,
+      xpBoost: 9,
+      raidTimeBoost: 8,
     },
     {
       type: AlienPartType.MOUTH,
@@ -145,6 +166,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/hohoemu.png',
       price: 0,
       isDefault: true,
+      starBoost: 14,
+      xpBoost: 11,
+      raidTimeBoost: 7,
     },
     {
       type: AlienPartType.MOUTH,
@@ -154,6 +178,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/hiraku.png',
       price: 0,
       isDefault: true,
+      starBoost: 9,
+      xpBoost: 15,
+      raidTimeBoost: 6,
     },
     {
       type: AlienPartType.MOUTH,
@@ -163,6 +190,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/fudan.png',
       price: 0,
       isDefault: true,
+      starBoost: 7,
+      xpBoost: 7,
+      raidTimeBoost: 14,
     },
     {
       type: AlienPartType.HAIR,
@@ -172,6 +202,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/teppa.png',
       price: 0,
       isDefault: true,
+      starBoost: 11,
+      xpBoost: 6,
+      raidTimeBoost: 9,
     },
     {
       type: AlienPartType.HAIR,
@@ -181,6 +214,12 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/rokusu.png',
       price: 0,
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
+      starBoost: 1,
+      xpBoost: 1,
+      raidTimeBoost: 1,
     },
     {
       type: AlienPartType.HAIR,
@@ -190,6 +229,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/raito.png',
       price: 0,
       isDefault: true,
+      starBoost: 13,
+      xpBoost: 10,
+      raidTimeBoost: 11,
     },
     {
       type: AlienPartType.HAIR,
@@ -199,6 +241,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/poniteru.png',
       price: 0,
       isDefault: true,
+      starBoost: 8,
+      xpBoost: 16,
+      raidTimeBoost: 10,
     },
     {
       type: AlienPartType.HAIR,
@@ -208,6 +253,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/mijikai.png',
       price: 0,
       isDefault: true,
+      starBoost: 4,
+      xpBoost: 12,
+      raidTimeBoost: 18,
     },
     {
       type: AlienPartType.HAIR,
@@ -217,6 +265,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/kusege.png',
       price: 0,
       isDefault: true,
+      starBoost: 17,
+      xpBoost: 4,
+      raidTimeBoost: 13,
     },
     {
       type: AlienPartType.HAIR,
@@ -226,6 +277,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/bouken.png',
       price: 0,
       isDefault: true,
+      starBoost: 9,
+      xpBoost: 14,
+      raidTimeBoost: 7,
     },
     {
       type: AlienPartType.HAIR,
@@ -235,6 +289,12 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/bocchangari.png',
       price: 0,
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
+      starBoost: 15,
+      xpBoost: 20,
+      raidTimeBoost: 20,
     },
     {
       type: AlienPartType.EYES,
@@ -244,6 +304,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/yashinteki-yellow.png',
       price: 0,
       isDefault: true,
+      starBoost: 16,
+      xpBoost: 8,
+      raidTimeBoost: 9,
     },
     {
       type: AlienPartType.EYES,
@@ -253,6 +316,9 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/niyatsuku.png',
       price: 0,
       isDefault: true,
+      starBoost: 7,
+      xpBoost: 17,
+      raidTimeBoost: 11,
     },
     {
       type: AlienPartType.EYES,
@@ -261,6 +327,9 @@ export async function seed(prisma: PrismaClient) {
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/nanpo-red.png',
       price: 0,
+      starBoost: 5,
+      xpBoost: 10,
+      raidTimeBoost: 10,
       isDefault: true,
     },
     {
@@ -270,6 +339,9 @@ export async function seed(prisma: PrismaClient) {
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/majime-blue.png',
       price: 0,
+      starBoost: 2,
+      xpBoost: 3,
+      raidTimeBoost: 4,
       isDefault: true,
     },
     {
@@ -279,6 +351,9 @@ export async function seed(prisma: PrismaClient) {
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/konryoku-orange-green.png',
       price: 0,
+      starBoost: 20,
+      xpBoost: 3,
+      raidTimeBoost: 4,
       isDefault: true,
     },
     {
@@ -288,6 +363,9 @@ export async function seed(prisma: PrismaClient) {
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/karui-black.png',
       price: 0,
+      starBoost: 6,
+      xpBoost: 3,
+      raidTimeBoost: 4,
       isDefault: true,
     },
     {
@@ -297,6 +375,9 @@ export async function seed(prisma: PrismaClient) {
       image:
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/fukai-grey.png',
       price: 0,
+      starBoost: 2,
+      xpBoost: 9,
+      raidTimeBoost: 14,
       isDefault: true,
       isForgeable: true,
       forgeRuneType: RuneType.LEGENDARY,
@@ -312,6 +393,9 @@ export async function seed(prisma: PrismaClient) {
       isForgeable: true,
       forgeRuneType: RuneType.RARE,
       forgeRuneAmount: 1,
+      starBoost: 12,
+      xpBoost: 13,
+      raidTimeBoost: 4,
       isDefault: true,
     },
     {
@@ -325,6 +409,9 @@ export async function seed(prisma: PrismaClient) {
       isForgeable: true,
       forgeRuneType: RuneType.COMMON,
       forgeRuneAmount: 1,
+      starBoost: 1,
+      xpBoost: 13,
+      raidTimeBoost: 4,
     },
   ];
 
@@ -379,6 +466,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/elf.png',
         price: 1,
         isDefault: false,
+        starBoost: 19,
+        xpBoost: 14,
+        raidTimeBoost: 10,
       },
       {
         type: AlienPartType.EYES,
@@ -388,6 +478,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/elf.png',
         price: 1,
         isDefault: false,
+        starBoost: 14,
+        xpBoost: 19,
+        raidTimeBoost: 12,
       },
       {
         type: AlienPartType.BODY,
@@ -397,6 +490,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/body/elf.png',
         price: 1,
         isDefault: false,
+        starBoost: 16,
+        xpBoost: 16,
+        raidTimeBoost: 16,
       },
       {
         type: AlienPartType.HAIR,
@@ -406,6 +502,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/prisoner.png',
         price: 1,
         isDefault: false,
+        starBoost: 10,
+        xpBoost: 13,
+        raidTimeBoost: 22,
       },
       {
         type: AlienPartType.HAIR,
@@ -415,6 +514,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/ninja.png',
         price: 1,
         isDefault: false,
+        starBoost: 13,
+        xpBoost: 22,
+        raidTimeBoost: 10,
       },
       {
         type: AlienPartType.BODY,
@@ -424,6 +526,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/body/prisoner.png',
         price: 1,
         isDefault: false,
+        starBoost: 12,
+        xpBoost: 12,
+        raidTimeBoost: 24,
       },
       {
         type: AlienPartType.BODY,
@@ -433,6 +538,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/body/ninja.png',
         price: 1,
         isDefault: false,
+        starBoost: 15,
+        xpBoost: 25,
+        raidTimeBoost: 8,
       },
       {
         type: AlienPartType.MARKS,
@@ -442,6 +550,9 @@ export async function seed(prisma: PrismaClient) {
           'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/marks/ninja.png',
         price: 1,
         isDefault: false,
+        starBoost: 18,
+        xpBoost: 18,
+        raidTimeBoost: 9,
       },
     ];
 
@@ -471,6 +582,7 @@ export async function seed(prisma: PrismaClient) {
         isDefault: false,
       },
     ];
+
     const createdElfParts = await prisma.alienPart.createMany({
       data: elfParts,
       skipDuplicates: true,

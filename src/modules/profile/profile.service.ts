@@ -1549,6 +1549,187 @@ export class ProfileService {
   public async equipAlienPart(
     walletAddress: string,
     alienId: number,
+    parts: { type: string; id: number }[],
+  ) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      if (user.stars < 150) {
+        return {
+          success: false,
+          message:
+            "You don't have enough stars. 150 stars required to equip parts.",
+        };
+      }
+
+      const alien = await this.prisma.alien.findFirst({
+        where: {
+          id: alienId,
+          userId: user.id,
+        },
+      });
+
+      if (!alien) {
+        throw new BadRequestException('Alien not found');
+      }
+
+      const userAlienPartGroup = await this.prisma.alienPartGroup.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          parts: true,
+        },
+      });
+
+      // Get user's elements
+      const userElements = await this.prisma.userElement.findMany({
+        where: {
+          userId: user.id,
+        },
+        select: {
+          elementId: true,
+        },
+      });
+
+      const userElementIds = userElements.map((ue) => ue.elementId);
+
+      const userAlienParts = userAlienPartGroup.flatMap((group) => group.parts);
+
+      // Map from frontend part type to database field
+      const partTypeToFieldMap = {
+        hair: 'hairId',
+        eyes: 'eyesId',
+        mouth: 'mouthId',
+        element: 'elementId',
+        body: 'bodyId',
+        clothes: 'clothesId',
+        head: 'headId',
+        marks: 'marksId',
+        powers: 'powersId',
+        accessories: 'accessoriesId',
+      };
+
+      // Map from frontend part type to database part type (for validation)
+      const partTypeToDbTypeMap = {
+        hair: 'HAIR',
+        eyes: 'EYES',
+        mouth: 'MOUTH',
+        body: 'BODY',
+        clothes: 'CLOTHES',
+        head: 'HEAD',
+        marks: 'MARKS',
+        powers: 'POWERS',
+        accessories: 'ACCESSORIES',
+      };
+
+      // Prepare update data
+      const updateData = {};
+
+      // Process each part with its type
+      for (const part of parts) {
+        const { type, id } = part;
+
+        // Handle element type separately
+        if (type === 'element') {
+          if (!userElementIds.includes(id)) {
+            throw new BadRequestException(
+              `Element with ID ${id} not found in user inventory`,
+            );
+          }
+
+          // Update the element
+          updateData['elementId'] = id;
+          continue;
+        }
+
+        // For other part types
+        const dbField = partTypeToFieldMap[type];
+
+        if (!dbField) {
+          throw new BadRequestException(`Invalid part type: ${type}`);
+        }
+
+        // Find the part in the database
+        const dbPart = await this.prisma.alienPart.findUnique({
+          where: { id },
+        });
+
+        if (!dbPart) {
+          throw new BadRequestException(`Alien part with ID ${id} not found`);
+        }
+
+        // Verify the part type matches what we expect
+        const expectedDbType = partTypeToDbTypeMap[type];
+
+        if (dbPart.type !== expectedDbType) {
+          throw new BadRequestException(
+            `Part ID ${id} is not of type ${type} (found ${dbPart.type})`,
+          );
+        }
+
+        // Verify the user owns this part
+        if (!userAlienParts.some((userPart) => userPart.id === id)) {
+          throw new BadRequestException(
+            `Alien part with ID ${id} not found in user inventory`,
+          );
+        }
+
+        // Add to update data
+        updateData[dbField] = id;
+      }
+
+      // Update the alien with all the new parts in a single operation
+      const updatedAlien = await this.prisma.alien.update({
+        where: { id: alien.id },
+        data: updateData,
+        include: {
+          body: true,
+          clothes: true,
+          head: true,
+          eyes: true,
+          mouth: true,
+          hair: true,
+          marks: true,
+          powers: true,
+          accessories: true,
+          element: true,
+        },
+      });
+
+      // Deduct stars from user after successful equipping
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          stars: {
+            decrement: 150,
+          },
+        },
+      });
+
+      return {
+        success: true,
+        message: `${parts.length} parts equipped successfully`,
+        alien: updatedAlien,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to equip parts',
+        error,
+      };
+    }
+  }
+
+  public async equipAlienPartOld(
+    walletAddress: string,
+    alienId: number,
     partIds: number[],
   ) {
     try {
@@ -1834,6 +2015,131 @@ export class ProfileService {
   }
 
   public async forgeParts(
+    walletAddress: string,
+    alienPartId: number,
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    error?: any;
+  }> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alienPart = await this.prisma.alienPart.findUnique({
+        where: {
+          id: alienPartId,
+        },
+      });
+
+      if (!alienPart) {
+        throw new BadRequestException('Alien part not found');
+      }
+
+      // Check if the user already has this part
+      const existingPartGroup = await this.prisma.alienPartGroup.findFirst({
+        where: {
+          userId: user.id,
+          parts: {
+            some: {
+              id: alienPartId,
+            },
+          },
+        },
+      });
+
+      if (existingPartGroup) {
+        return {
+          success: false,
+          message: `You already own the ${alienPart.name}`,
+        };
+      }
+
+      const runeType = alienPart.forgeRuneType;
+      const runeAmount = alienPart.forgeRuneAmount;
+
+      if (!runeType || !runeAmount) {
+        throw new BadRequestException('Alien part cannot be forged');
+      }
+
+      const userRunes = user.runes.filter((rune) => rune === runeType);
+
+      if (userRunes.length < runeAmount) {
+        throw new BadRequestException(
+          `Insufficient ${runeType} runes. Required: ${runeAmount} ${runeType} runes`,
+        );
+      }
+
+      // Create a new runes array by removing only the required amount of the specific rune type
+      const newRunes = [...user.runes];
+      let removedCount = 0;
+
+      for (let i = newRunes.length - 1; i >= 0; i--) {
+        if (newRunes[i] === runeType && removedCount < runeAmount) {
+          newRunes.splice(i, 1);
+          removedCount++;
+        }
+
+        if (removedCount === runeAmount) {
+          break;
+        }
+      }
+
+      // Deduct runes from user
+      await this.prisma.user.update({
+        where: {
+          walletAddress,
+        },
+        data: {
+          runes: newRunes,
+        },
+      });
+
+      // Create a new alien part for the user
+      await this.prisma.alienPartGroup.upsert({
+        where: {
+          id: alienPartId,
+        },
+        update: {
+          parts: {
+            connect: {
+              id: alienPartId,
+            },
+          },
+        },
+        create: {
+          name: alienPart.name,
+          description: alienPart.description,
+          parts: {
+            connect: {
+              id: alienPartId,
+            },
+          },
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      return {
+        success: true,
+        message: `Successfully forged ${alienPart.name} part.`,
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async forgePartsOld(
     walletAddress: string,
     alienPartId: number,
   ): Promise<{
