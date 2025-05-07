@@ -183,6 +183,8 @@ export class RaidsService {
         user,
       );
 
+      console.log('raidDuration ===>', raidDuration);
+
       if (!raidDuration) {
         throw new BadRequestException('Error calculating raid duration');
       }
@@ -295,7 +297,7 @@ export class RaidsService {
         const raidRewards = raid.raid.rewards;
         const raidUserId = raid.userId;
         const raidDuration = await this.calculateRaidDuration(
-          raid.id,
+          raid.raidId,
           raidAliens,
           raidCharacters,
           raid.user,
@@ -336,6 +338,8 @@ export class RaidsService {
                   );
                 for (const partType in equippedPartsResponse.parts) {
                   const part: AlienPart = equippedPartsResponse.parts[partType];
+
+                  if (!part || !part.xpBoost) continue;
                   rewardAmount += reward.amount * part.xpBoost;
                 }
               }
@@ -358,6 +362,8 @@ export class RaidsService {
                   );
                 for (const partType in equippedPartsResponse.parts) {
                   const part: AlienPart = equippedPartsResponse.parts[partType];
+
+                  if (!part || !part.starBoost) continue;
                   rewardAmount += reward.amount * part.starBoost;
                 }
               }
@@ -450,6 +456,8 @@ export class RaidsService {
     user: User,
   ) {
     try {
+      console.log('raidId ===>', raidId);
+
       const raid = await this.prisma.raid.findUnique({
         where: { id: raidId },
       });
@@ -489,6 +497,8 @@ export class RaidsService {
         newRaidDuration -= raidDuration * user.raidTimeBoost;
       }
 
+      console.log('raidDuration ===>', raidDuration);
+      console.log('newRaidDuration ===>', newRaidDuration);
       // Calculate raid duration based on equipped parts on each alien in raid
       for (const alien of raidAliens) {
         const equippedPartsResponse =
@@ -496,9 +506,13 @@ export class RaidsService {
             user.walletAddress,
             alien.id,
           );
+
         for (const partType in equippedPartsResponse.parts) {
           const part: AlienPart = equippedPartsResponse.parts[partType];
+
+          if (!part || !part.raidTimeBoost) continue;
           newRaidDuration -= raidDuration * part.raidTimeBoost;
+          console.log('newRaidDuration loop ===>', newRaidDuration);
         }
       }
 

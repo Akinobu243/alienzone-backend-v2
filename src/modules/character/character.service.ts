@@ -51,6 +51,7 @@ export class CharacterService {
           id: elementId,
         },
       });
+
       if (!element) {
         throw new BadRequestException('Element not found');
       }
@@ -146,6 +147,7 @@ export class CharacterService {
 
       // Find and update the character in metadata
       const characterIndex = metadata.findIndex((item) => item.tokenId === id);
+
       if (characterIndex === -1) {
         throw new BadRequestException('Character not found in metadata');
       }
@@ -348,7 +350,7 @@ export class CharacterService {
 
       const rolledRarity = rollRarity();
 
-      var charactersByRarity = characters.filter(
+      let charactersByRarity = characters.filter(
         (character) => character.rarity === rolledRarity,
       );
 
@@ -387,6 +389,7 @@ export class CharacterService {
               id: user.id,
             },
           },
+          status: TransactionStatus.INITIATED,
         },
       });
 
@@ -482,6 +485,7 @@ export class CharacterService {
 
       for (const tokenId of allTokenIds) {
         const tokenBalance = Number(tokenBalances[tokenId - 1]);
+
         if (tokenBalance > 0) {
           const character = await this.prisma.character.findFirst({
             where: {
@@ -617,6 +621,8 @@ export class CharacterService {
             Math.floor(Math.random() * charactersByRarity.length)
           ];
 
+        console.log('randomCharacter ===>', randomCharacter);
+        console.log('user ===>', user);
         // Create a mintable character
         await this.prisma.unmintedCharacter.create({
           data: {
@@ -630,6 +636,7 @@ export class CharacterService {
                 id: user.id,
               },
             },
+            status: TransactionStatus.INITIATED,
           },
         });
 
@@ -1335,6 +1342,7 @@ export class CharacterService {
           user: true,
         },
       });
+
       if (!unmintedCharacter) {
         throw new BadRequestException('Unminted character not found');
       }
