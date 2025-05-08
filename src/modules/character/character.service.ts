@@ -1045,49 +1045,57 @@ export class CharacterService {
         );
       }
 
-      // Deduct 8 gear items from user
-      await this.prisma.userGearItem.update({
-        where: {
-          id: userGear.id,
-        },
-        data: {
-          quantity: {
-            decrement: 8,
+      // Use a transaction to ensure atomicity
+      return await this.prisma.$transaction(async (prisma) => {
+        // Deduct 8 gear items from user
+        await prisma.userGearItem.update({
+          where: {
+            id: userGear.id,
           },
-        },
-      });
-
-      // Reward the user with the associated character of the burned gear
-      const gearItem = await this.prisma.gearItem.findUnique({
-        where: {
-          id: gearItemId,
-        },
-      });
-
-      const character = await this.prisma.character.findFirst({
-        where: {
-          isPortal2: true,
-          name: {
-            contains: gearItem.type,
-            mode: 'insensitive',
+          data: {
+            quantity: {
+              decrement: 8,
+            },
           },
-          tier: 1,
-        },
+        });
+
+        // Reward the user with the associated character of the burned gear
+        const gearItem = await prisma.gearItem.findUnique({
+          where: {
+            id: gearItemId,
+          },
+        });
+
+        const character = await prisma.character.findFirst({
+          where: {
+            isPortal2: true,
+            name: {
+              contains: gearItem.type,
+              mode: 'insensitive',
+            },
+            tier: 1,
+          },
+        });
+
+        if (!character) {
+          throw new BadRequestException('Character not found');
+        }
+
+        // TODO: burn character using blockchain instead of manually granting character.
+
+        const { serverSignature, nonce } = await this.generateServerSignature(
+          [character.tokenId],
+          [1],
+          user.walletAddress,
+        );
+
+        return {
+          success: true,
+          serverSignature,
+          character,
+          nonce,
+        };
       });
-
-      // TODO: burn character using blockchain instead of manually granting character.
-
-      const { serverSignature, nonce } = await this.generateServerSignature(
-        [character.tokenId],
-        [1],
-        user.walletAddress,
-      );
-
-      return {
-        success: true,
-        serverSignature,
-        nonce,
-      };
     } catch (error) {
       return {
         success: false,
