@@ -1039,22 +1039,24 @@ export class CharacterService {
         throw new BadRequestException('User does not have this gear');
       }
 
-      if (userGear.quantity < 8) {
+      const burnAmount = 4;
+
+      if (userGear.quantity < burnAmount) {
         throw new BadRequestException(
-          'User does not have enough gear to burn. Required: 8',
+          `User does not have enough gear to burn. Required: ${burnAmount}`,
         );
       }
 
       // Use a transaction to ensure atomicity
       return await this.prisma.$transaction(async (prisma) => {
-        // Deduct 8 gear items from user
+        // Deduct 4 gear items from user
         await prisma.userGearItem.update({
           where: {
             id: userGear.id,
           },
           data: {
             quantity: {
-              decrement: 8,
+              decrement: burnAmount,
             },
           },
         });
@@ -1205,19 +1207,22 @@ export class CharacterService {
             `User does not have the required gear item: ${type}`,
           );
         }
-        if (userGear.quantity < 8) {
+
+        const burnAmount = 4;
+
+        if (userGear.quantity < burnAmount) {
           throw new BadRequestException(
-            `User does not have enough gear to burn. Required: 8`,
+            `User does not have enough gear to burn. Required: ${burnAmount}`,
           );
         }
-        // Deduct 8 gear items from user
+        // Deduct 4 gear items from user
         await this.prisma.userGearItem.update({
           where: {
             id: userGear.id,
           },
           data: {
             quantity: {
-              decrement: 8,
+              decrement: burnAmount,
             },
           },
         });
