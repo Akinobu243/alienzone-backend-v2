@@ -47,7 +47,7 @@ export async function seed(prisma: PrismaClient) {
     {
       title: 'Water Temple Raid',
       description: 'Explore the ancient water temple and defeat the guardian',
-      duration: 10, // 1 hour in seconds
+      duration: 60, // 1 hour in seconds
       image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
       elementId: elements.find((e) => e.name === 'Water')?.id || elements[0].id,
       rewards: {
@@ -57,7 +57,7 @@ export async function seed(prisma: PrismaClient) {
     {
       title: 'Fire Mountain Raid',
       description: 'Climb the fire mountain and collect rare fire crystals',
-      duration: 7200, // 2 hours in seconds
+      duration: 120, // 2 hours in seconds
       image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
       elementId: elements.find((e) => e.name === 'Fire')?.id || elements[1].id,
       rewards: {
@@ -68,7 +68,7 @@ export async function seed(prisma: PrismaClient) {
       title: 'Thunder Plains Raid',
       description:
         'Cross the dangerous thunder plains and harness lightning power',
-      duration: 5400, // 1.5 hours in seconds
+      duration: 60, // 1.5 hours in seconds
       image: 'https://alienzone-v2.s3.amazonaws.com/raids/raid-1.jpeg',
       elementId:
         elements.find((e) => e.name === 'Thunder')?.id || elements[2].id,
