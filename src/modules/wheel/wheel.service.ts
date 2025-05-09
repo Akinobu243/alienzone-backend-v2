@@ -10,6 +10,64 @@ export class WheelService {
     private questService: QuestService,
   ) {}
 
+  // public async spinWheel(walletAddress: string) {
+  //   try {
+  //     const user = await this.prisma.user.findUnique({
+  //       where: { walletAddress },
+  //     });
+
+  //     if (!user) {
+  //       throw new BadRequestException('User not found');
+  //     }
+
+  //     // Get current date in UTC and reset to start of day
+  //     const today = new Date();
+  //     today.setUTCHours(0, 0, 0, 0);
+
+  //     const lastSpin = await this.prisma.userSpin.findFirst({
+  //       where: { userId: user.id },
+  //       orderBy: { createdAt: 'desc' },
+  //     });
+
+  //     if (lastSpin) {
+  //       // Create a date from lastSpin and reset to start of that day in UTC
+  //       const lastSpinDate = new Date(lastSpin.createdAt);
+  //       lastSpinDate.setUTCHours(0, 0, 0, 0);
+
+  //       // Compare the UTC dates
+  //       if (lastSpinDate.getTime() === today.getTime()) {
+  //         throw new BadRequestException(
+  //           'You have already spun the wheel today',
+  //         );
+  //       }
+  //     }
+
+  //     // Logic for spinning the wheel and determining the result
+  //     const result = this.getWheelResult();
+
+  //     // Update user rewards based on the result
+  //     await this.updateUserRewards(user.id, result);
+
+  //     // Record the spin
+  //     await this.prisma.userSpin.create({
+  //       data: {
+  //         userId: user.id,
+  //         result,
+  //       },
+  //     });
+
+  //     try {
+  //       await this.questService.progressWheelQuest(walletAddress);
+  //     } catch (error) {
+  //       console.error('Error progressing wheel quest:', error);
+  //     }
+
+  //     return { success: true, result };
+  //   } catch (error) {
+  //     return { success: false, error: error.message };
+  //   }
+  // }
+
   public async spinWheel(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -24,21 +82,35 @@ export class WheelService {
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);
 
+      // Count spins for today
+      const todaySpins = await this.prisma.userSpin.count({
+        where: {
+          userId: user.id,
+          createdAt: {
+            gte: today,
+          },
+        },
+      });
+
+      if (todaySpins >= 3) {
+        throw new BadRequestException(
+          'You have already used all 3 spins for today',
+        );
+      }
+
+      // Check if 5 minutes have passed since last spin
       const lastSpin = await this.prisma.userSpin.findFirst({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       });
 
       if (lastSpin) {
-        // Create a date from lastSpin and reset to start of that day in UTC
-        const lastSpinDate = new Date(lastSpin.createdAt);
-        lastSpinDate.setUTCHours(0, 0, 0, 0);
+        const lastSpinTime = new Date(lastSpin.createdAt);
+        const fiveMinutesAgo = new Date();
+        fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
 
-        // Compare the UTC dates
-        if (lastSpinDate.getTime() === today.getTime()) {
-          throw new BadRequestException(
-            'You have already spun the wheel today',
-          );
+        if (lastSpinTime > fiveMinutesAgo) {
+          throw new BadRequestException('Please wait 5 minutes between spins');
         }
       }
 
@@ -62,13 +134,146 @@ export class WheelService {
         console.error('Error progressing wheel quest:', error);
       }
 
-      return { success: true, result };
+      // Return remaining spins for today
+      return {
+        success: true,
+        result,
+        remainingSpins: 3 - (todaySpins + 1),
+      };
     } catch (error) {
       return { success: false, error: error.message };
     }
   }
 
   public async canSpin(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      // Get current date in UTC and reset to start of day
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+
+      // Count spins for today
+      const todaySpins = await this.prisma.userSpin.count({
+        where: {
+          userId: user.id,
+          createdAt: {
+            gte: today,
+          },
+        },
+      });
+
+      // Check if user has used all 3 spins for today
+      if (todaySpins >= 3) {
+        // Calculate time until reset (next day)
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setUTCHours(0, 0, 0, 0);
+        const timeUntilReset = tomorrow.getTime() - now.getTime();
+        const secondsUntilReset = Math.ceil(timeUntilReset / 1000);
+
+        return {
+          success: true,
+          canSpin: false,
+          reason: 'All spins used today',
+          remainingSpins: 0,
+          nextSpinTime: tomorrow,
+          secondsUntilNextSpin: secondsUntilReset,
+        };
+      }
+
+      // Check if 5 minutes have passed since last spin
+      const lastSpin = await this.prisma.userSpin.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (lastSpin) {
+        const lastSpinTime = new Date(lastSpin.createdAt);
+        const now = new Date();
+        const nextAvailableTime = new Date(lastSpinTime);
+        nextAvailableTime.setMinutes(nextAvailableTime.getMinutes() + 5);
+
+        if (now < nextAvailableTime) {
+          const waitTimeMs = nextAvailableTime.getTime() - now.getTime();
+          const waitTimeSeconds = Math.ceil(waitTimeMs / 1000);
+
+          return {
+            success: true,
+            canSpin: false,
+            reason: 'Need to wait between spins',
+            waitTimeSeconds,
+            remainingSpins: 3 - todaySpins,
+            nextSpinTime: nextAvailableTime,
+            secondsUntilNextSpin: waitTimeSeconds,
+          };
+        }
+      }
+
+      return {
+        success: true,
+        canSpin: true,
+        remainingSpins: 3 - todaySpins,
+        nextSpinTime: null,
+        secondsUntilNextSpin: 0,
+      };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  public async getSpinHistory(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const spins = await this.prisma.userSpin.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Get current date in UTC and reset to start of day
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+
+      // Count spins for today
+      const todaySpins = await this.prisma.userSpin.count({
+        where: {
+          userId: user.id,
+          createdAt: {
+            gte: today,
+          },
+        },
+      });
+
+      const spinTimes = spins.map((spin) => {
+        return new Date(spin.createdAt);
+      });
+
+      return {
+        success: true,
+        spinTimes,
+        todaySpins,
+        remainingSpins: Math.max(0, 3 - todaySpins),
+      };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  public async canSpinOld(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -93,7 +298,7 @@ export class WheelService {
     }
   }
 
-  public async getSpinHistory(walletAddress: string) {
+  public async getSpinHistoryOld(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
