@@ -146,6 +146,8 @@ export class WheelService {
   }
 
   public async canSpin(walletAddress: string) {
+    console.log('canSpin ===>', walletAddress);
+
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
