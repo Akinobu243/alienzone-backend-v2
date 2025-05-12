@@ -1049,18 +1049,6 @@ export class CharacterService {
 
       // Use a transaction to ensure atomicity
       return await this.prisma.$transaction(async (prisma) => {
-        // Deduct 4 gear items from user
-        await prisma.userGearItem.update({
-          where: {
-            id: userGear.id,
-          },
-          data: {
-            quantity: {
-              decrement: burnAmount,
-            },
-          },
-        });
-
         // Reward the user with the associated character of the burned gear
         const gearItem = await prisma.gearItem.findUnique({
           where: {
@@ -1083,7 +1071,17 @@ export class CharacterService {
           throw new BadRequestException('Character not found');
         }
 
-        // TODO: burn character using blockchain instead of manually granting character.
+        // Deduct 4 gear items from user
+        await prisma.userGearItem.update({
+          where: {
+            id: userGear.id,
+          },
+          data: {
+            quantity: {
+              decrement: burnAmount,
+            },
+          },
+        });
 
         const { serverSignature, nonce } = await this.generateServerSignature(
           [character.tokenId],
@@ -1164,94 +1162,6 @@ export class CharacterService {
         }
       } catch (error) {
         console.error('Error progressing T3 characters quest:', error);
-      }
-
-      // Separate upgrade for Portal 2 characters
-      if (character.isPortal2) {
-        let type = null;
-        switch (true) {
-          case character.name.toLowerCase().includes('dante'):
-            type = GearItemType.DANTE;
-            break;
-          case character.name.toLowerCase().includes('karushi'):
-            type = GearItemType.KARUSHI;
-            break;
-          case character.name.toLowerCase().includes('nikola'):
-            type = GearItemType.NIKOLA;
-            break;
-          case character.name.toLowerCase().includes('shishi'):
-            type = GearItemType.SHISHI;
-            break;
-          case character.name.toLowerCase().includes('tembin'):
-            type = GearItemType.TEMBIN;
-            break;
-          case character.name.toLowerCase().includes('twins'):
-            type = GearItemType.TWINS;
-            break;
-        }
-
-        const userGear = await this.prisma.userGearItem.findFirst({
-          where: {
-            userId: user.id,
-            gearItem: {
-              type,
-            },
-          },
-          include: {
-            gearItem: true,
-          },
-        });
-
-        if (!userGear) {
-          throw new BadRequestException(
-            `User does not have the required gear item: ${type}`,
-          );
-        }
-
-        const burnAmount = 4;
-
-        if (userGear.quantity < burnAmount) {
-          throw new BadRequestException(
-            `User does not have enough gear to burn. Required: ${burnAmount}`,
-          );
-        }
-        // Deduct 4 gear items from user
-        await this.prisma.userGearItem.update({
-          where: {
-            id: userGear.id,
-          },
-          data: {
-            quantity: {
-              decrement: burnAmount,
-            },
-          },
-        });
-
-        const upgradedChar = await this.prisma.character.findFirst({
-          where: {
-            isPortal2: true,
-            name: {
-              contains: userGear.gearItem.type,
-              mode: 'insensitive',
-            },
-            tier: character.tier + 1,
-          },
-        });
-        if (!upgradedChar) {
-          throw new BadRequestException('Upgraded character not found');
-        }
-
-        const { serverSignature, nonce } = await this.generateServerSignature(
-          [upgradedChar.tokenId],
-          [1],
-          user.walletAddress,
-        );
-
-        return {
-          success: true,
-          serverSignature,
-          nonce,
-        };
       }
 
       const ownedCharacterQuantity = userCharacters.filter(
