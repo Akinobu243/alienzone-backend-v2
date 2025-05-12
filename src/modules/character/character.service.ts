@@ -1208,41 +1208,43 @@ export class CharacterService {
 
       allCharacters.push(character);
 
-      if (character.tier >= 2) {
-        const prevCharacter = await this.prisma.character.findMany({
-          where: {
-            upgradesToId: character.id,
-          },
-        });
-        allCharacters.push(prevCharacter[0]);
-
-        if (prevCharacter[0].tier === 2) {
-          const prevCharacter2 = await this.prisma.character.findMany({
-            where: {
-              upgradesToId: prevCharacter[0].id,
-            },
-          });
-          allCharacters.push(prevCharacter2[0]);
-        }
+      if (character.upgradesToId === null) {
+        return {
+          success: true,
+          characters: allCharacters,
+        };
       }
 
-      if (character.tier <= 2) {
-        const nextCharacter = await this.prisma.character.findUnique({
-          where: {
-            id: character.upgradesToId,
-          },
-        });
-        allCharacters.push(nextCharacter);
+      const characterT2 = await this.prisma.character.findUnique({
+        where: {
+          id: character.upgradesToId,
+        },
+      });
 
-        if (nextCharacter.tier === 2) {
-          const nextCharacter2 = await this.prisma.character.findUnique({
-            where: {
-              id: character.upgradesToId,
-            },
-          });
-          allCharacters.push(nextCharacter2);
-        }
+      if (!characterT2) {
+        throw new BadRequestException('Character T2 not found');
       }
+
+      allCharacters.push(characterT2);
+
+      if (characterT2.upgradesToId === null) {
+        return {
+          success: true,
+          characters: allCharacters,
+        };
+      }
+
+      const characterT3 = await this.prisma.character.findUnique({
+        where: {
+          id: characterT2.upgradesToId,
+        },
+      });
+
+      if (!characterT3) {
+        throw new BadRequestException('Character T3 not found');
+      }
+
+      allCharacters.push(characterT3);
 
       return {
         success: true,
