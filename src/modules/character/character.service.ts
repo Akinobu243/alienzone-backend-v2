@@ -1203,7 +1203,7 @@ export class CharacterService {
       });
 
       if (!character) {
-        throw new BadRequestException('Character not found');
+        throw new BadRequestException(`Character (${character.id}) not found`);
       }
 
       allCharacters.push(character);
@@ -1222,7 +1222,9 @@ export class CharacterService {
       });
 
       if (!characterT2) {
-        throw new BadRequestException('Character T2 not found');
+        throw new BadRequestException(
+          `Character (${character.id}) T2 (${character.upgradesToId}) not found`,
+        );
       }
 
       allCharacters.push(characterT2);
@@ -1241,7 +1243,9 @@ export class CharacterService {
       });
 
       if (!characterT3) {
-        throw new BadRequestException('Character T3 not found');
+        throw new BadRequestException(
+          `Character (${character.id}) T3 (${character.upgradesToId}) not found`,
+        );
       }
 
       allCharacters.push(characterT3);
