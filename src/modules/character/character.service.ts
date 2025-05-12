@@ -1256,8 +1256,18 @@ export class CharacterService {
     }
   }
 
-  public async getAllCharacterTiers() {
+  public async getAllCharacterTiers(walletAddress: string) {
     try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
       const p1Characters = await this.prisma.character.findMany({
         where: {
           isPortal2: false,
@@ -1277,6 +1287,17 @@ export class CharacterService {
         },
       });
 
+      const userCharactersResponse = await this.getUserCharacters(
+        walletAddress,
+      );
+
+      if (!userCharactersResponse.success) {
+        throw new BadRequestException(
+          'Error fetching user characters for tier calculation',
+        );
+      }
+      const userCharacters = userCharactersResponse.userCharacters;
+
       const response = {
         portal1: [],
         portal2: [],
@@ -1289,10 +1310,30 @@ export class CharacterService {
           const t1Char = charTiers.find((c) => c.tier === 1);
           const t2Char = charTiers.find((c) => c.tier === 2);
           const t3Char = charTiers.find((c) => c.tier === 3);
+
+          const t1Amount = userCharacters.filter(
+            (c) => c.id === t1Char.id,
+          ).length;
+          const t2Amount = userCharacters.filter(
+            (c) => c.id === t2Char.id,
+          ).length;
+          const t3Amount = userCharacters.filter(
+            (c) => c.id === t3Char.id,
+          ).length;
+
           response.portal1.push({
-            stage1: t1Char,
-            stage2: t2Char,
-            stage3: t3Char,
+            stage1: {
+              ...t1Char,
+              amount: t1Amount,
+            },
+            stage2: {
+              ...t2Char,
+              amount: t2Amount,
+            },
+            stage3: {
+              ...t3Char,
+              amount: t3Amount,
+            },
           });
         } else {
           throw new BadRequestException(
@@ -1308,10 +1349,30 @@ export class CharacterService {
           const t1Char = charTiers.find((c) => c.tier === 1);
           const t2Char = charTiers.find((c) => c.tier === 2);
           const t3Char = charTiers.find((c) => c.tier === 3);
-          response.portal2.push({
-            stage1: t1Char,
-            stage2: t2Char,
-            stage3: t3Char,
+
+          const t1Amount = userCharacters.filter(
+            (c) => c.id === t1Char.id,
+          ).length;
+          const t2Amount = userCharacters.filter(
+            (c) => c.id === t2Char.id,
+          ).length;
+          const t3Amount = userCharacters.filter(
+            (c) => c.id === t3Char.id,
+          ).length;
+
+          response.portal1.push({
+            stage1: {
+              ...t1Char,
+              amount: t1Amount,
+            },
+            stage2: {
+              ...t2Char,
+              amount: t2Amount,
+            },
+            stage3: {
+              ...t3Char,
+              amount: t3Amount,
+            },
           });
         } else {
           throw new BadRequestException(
