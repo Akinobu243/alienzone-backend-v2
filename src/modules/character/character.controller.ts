@@ -194,9 +194,8 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Get('/tiers')
-  async getTiers(@Query('characterId') characterId: number) {
-    characterId = parseInt(characterId.toString());
-    return this.characterService.getTiers(characterId);
+  async getTiers() {
+    return this.characterService.getAllCharacterTiers();
   }
 
   @UseGuards(AuthGuard)

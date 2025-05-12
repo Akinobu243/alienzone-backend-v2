@@ -1193,7 +1193,7 @@ export class CharacterService {
     }
   }
 
-  public async getTiers(characterId: number) {
+  private async getTiers(characterId: number) {
     var allCharacters = [];
     try {
       const character = await this.prisma.character.findUnique({
@@ -1252,6 +1252,82 @@ export class CharacterService {
       return {
         success: false,
         error,
+      };
+    }
+  }
+
+  public async getAllCharacterTiers() {
+    try {
+      const p1Characters = await this.prisma.character.findMany({
+        where: {
+          isPortal2: false,
+          tier: 1,
+        },
+        include: {
+          element: true,
+        },
+      });
+      const p2Characters = await this.prisma.character.findMany({
+        where: {
+          isPortal2: true,
+          tier: 1,
+        },
+        include: {
+          element: true,
+        },
+      });
+
+      const response = {
+        portal1: [],
+        portal2: [],
+      };
+
+      for (const char of p1Characters) {
+        const allTiers = await this.getTiers(char.id);
+        if (allTiers.success) {
+          const charTiers = allTiers.characters;
+          const t1Char = charTiers.find((c) => c.tier === 1);
+          const t2Char = charTiers.find((c) => c.tier === 2);
+          const t3Char = charTiers.find((c) => c.tier === 3);
+          response.portal1.push({
+            stage1: t1Char,
+            stage2: t2Char,
+            stage3: t3Char,
+          });
+        } else {
+          throw new BadRequestException(
+            `Error fetching character tiers for character: ${char.id}`,
+          );
+        }
+      }
+
+      for (const char of p2Characters) {
+        const allTiers = await this.getTiers(char.id);
+        if (allTiers.success) {
+          const charTiers = allTiers.characters;
+          const t1Char = charTiers.find((c) => c.tier === 1);
+          const t2Char = charTiers.find((c) => c.tier === 2);
+          const t3Char = charTiers.find((c) => c.tier === 3);
+          response.portal2.push({
+            stage1: t1Char,
+            stage2: t2Char,
+            stage3: t3Char,
+          });
+        } else {
+          throw new BadRequestException(
+            `Error fetching character tiers for character: ${char.id}`,
+          );
+        }
+      }
+      return {
+        success: true,
+        allCharacterTiers: response,
+      };
+    } catch (error) {
+      console.error('Error fetching all character tiers:', error);
+      return {
+        success: false,
+        error: error.message,
       };
     }
   }
