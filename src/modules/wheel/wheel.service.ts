@@ -10,64 +10,6 @@ export class WheelService {
     private questService: QuestService,
   ) {}
 
-  // public async spinWheel(walletAddress: string) {
-  //   try {
-  //     const user = await this.prisma.user.findUnique({
-  //       where: { walletAddress },
-  //     });
-
-  //     if (!user) {
-  //       throw new BadRequestException('User not found');
-  //     }
-
-  //     // Get current date in UTC and reset to start of day
-  //     const today = new Date();
-  //     today.setUTCHours(0, 0, 0, 0);
-
-  //     const lastSpin = await this.prisma.userSpin.findFirst({
-  //       where: { userId: user.id },
-  //       orderBy: { createdAt: 'desc' },
-  //     });
-
-  //     if (lastSpin) {
-  //       // Create a date from lastSpin and reset to start of that day in UTC
-  //       const lastSpinDate = new Date(lastSpin.createdAt);
-  //       lastSpinDate.setUTCHours(0, 0, 0, 0);
-
-  //       // Compare the UTC dates
-  //       if (lastSpinDate.getTime() === today.getTime()) {
-  //         throw new BadRequestException(
-  //           'You have already spun the wheel today',
-  //         );
-  //       }
-  //     }
-
-  //     // Logic for spinning the wheel and determining the result
-  //     const result = this.getWheelResult();
-
-  //     // Update user rewards based on the result
-  //     await this.updateUserRewards(user.id, result);
-
-  //     // Record the spin
-  //     await this.prisma.userSpin.create({
-  //       data: {
-  //         userId: user.id,
-  //         result,
-  //       },
-  //     });
-
-  //     try {
-  //       await this.questService.progressWheelQuest(walletAddress);
-  //     } catch (error) {
-  //       console.error('Error progressing wheel quest:', error);
-  //     }
-
-  //     return { success: true, result };
-  //   } catch (error) {
-  //     return { success: false, error: error.message };
-  //   }
-  // }
-
   public async spinWheel(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
