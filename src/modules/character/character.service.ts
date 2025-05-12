@@ -8,7 +8,7 @@ import {
   GearItemType,
   TransactionStatus,
 } from '@prisma/client';
-import { ethers } from 'ethers';
+import { ethers, toQuantity } from 'ethers';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   multiCharacterSummonCost,
@@ -1330,15 +1330,15 @@ export class CharacterService {
           response.portal1.push({
             stage1: {
               ...t1Char,
-              amount: t1Amount,
+              quantity: t1Amount,
             },
             stage2: {
               ...t2Char,
-              amount: t2Amount,
+              quantity: t2Amount,
             },
             stage3: {
               ...t3Char,
-              amount: t3Amount,
+              quantity: t3Amount,
             },
           });
         } else {
@@ -1366,18 +1366,18 @@ export class CharacterService {
             (c) => c.id === t3Char.id,
           ).length;
 
-          response.portal1.push({
+          response.portal2.push({
             stage1: {
               ...t1Char,
-              amount: t1Amount,
+              quantity: t1Amount,
             },
             stage2: {
               ...t2Char,
-              amount: t2Amount,
+              quantity: t2Amount,
             },
             stage3: {
               ...t3Char,
-              amount: t3Amount,
+              quantity: t3Amount,
             },
           });
         } else {
