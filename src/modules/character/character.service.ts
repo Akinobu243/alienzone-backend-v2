@@ -1274,6 +1274,15 @@ export class CharacterService {
         throw new BadRequestException('User not found');
       }
 
+      const allT1Characters = await this.prisma.character.findMany({
+        where: {
+          tier: 1,
+        },
+        include: {
+          element: true,
+        },
+      });
+
       const p1Characters = await this.prisma.character.findMany({
         where: {
           isPortal2: false,
@@ -1309,7 +1318,7 @@ export class CharacterService {
         portal2: [],
       };
 
-      for (const char of p1Characters) {
+      for (const char of allT1Characters) {
         const allTiers = await this.getTiers(char.id);
         if (allTiers.success) {
           const charTiers = allTiers.characters;
@@ -1327,7 +1336,7 @@ export class CharacterService {
             (c) => c.id === (t3Char ? t3Char.id : -1), // amount will be 0 if t4Char is undefined
           ).length;
 
-          response.portal1.push({
+          const responseData = {
             stage1: {
               ...t1Char,
               quantity: t1Amount,
@@ -1340,7 +1349,13 @@ export class CharacterService {
               ...t3Char,
               quantity: t3Amount,
             },
-          });
+          };
+
+          if (char.isPortal2) {
+            response.portal2.push(responseData);
+          } else {
+            response.portal1.push(responseData);
+          }
         } else {
           throw new BadRequestException(
             `Error fetching character tiers for character: ${char.id}`,
@@ -1348,44 +1363,6 @@ export class CharacterService {
         }
       }
 
-      for (const char of p2Characters) {
-        const allTiers = await this.getTiers(char.id);
-        if (allTiers.success) {
-          const charTiers = allTiers.characters;
-          const t1Char = charTiers.find((c) => c.tier === 1);
-          const t2Char = charTiers.find((c) => c.tier === 2);
-          const t3Char = charTiers.find((c) => c.tier === 3);
-
-          const t1Amount = userCharacters.filter(
-            (c) => c.id === (t1Char ? t1Char.id : -1), // amount will be 0 if t1Char is undefined
-          ).length;
-          const t2Amount = userCharacters.filter(
-            (c) => c.id === (t2Char ? t2Char.id : -1), // amount will be 0 if t3Char is undefined
-          ).length;
-          const t3Amount = userCharacters.filter(
-            (c) => c.id === (t3Char ? t3Char.id : -1), // amount will be 0 if t4Char is undefined
-          ).length;
-
-          response.portal2.push({
-            stage1: {
-              ...t1Char,
-              quantity: t1Amount,
-            },
-            stage2: {
-              ...t2Char,
-              quantity: t2Amount,
-            },
-            stage3: {
-              ...t3Char,
-              quantity: t3Amount,
-            },
-          });
-        } else {
-          throw new BadRequestException(
-            `Error fetching character tiers for character: ${char.id}`,
-          );
-        }
-      }
       return {
         success: true,
         allCharacterTiers: response,
