@@ -340,11 +340,17 @@ export class CharacterService {
         UR: 0.01,
       };
 
-      const rollRarity = () => {
+      const rollRarity = (ignoredRarities = []) => {
+        const filteredRarities = Object.fromEntries(
+          Object.entries(rarityChances).filter(
+            ([key]) => !ignoredRarities.includes(key),
+          ),
+        );
+
         const random = Math.random();
         let accumulatedChance = 0;
 
-        for (const rarity in rarityChances) {
+        for (const rarity in filteredRarities) {
           accumulatedChance += rarityChances[rarity];
           if (random < accumulatedChance) {
             return rarity;
@@ -352,18 +358,23 @@ export class CharacterService {
         }
       };
 
-      const rolledRarity = rollRarity();
+      let rolledRarity = rollRarity();
 
       let charactersByRarity = characters.filter(
         (character) => character.rarity === rolledRarity,
       );
 
-      if (charactersByRarity.length === 0) {
-        charactersByRarity = characters;
-        // TODO: Uncomment this line
-        // throw new BadRequestException(
-        //   'No characters found for the rolled rarity',
-        // );
+      const ignoredRarities = [rolledRarity];
+      while (charactersByRarity.length === 0) {
+        console.log(
+          `No characters found for rarity: ${rolledRarity}. Rolling again...`,
+        );
+        rolledRarity = rollRarity(ignoredRarities);
+        console.log('rolledRarity ===>', rolledRarity);
+        charactersByRarity = characters.filter(
+          (character) => character.rarity === rolledRarity,
+        );
+        ignoredRarities.push(rolledRarity);
       }
 
       const randomCharacter =
@@ -577,29 +588,34 @@ export class CharacterService {
       });
 
       const characters = await this.prisma.character.findMany({
+        where: {
+          isPortal2: false,
+        },
         include: {
           element: true,
         },
       });
 
-      if (characters.length === 0) {
-        throw new BadRequestException('No characters found for this portal');
-      }
-
       const summonResults = [];
       // Reward 10 random characters
       for (let i = 0; i < 10; i++) {
         const rarityChances = {
-          R: 0.6,
-          SR: 0.3,
-          UR: 0.1,
+          R: 0.7,
+          SR: 0.2,
+          SSR: 0.09,
+          UR: 0.01,
         };
 
-        const rollRarity = () => {
+        const rollRarity = (ignoredRarities = []) => {
+          const filteredRarities = Object.fromEntries(
+            Object.entries(rarityChances).filter(
+              ([key]) => !ignoredRarities.includes(key),
+            ),
+          );
+
           const random = Math.random();
           let accumulatedChance = 0;
-
-          for (const rarity in rarityChances) {
+          for (const rarity in filteredRarities) {
             accumulatedChance += rarityChances[rarity];
             if (random < accumulatedChance) {
               return rarity;
@@ -607,27 +623,32 @@ export class CharacterService {
           }
         };
 
-        const rolledRarity = rollRarity();
+        let rolledRarity = rollRarity();
 
-        const charactersByRarity = characters.filter(
+        let charactersByRarity = characters.filter(
           (character) => character.rarity === rolledRarity,
         );
 
-        // TODO: Uncomment this line
-        // if (charactersByRarity.length === 0) {
-        //   throw new BadRequestException(
-        //     'No characters found for the rolled rarity',
-        //   );
-        // }
+        const ignoredRarities = [rolledRarity];
+        while (charactersByRarity.length === 0) {
+          console.log(
+            `No characters found for rarity: ${rolledRarity}. Rolling again...`,
+          );
+          rolledRarity = rollRarity(ignoredRarities);
+          console.log('rolledRarity ===>', rolledRarity);
+          charactersByRarity = characters.filter(
+            (character) => character.rarity === rolledRarity,
+          );
+          ignoredRarities.push(rolledRarity);
+        }
 
         const randomCharacter =
           charactersByRarity[
             Math.floor(Math.random() * charactersByRarity.length)
           ];
 
-        console.log('randomCharacter ===>', randomCharacter);
-        console.log('user ===>', user);
-        // Create a mintable character
+        // console.log('randomCharacter ===>', randomCharacter);
+
         await this.prisma.unmintedCharacter.create({
           data: {
             character: {
