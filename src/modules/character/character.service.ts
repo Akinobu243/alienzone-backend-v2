@@ -458,6 +458,7 @@ export class CharacterService {
       upgradeReq: number | null;
       upgradesToId: number | null;
       tier: number;
+      isPortal2: boolean;
       element: {
         id: number;
         name: string;
@@ -1224,6 +1225,7 @@ export class CharacterService {
         oldTokenId: character.tokenId,
         oldTokenAmount: character.upgradeReq,
         newTokenId: character.upgradesToId,
+        character,
       };
     } catch (error) {
       return {

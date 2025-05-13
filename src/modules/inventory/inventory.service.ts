@@ -93,6 +93,7 @@ export class InventoryService {
           name: userChar.name,
           quantity: userChar.quantity,
           tier: userChar.tier,
+          isPortal2: userChar.isPortal2,
           image: userChar.image,
           description: `${userChar.rarity} character with power ${userChar.power}`,
           type: 'CHARACTER' as const,
