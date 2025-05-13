@@ -1357,13 +1357,13 @@ export class CharacterService {
           const t3Char = charTiers.find((c) => c.tier === 3);
 
           const t1Amount = userCharacters.filter(
-            (c) => c.id === t1Char.id,
+            (c) => c.id === (t1Char ? t1Char.id : -1), // amount will be 0 if t1Char is undefined
           ).length;
           const t2Amount = userCharacters.filter(
-            (c) => c.id === t2Char.id,
+            (c) => c.id === (t2Char ? t2Char.id : -1), // amount will be 0 if t3Char is undefined
           ).length;
           const t3Amount = userCharacters.filter(
-            (c) => c.id === t3Char.id,
+            (c) => c.id === (t3Char ? t3Char.id : -1), // amount will be 0 if t4Char is undefined
           ).length;
 
           response.portal2.push({
