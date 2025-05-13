@@ -1189,6 +1189,9 @@ export class CharacterService {
         success: true,
         serverSignature: serverSignature,
         nonce,
+        oldTokenId: character.tokenId,
+        oldTokenAmount: ownedCharacterQuantity,
+        newTokenId: character.upgradesToId,
       };
     } catch (error) {
       return {
