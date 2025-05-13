@@ -1164,9 +1164,14 @@ export class CharacterService {
         console.error('Error progressing T3 characters quest:', error);
       }
 
-      const ownedCharacterQuantity = userCharacters.filter(
+      const ownedCharacter = userCharacters.find(
         (chr) => chr.id === characterId,
-      ).length;
+      );
+      if (!ownedCharacter) {
+        throw new BadRequestException('Character not found in user list');
+      }
+
+      const ownedCharacterQuantity = ownedCharacter.quantity;
 
       if (ownedCharacterQuantity < character.upgradeReq) {
         throw new BadRequestException(
