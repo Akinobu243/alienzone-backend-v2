@@ -1181,7 +1181,7 @@ export class CharacterService {
 
       const { serverSignature, nonce } = await this.generateServerSignature(
         [character.tokenId],
-        [1],
+        [character.upgradeReq],
         user.walletAddress,
       );
 
@@ -1190,7 +1190,7 @@ export class CharacterService {
         serverSignature: serverSignature,
         nonce,
         oldTokenId: character.tokenId,
-        oldTokenAmount: ownedCharacterQuantity,
+        oldTokenAmount: character.upgradeReq,
         newTokenId: character.upgradesToId,
       };
     } catch (error) {
