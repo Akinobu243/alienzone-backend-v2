@@ -1307,15 +1307,19 @@ export class CharacterService {
           const t2Char = charTiers.find((c) => c.tier === 2);
           const t3Char = charTiers.find((c) => c.tier === 3);
 
-          const t1Amount = userCharacters.filter(
-            (c) => c.id === (t1Char ? t1Char.id : -1), // amount will be 0 if t1Char is undefined
-          ).length;
-          const t2Amount = userCharacters.filter(
-            (c) => c.id === (t2Char ? t2Char.id : -1), // amount will be 0 if t3Char is undefined
-          ).length;
-          const t3Amount = userCharacters.filter(
-            (c) => c.id === (t3Char ? t3Char.id : -1), // amount will be 0 if t4Char is undefined
-          ).length;
+          const t1OwnedCharacter = userCharacters.find(
+            (c) => c.id === (t1Char ? t1Char.id : -1),
+          );
+          const t1Amount = t1OwnedCharacter ? t1OwnedCharacter.quantity : 0;
+
+          const t2OwnedCharacter = userCharacters.find(
+            (c) => c.id === (t2Char ? t2Char.id : -1),
+          );
+          const t2Amount = t2OwnedCharacter ? t2OwnedCharacter.quantity : 0;
+          const t3OwnedCharacter = userCharacters.find(
+            (c) => c.id === (t3Char ? t3Char.id : -1),
+          );
+          const t3Amount = t3OwnedCharacter ? t3OwnedCharacter.quantity : 0;
 
           const responseData = {
             stage1: {
