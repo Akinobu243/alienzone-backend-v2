@@ -1180,7 +1180,7 @@ export class CharacterService {
       }
 
       const { serverSignature, nonce } = await this.generateServerSignature(
-        [character.upgradesToId],
+        [character.tokenId],
         [1],
         user.walletAddress,
       );
