@@ -715,34 +715,45 @@ export class CharacterService {
         throw new BadRequestException('User not found');
       }
 
-      const unmintedCharacters = await this.prisma.unmintedCharacter.findMany({
-        where: {
-          userId: user.id,
-          characterId: {
-            in: characterIds,
+      const unmintedCharacters = [];
+      for (const characterId of characterIds) {
+        const uChar = await this.prisma.unmintedCharacter.findFirst({
+          where: {
+            id: { notIn: unmintedCharacters.map((u) => u.id) }, // Avoid duplicates
+            userId: user.id,
+            characterId,
+            status: {
+              in: [TransactionStatus.INITIATED, TransactionStatus.FAILED],
+            },
           },
-          status: {
-            in: [TransactionStatus.INITIATED, TransactionStatus.FAILED],
-          },
-        },
-      });
-
-      if (!unmintedCharacters || unmintedCharacters.length === 0) {
-        throw new BadRequestException(
-          'Character not found in mintable list for this user.',
-        );
+        });
+        if (uChar) {
+          unmintedCharacters.push(uChar);
+          console.log(
+            `Unminted character found: ${uChar.characterId} uCharId: ${uChar.id}`,
+          );
+        } else {
+          throw new BadRequestException(
+            `Character with ID ${characterId} not found in mintable list.`,
+          );
+        }
       }
 
-      const characters = await this.prisma.character.findMany({
-        where: {
-          id: {
-            in: characterIds,
-          },
-        },
-      });
+      const characters = [];
 
-      if (characters.length !== characterIds.length) {
-        throw new BadRequestException('Character not found');
+      for (const characterId of characterIds) {
+        const character = await this.prisma.character.findUnique({
+          where: {
+            id: characterId,
+          },
+        });
+        if (character) {
+          characters.push(character);
+        } else {
+          throw new BadRequestException(
+            `Character with ID ${characterId} not found.`,
+          );
+        }
       }
 
       const signerAddress = ethers.verifyMessage(
