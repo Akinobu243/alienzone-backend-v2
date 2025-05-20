@@ -319,6 +319,11 @@ export class RaidsService {
           for (const reward of raidRewards) {
             let rewardAmount = reward.amount;
             let rewardType: string;
+
+            console.log(
+              `Initial reward: ${reward.type} Amount: ${reward.amount}`,
+            );
+
             if (reward.type === RewardType.XP) {
               rewardType = 'experience';
               if (
@@ -326,7 +331,12 @@ export class RaidsService {
                 raid.user.lastXpBoost.getTime() + 24 * 60 * 60 * 1000 >
                   Date.now()
               ) {
-                rewardAmount += reward.amount * raid.user.xpBoost;
+                rewardAmount += reward.amount * (raid.user.xpBoost / 100);
+                console.log(
+                  `XP boost added from consumable: ${
+                    reward.amount * (raid.user.xpBoost / 100)
+                  }`,
+                );
               }
 
               // Get raid aliens boosts
@@ -340,7 +350,12 @@ export class RaidsService {
                   const part: AlienPart = equippedPartsResponse.parts[partType];
 
                   if (!part || !part.xpBoost) continue;
-                  rewardAmount += reward.amount * part.xpBoost;
+                  rewardAmount += reward.amount * (part.xpBoost / 100);
+                  console.log(
+                    `XP boost added from part ${partType}: ${
+                      reward.amount * (part.xpBoost / 100)
+                    }`,
+                  );
                 }
               }
             } else if (reward.type === RewardType.STARS) {
@@ -350,7 +365,12 @@ export class RaidsService {
                 raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 >
                   Date.now()
               ) {
-                rewardAmount += reward.amount * raid.user.starsBoost;
+                rewardAmount += reward.amount * (raid.user.starsBoost / 100);
+                console.log(
+                  `Stars boost added from consumable: ${
+                    reward.amount * (raid.user.starsBoost / 100)
+                  }`,
+                );
               }
 
               // Get raid aliens boosts
@@ -364,7 +384,12 @@ export class RaidsService {
                   const part: AlienPart = equippedPartsResponse.parts[partType];
 
                   if (!part || !part.starBoost) continue;
-                  rewardAmount += reward.amount * part.starBoost;
+                  rewardAmount += reward.amount * (part.starBoost / 100);
+                  console.log(
+                    `Stars boost added from part ${partType}: ${
+                      reward.amount * (part.starBoost / 100)
+                    }`,
+                  );
                 }
               }
             }
@@ -376,7 +401,9 @@ export class RaidsService {
                 },
               },
             });
-            console.log('Reward processed:', reward.type, reward.amount);
+            console.log(
+              `Final reward: ${reward.type} Amount: ${reward.amount}`,
+            );
 
             const user = await this.prisma.user.findUnique({
               where: { id: raidUserId },
@@ -385,7 +412,7 @@ export class RaidsService {
             const levelRequirement = levelRequirements[userLevel];
 
             if (user.experience >= levelRequirement.requiredPoints) {
-              console.log('User level up:', userLevel + 1);
+              console.log(`User level up: ${userLevel + 1}`);
               await this.prisma.user.update({
                 where: { id: raidUserId },
                 data: { level: userLevel + 1 },
@@ -456,7 +483,7 @@ export class RaidsService {
     user: User,
   ) {
     try {
-      console.log('raidId ===>', raidId);
+      // console.log(`Calculating raid duration for raidId: ${raidId}`);
 
       const raid = await this.prisma.raid.findUnique({
         where: { id: raidId },
@@ -475,8 +502,10 @@ export class RaidsService {
         const alienElement = alien.element;
 
         if (alienElement.weaknessId === raidElementId) {
+          // console.log(`Weakness found.`);
           newRaidDuration += raidDuration * 0.02;
         } else if (alienElement.strengthId === raidElementId) {
+          // console.log(`Strength found.`);
           newRaidDuration -= raidDuration * 0.02;
         }
       }
@@ -484,21 +513,26 @@ export class RaidsService {
         const characterElement = character.element;
 
         if (characterElement.weaknessId === raidElementId) {
+          // console.log(`Weakness found.`);
           newRaidDuration += raidDuration * 0.02;
         } else if (characterElement.strengthId === raidElementId) {
+          // console.log(`Strength found.`);
           newRaidDuration -= raidDuration * 0.02;
         }
       }
+
+      // console.log(`Raid duration after alien/character weakness/strength: ${newRaidDuration}`);
 
       if (
         user.lastRaidBoost &&
         user.lastRaidBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
       ) {
-        newRaidDuration -= raidDuration * user.raidTimeBoost;
+        // console.log(`Raid boost found.`);
+        newRaidDuration -= raidDuration * (user.raidTimeBoost / 100);
       }
 
-      console.log('raidDuration ===>', raidDuration);
-      console.log('newRaidDuration ===>', newRaidDuration);
+      // console.log(`Raid duration after user boost: ${newRaidDuration}`);
+
       // Calculate raid duration based on equipped parts on each alien in raid
       for (const alien of raidAliens) {
         const equippedPartsResponse =
@@ -511,10 +545,11 @@ export class RaidsService {
           const part: AlienPart = equippedPartsResponse.parts[partType];
 
           if (!part || !part.raidTimeBoost) continue;
-          newRaidDuration -= raidDuration * part.raidTimeBoost;
-          console.log('newRaidDuration loop ===>', newRaidDuration);
+          // console.log(`Part boost found for part: ${partType}`);
+          newRaidDuration -= raidDuration * (part.raidTimeBoost / 100);
         }
       }
+      // console.log(`Raid duration after alien part boosts: ${newRaidDuration}`);
 
       return newRaidDuration;
     } catch (error) {

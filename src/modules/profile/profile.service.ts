@@ -1125,13 +1125,13 @@ export class ProfileService {
       }
       switch (userItem.item.quality) {
         case ItemQuality.BRONZE:
-          boostAmount = 0.02;
+          boostAmount = 2;
           break;
         case ItemQuality.SILVER:
-          boostAmount = 0.04;
+          boostAmount = 4;
           break;
         case ItemQuality.GOLDEN:
-          boostAmount = 0.08;
+          boostAmount = 8;
           break;
       }
 
