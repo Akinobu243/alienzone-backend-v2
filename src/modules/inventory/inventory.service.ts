@@ -136,7 +136,7 @@ export class InventoryService {
       // Format gear items to match InventoryGroupsDto
       const formattedGearItems = userGearItems.map((userGear) => ({
         id: userGear.gearItem.id,
-        name: `${userGear.gearItem.rarity} Gear`,
+        name: `${userGear.gearItem.type} Gear`,
         quantity: userGear.quantity,
         image: userGear.gearItem.image,
         description: `${userGear.gearItem.rarity} gear item`,
