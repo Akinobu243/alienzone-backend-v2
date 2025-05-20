@@ -1237,17 +1237,19 @@ export class CharacterService {
     }
   }
 
-  private async getTiers(characterId: number) {
+  private async getTiers(tokenId: number) {
     var allCharacters = [];
     try {
       const character = await this.prisma.character.findUnique({
         where: {
-          id: characterId,
+          tokenId,
         },
       });
 
       if (!character) {
-        throw new BadRequestException(`Character (${character.id}) not found`);
+        throw new BadRequestException(
+          `Character (${character.tokenId}) not found`,
+        );
       }
 
       allCharacters.push(character);
@@ -1261,13 +1263,13 @@ export class CharacterService {
 
       const characterT2 = await this.prisma.character.findUnique({
         where: {
-          id: character.upgradesToId,
+          tokenId: character.upgradesToId,
         },
       });
 
       if (!characterT2) {
         throw new BadRequestException(
-          `Character (${character.id}) T2 (${character.upgradesToId}) not found`,
+          `Character (${character.tokenId}) T2 (${character.upgradesToId}) not found`,
         );
       }
 
@@ -1282,13 +1284,13 @@ export class CharacterService {
 
       const characterT3 = await this.prisma.character.findUnique({
         where: {
-          id: characterT2.upgradesToId,
+          tokenId: characterT2.upgradesToId,
         },
       });
 
       if (!characterT3) {
         throw new BadRequestException(
-          `Character (${character.id}) T3 (${character.upgradesToId}) not found`,
+          `Character (${character.tokenId}) T3 (${character.upgradesToId}) not found`,
         );
       }
 

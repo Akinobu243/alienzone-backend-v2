@@ -243,7 +243,7 @@ model Character {
   power              Int
   image              String?
   video              String?
-  tokenId            Int
+  tokenId            Int                 @unique
   upgradeReq         Int?
   upgradesToId       Int?
   tier               Int
