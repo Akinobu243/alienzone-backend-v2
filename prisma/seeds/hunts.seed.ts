@@ -65,7 +65,7 @@ export async function seed(prisma: PrismaClient) {
 
   for (const raid of raids) {
     await prisma.raid.create({
-      data: raid,
+      data: { ...raid, isHunt: true },
     });
   }
 
