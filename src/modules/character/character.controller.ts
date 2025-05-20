@@ -195,7 +195,9 @@ export class CharacterController {
   @UseGuards(AuthGuard)
   @Get('/tiers')
   async getTiers(@Request() req) {
-    return this.characterService.getAllCharacterTiers(req.walletAddress);
+    return this.characterService.getAllCharacterTiers(
+      req.walletAddress.toLowerCase(),
+    );
   }
 
   @UseGuards(AuthGuard)
