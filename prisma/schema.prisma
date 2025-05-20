@@ -392,9 +392,9 @@ model AlienPart {
   isForgeable   Boolean          @default(false)
   forgeRuneType RuneType?
   forgeRuneAmount Int?
-  starBoost      Float          @default(0)
-  xpBoost        Float          @default(0)
-  raidTimeBoost  Float          @default(0)
+  starBoost      Int          @default(0)
+  xpBoost        Int          @default(0)
+  raidTimeBoost  Int          @default(0)
   users          User[]
   packs          PackReward[]
   createdAt      DateTime         @default(now())
