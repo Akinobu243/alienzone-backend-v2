@@ -261,6 +261,7 @@ model UnmintedCharacter {
   id          String    @id @default(uuid())
   userId      Int
   characterId Int
+  tokenId     Int       @default(0)
   status      TransactionStatus @default(INITIATED)
   user        User      @relation(fields: [userId], references: [id])
   character   Character @relation(fields: [characterId], references: [id])

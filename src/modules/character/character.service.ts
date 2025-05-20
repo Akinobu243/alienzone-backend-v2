@@ -394,6 +394,7 @@ export class CharacterService {
 
       await this.prisma.unmintedCharacter.create({
         data: {
+          tokenId: randomCharacter.tokenId,
           character: {
             connect: {
               id: randomCharacter.id,
@@ -651,6 +652,7 @@ export class CharacterService {
 
         await this.prisma.unmintedCharacter.create({
           data: {
+            tokenId: randomCharacter.tokenId,
             character: {
               connect: {
                 id: randomCharacter.id,
@@ -721,7 +723,7 @@ export class CharacterService {
           where: {
             id: { notIn: unmintedCharacters.map((u) => u.id) }, // Avoid duplicates
             userId: user.id,
-            characterId,
+            tokenId: characterId,
             status: {
               in: [TransactionStatus.INITIATED, TransactionStatus.FAILED],
             },
@@ -730,7 +732,7 @@ export class CharacterService {
         if (uChar) {
           unmintedCharacters.push(uChar);
           console.log(
-            `Unminted character found: ${uChar.characterId} uCharId: ${uChar.id}`,
+            `Unminted character found: ${uChar.tokenId} uCharId: ${uChar.id}`,
           );
         } else {
           throw new BadRequestException(
@@ -742,9 +744,9 @@ export class CharacterService {
       const characters = [];
 
       for (const characterId of characterIds) {
-        const character = await this.prisma.character.findUnique({
+        const character = await this.prisma.character.findFirst({
           where: {
-            id: characterId,
+            tokenId: characterId,
           },
         });
         if (character) {
