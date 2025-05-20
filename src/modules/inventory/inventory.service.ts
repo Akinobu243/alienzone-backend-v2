@@ -96,6 +96,7 @@ export class InventoryService {
           isPortal2: userChar.isPortal2,
           image: userChar.image,
           description: `${userChar.rarity} character with power ${userChar.power}`,
+          upgradesToId: userChar.upgradesToId,
           type: 'CHARACTER' as const,
         };
       });
