@@ -10,6 +10,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { ElementModule } from './modules/element/element.module';
 import { CharacterModule } from './modules/character/character.module';
 import { QuestModule } from './modules/quest/quest.module';
+import { StoreModule } from './modules/store/store.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { QuestModule } from './modules/quest/quest.module';
     ElementModule,
     CharacterModule,
     QuestModule,
+    StoreModule,
   ],
 })
 export class AppModule {}
