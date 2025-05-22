@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ethers } from 'ethers';
-import { wearablesContractABI } from './wearablesContractABI';
+import wearablesContractABI from './wearablesContractABI.json';
 import axios from 'axios';
 
 @Injectable()
@@ -64,7 +64,7 @@ export class StoreService {
     });
 
     for (const wearable of wearables) {
-      wearable.currentSupply = await this.contract.wearablesSupply(
+      wearable.totalSupply = await this.contract.wearablesSupply(
         wearable.subject,
       );
     }

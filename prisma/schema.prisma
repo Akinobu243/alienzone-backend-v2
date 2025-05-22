@@ -93,11 +93,11 @@ model User {
   stars                 Int
   RaidHistory           RaidHistory[]
   aliens                Alien[]
-  characterIds          Int[]                 @default([])
-  teamCharacterIds      Int[]                 @default([])
-  teamAlienIds          Int[]                 @default([])
-  raidAlienIds          Int[]                 @default([])
-  raidCharacterIds      Int[]                 @default([])
+  characterIds          Int[]                  @default([])
+  teamCharacterIds      Int[]                  @default([])
+  teamAlienIds          Int[]                  @default([])
+  raidAlienIds          Int[]                  @default([])
+  raidCharacterIds      Int[]                  @default([])
   unmintedCharacters    UnmintedCharacter[]
   items                 UserItem[]
   runes                 RuneType[]
@@ -109,7 +109,7 @@ model User {
   lastXpBoost           DateTime?
   role                  Role                   @default(USER)
   dailyStreak           Int                    @default(0)
-  lastDailyClaimed      DateTime?               
+  lastDailyClaimed      DateTime?
   claimedDailyRewards   DailyReward[]
   claimedDailyRewardIds Int[]                  @default([])
   likedUserIds          Int[]                  @default([])
@@ -121,16 +121,16 @@ model User {
   transactions          Transaction[]
   AlienParts            AlienPart[]
   AlienPartGroups       AlienPartGroup[]
-  purchasedPacks        Pack[]           @relation("PurchasedPacks")
+  purchasedPacks        Pack[]                 @relation("PurchasedPacks")
   gearItems             UserGearItem[]
   UserElement           UserElement[]
   characterTransactions CharacterTransaction[]
   UserSpin              UserSpin[]
   userQuests            UserQuest[]
-  sentMessages          Message[]       @relation("SentMessages")
-  receivedMessages      Message[]       @relation("ReceivedMessages")
-  friendships           Friendship[]    @relation("UserFriendships")
-  friendUserFriendships Friendship[]    @relation("FriendUserFriendships")
+  sentMessages          Message[]              @relation("SentMessages")
+  receivedMessages      Message[]              @relation("ReceivedMessages")
+  friendships           Friendship[]           @relation("UserFriendships")
+  friendUserFriendships Friendship[]           @relation("FriendUserFriendships")
 }
 
 model Raid {
@@ -145,7 +145,7 @@ model Raid {
   RaidHistory RaidHistory[]
   element     Element       @relation(fields: [elementId], references: [id])
   elementId   Int
-  isHunt      Boolean      @default(false)
+  isHunt      Boolean       @default(false)
 }
 
 model RaidReward {
@@ -158,17 +158,17 @@ model RaidReward {
 }
 
 model RaidHistory {
-  id                Int             @id @default(autoincrement())
-  raid              Raid            @relation(fields: [raidId], references: [id])
-  raidId            Int
-  user              User            @relation(fields: [userId], references: [id])
-  userId            Int
-  aliens            Alien[]
-  characterIds      Int[]
-  inProgress        Boolean         @default(true)
-  raidFinishTime    DateTime
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id             Int      @id @default(autoincrement())
+  raid           Raid     @relation(fields: [raidId], references: [id])
+  raidId         Int
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  aliens         Alien[]
+  characterIds   Int[]
+  inProgress     Boolean  @default(true)
+  raidFinishTime DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([raidId, userId])
 }
@@ -247,7 +247,7 @@ model Character {
   upgradeReq         Int?
   upgradesToId       Int?
   tier               Int
-  isPortal2          Boolean            @default(false)
+  isPortal2          Boolean             @default(false)
   PackReward         PackReward[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -258,15 +258,15 @@ model Character {
 }
 
 model UnmintedCharacter {
-  id          String    @id @default(uuid())
+  id          String            @id @default(uuid())
   userId      Int
   characterId Int
-  tokenId     Int       @default(0)
+  tokenId     Int               @default(0)
   status      TransactionStatus @default(INITIATED)
-  user        User      @relation(fields: [userId], references: [id])
-  character   Character @relation(fields: [characterId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now())
+  user        User              @relation(fields: [userId], references: [id])
+  character   Character         @relation(fields: [characterId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @default(now())
 
   @@index([userId, characterId])
 }
@@ -316,14 +316,14 @@ enum GearItemType {
 }
 
 model GearItem {
-  id                    Int           @id @default(autoincrement())
-  rarity                GearItemRarity
-  image                 String
-  type                  GearItemType
-  users                 UserGearItem[]
-  summonedCharacter     Character?    @relation(fields: [summonedCharacterId], references: [id])
-  summonedCharacterId   Int?
-  dailyRewards  DailyReward[]
+  id                  Int            @id @default(autoincrement())
+  rarity              GearItemRarity
+  image               String
+  type                GearItemType
+  users               UserGearItem[]
+  summonedCharacter   Character?     @relation(fields: [summonedCharacterId], references: [id])
+  summonedCharacterId Int?
+  dailyRewards        DailyReward[]
 }
 
 model UserGearItem {
@@ -338,19 +338,19 @@ model UserGearItem {
 }
 
 model DailyReward {
-  id        Int             @id @default(autoincrement())
-  type      DailyRewardType
-  itemId    Int?
-  amount    Int?
-  item      Item?           @relation(fields: [itemId], references: [id])
+  id          Int             @id @default(autoincrement())
+  type        DailyRewardType
+  itemId      Int?
+  amount      Int?
+  item        Item?           @relation(fields: [itemId], references: [id])
   alienPartId Int?
-  alienPart AlienPart?     @relation(fields: [alienPartId], references: [id])
-  gearItemId Int?
-  gearItem GearItem?       @relation(fields: [gearItemId], references: [id])
-  rewardDate DateTime
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  User      User[]
+  alienPart   AlienPart?      @relation(fields: [alienPartId], references: [id])
+  gearItemId  Int?
+  gearItem    GearItem?       @relation(fields: [gearItemId], references: [id])
+  rewardDate  DateTime
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  User        User[]
 }
 
 model ReferralReward {
@@ -381,37 +381,38 @@ enum AlienPartType {
 }
 
 model AlienPart {
-  id             Int              @id @default(autoincrement())
-  type           AlienPartType
-  image          String
-  name           String
-  description    String?
-  price          Float?
-  hash           String?          @unique @default(uuid())
-  power          Int              @default(0)
-  isDefault      Boolean          @default(false)
-  isForgeable   Boolean          @default(false)
-  forgeRuneType RuneType?
-  forgeRuneAmount Int?
-  starBoost      Int          @default(0)
-  xpBoost        Int          @default(0)
-  raidTimeBoost  Int          @default(0)
-  users          User[]
-  packs          PackReward[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  transactions   Transaction[]
-  AlienPartGroup AlienPartGroup[]
-  dailyRewards   DailyReward[]
-  bodyAliens        Alien[] @relation("BodyPart")
-  clothesAliens     Alien[] @relation("ClothesPart")
-  headAliens        Alien[] @relation("HeadPart")
-  eyesAliens        Alien[] @relation("EyesPart")
-  mouthAliens       Alien[] @relation("MouthPart")
-  hairAliens        Alien[] @relation("HairPart")
-  marksAliens       Alien[] @relation("MarksPart")
-  powersAliens      Alien[] @relation("PowersPart")
-  accessoriesAliens Alien[] @relation("AccessoriesPart")
+  id                Int              @id @default(autoincrement())
+  type              AlienPartType
+  image             String
+  name              String
+  description       String?
+  price             Float?
+  hash              String?          @unique @default(uuid())
+  power             Int              @default(0)
+  isDefault         Boolean          @default(false)
+  isForgeable       Boolean          @default(false)
+  forgeRuneType     RuneType?
+  forgeRuneAmount   Int?
+  starBoost         Int              @default(0)
+  xpBoost           Int              @default(0)
+  raidTimeBoost     Int              @default(0)
+  users             User[]
+  packs             PackReward[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  transactions      Transaction[]
+  AlienPartGroup    AlienPartGroup[]
+  dailyRewards      DailyReward[]
+  bodyAliens        Alien[]          @relation("BodyPart")
+  clothesAliens     Alien[]          @relation("ClothesPart")
+  headAliens        Alien[]          @relation("HeadPart")
+  eyesAliens        Alien[]          @relation("EyesPart")
+  mouthAliens       Alien[]          @relation("MouthPart")
+  hairAliens        Alien[]          @relation("HairPart")
+  marksAliens       Alien[]          @relation("MarksPart")
+  powersAliens      Alien[]          @relation("PowersPart")
+  accessoriesAliens Alien[]          @relation("AccessoriesPart")
+  Wearable          Wearable[]
 }
 
 model AlienPartGroup {
@@ -514,28 +515,28 @@ model UserSpin {
 }
 
 model Quest {
-  id             Int       @id @default(autoincrement())
+  id             Int         @id @default(autoincrement())
   type           String
   frequency      String
   description    String
   requiredNumber Int
   rewards        Json
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
   userQuests     UserQuest[]
 }
 
 model UserQuest {
-  id             Int       @id @default(autoincrement())
-  userId         Int
-  questId        Int
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  questId         Int
   currentProgress Int      @default(0)
-  isCompleted    Boolean   @default(false)
-  isClaimed      Boolean   @default(false)
-  user           User      @relation(fields: [userId], references: [id])
-  quest          Quest     @relation(fields: [questId], references: [id])
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  isCompleted     Boolean  @default(false)
+  isClaimed       Boolean  @default(false)
+  user            User     @relation(fields: [userId], references: [id])
+  quest           Quest    @relation(fields: [questId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Message {
@@ -545,26 +546,26 @@ model Message {
   content    String
   createdAt  DateTime @default(now())
 
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
-  receiver   User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sender   User  @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User? @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }
 
 model Friendship {
-  id       Int  @id @default(autoincrement())
+  id       Int @id @default(autoincrement())
   userId   Int
   friendId Int
 
-  user     User @relation("UserFriendships", fields: [userId], references: [id])
-  friend   User @relation("FriendUserFriendships", fields: [friendId], references: [id])
+  user   User @relation("UserFriendships", fields: [userId], references: [id])
+  friend User @relation("FriendUserFriendships", fields: [friendId], references: [id])
 }
 
 model Wearable {
-  id          Int         @id @default(autoincrement())
-  subject     String      @unique
+  id          Int        @id @default(autoincrement())
+  subject     String     @unique
   name        String
-  metadata    String      // Link to metadata containing alien part details
+  metadata    String // Link to metadata containing alien part details
   totalSupply Int
-  alienPart   AlienPart?  @relation(fields: [alienPartId], references: [id])
+  alienPart   AlienPart? @relation(fields: [alienPartId], references: [id])
   alienPartId Int?
 
   @@index([alienPartId])
