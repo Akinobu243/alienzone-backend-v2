@@ -1,0 +1,29 @@
+import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { StoreService } from './store.service';
+import { AdminGuard } from '../auth/guards/admin.guard';
+
+@Controller('store')
+export class StoreController {
+  constructor(private readonly storeService: StoreService) {}
+
+  @UseGuards(AdminGuard)
+  @Post('/update-wearables')
+  async updateWearables() {
+    return this.storeService.updateWearables();
+  }
+
+  @Get('/wearables')
+  async getWearables() {
+    return this.storeService.getWearables();
+  }
+
+  @Get('/wearables/:subject')
+  async getWearableDetails(@Param('subject') subject: string) {
+    return this.storeService.getWearableDetails(subject);
+  }
+
+  @Get('/wearables/user-wearables/:address')
+  async getUserWearables(@Param('address') address: string) {
+    return this.storeService.getUserWearables(address);
+  }
+}

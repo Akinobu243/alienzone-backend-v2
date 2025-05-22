@@ -387,6 +387,7 @@ model AlienPart {
   name           String
   description    String?
   price          Float?
+  hash           String?          @unique @default(uuid())
   power          Int              @default(0)
   isDefault      Boolean          @default(false)
   isForgeable   Boolean          @default(false)
@@ -555,4 +556,16 @@ model Friendship {
 
   user     User @relation("UserFriendships", fields: [userId], references: [id])
   friend   User @relation("FriendUserFriendships", fields: [friendId], references: [id])
+}
+
+model Wearable {
+  id          Int         @id @default(autoincrement())
+  subject     String      @unique
+  name        String
+  metadata    String      // Link to metadata containing alien part details
+  totalSupply Int
+  alienPart   AlienPart?  @relation(fields: [alienPartId], references: [id])
+  alienPartId Int?
+
+  @@index([alienPartId])
 }
