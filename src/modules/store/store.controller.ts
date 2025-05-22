@@ -1,8 +1,10 @@
 import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('store')
+@ApiTags('store')
+@Controller('/store')
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
@@ -25,5 +27,10 @@ export class StoreController {
   @Get('/wearables/user-wearables/:address')
   async getUserWearables(@Param('address') address: string) {
     return this.storeService.getUserWearables(address);
+  }
+
+  @Get('/test')
+  async test() {
+    return 'THIS WORKS';
   }
 }

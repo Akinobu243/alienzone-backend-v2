@@ -24,6 +24,7 @@ import { WheelModule } from '../wheel/wheel.module';
 import { QuestModule } from '../quest/quest.module';
 import { ChatModule } from '../chat/chat.module';
 import { FriendsModule } from '../friends/friends.module';
+import { StoreModule } from '../store/store.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { FriendsModule } from '../friends/friends.module';
     QuestModule,
     ChatModule,
     FriendsModule,
+    StoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],
