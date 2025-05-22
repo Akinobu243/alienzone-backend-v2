@@ -40,6 +40,7 @@ export class AuthService {
       const user = await this.userService.findUser({
         walletAddress: payload.walletAddress,
       });
+
       if (!user) {
         throw new UnauthorizedException({
           success: false,
@@ -77,13 +78,13 @@ export class AuthService {
       });
     }
 
-    var user = await this.userService.findUser({
+    let user = await this.userService.findUser({
       walletAddress: userWalletAddress,
     });
 
     if (!user) {
-      var referralCode = Math.random().toString(36).substring(2, 8);
-      var existingUser = await this.userService.findUser({
+      let referralCode = Math.random().toString(36).substring(2, 8);
+      let existingUser = await this.userService.findUser({
         referralCode: referralCode,
       });
 
@@ -164,10 +165,21 @@ export class AuthService {
       expiresIn: GLOBAL_CONFIG.security.expiresIn,
     });
 
-    try {
-      await this.questService.progressLoginQuest(user.walletAddress);
-    } catch (error) {
-      console.error('Error progressing login quest:', error);
+    console.log('Progressing login quest for user:', user.walletAddress);
+    const progressResponse = await this.questService.progressLoginQuest(
+      user.walletAddress,
+    );
+
+    if (!progressResponse.success) {
+      console.error(
+        'Failed to progress login quest:',
+        progressResponse.message,
+      );
+    } else {
+      console.log(
+        'Login quest progressed successfully for user:',
+        user.walletAddress,
+      );
     }
 
     return {

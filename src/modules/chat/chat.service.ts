@@ -33,7 +33,7 @@ export class ChatService {
     return this.prisma.message.create({
       data: {
         senderId,
-        receiverId: Number(receiverId),
+        receiverId: receiverId ? Number(receiverId) : null,
         content,
       },
     });
@@ -86,12 +86,87 @@ export class ChatService {
     }));
   }
 
+  // inside ChatService
   async getGlobalMessages(offset: number, limit: number) {
-    return this.prisma.message.findMany({
+    const raw = await this.prisma.message.findMany({
       where: { receiverId: null },
-      orderBy: { createdAt: 'desc' },
-      skip: offset,
-      take: limit,
+      orderBy: { createdAt: 'asc' },
+      // skip: offset,
+      // take: limit,
+      include: {
+        sender: {
+          select: {
+            walletAddress: true,
+            name: true,
+            aliens: {
+              take: 1,
+              select: {
+                image: true,
+                element: {
+                  select: {
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
+
+    return raw.map((m) => ({
+      id: m.id,
+      content: m.content,
+      timestamp: m.createdAt.getTime(),
+      formattedDate: this.formatTimestamp(m.createdAt),
+      senderId: m.senderId,
+      senderName: m.sender.name,
+      senderImage: m.sender.aliens[0]?.image ?? null,
+      elementImage:
+        m.sender.aliens.length > 0 ? m.sender.aliens[0].element.image : null,
+    }));
+  }
+
+  /**
+   * Turn a Date into:
+   *  • “Today at 2:39 pm”
+   *  • “Yesterday at 2:30 pm”
+   *  • “Jan 15, 2024 at 5:10 pm”
+   */
+  private formatTimestamp(date: Date): string {
+    const now = new Date();
+    // midnight today
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // midnight of the message day
+    const msgDay = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
+    const diffDays =
+      (today.getTime() - msgDay.getTime()) / (1000 * 60 * 60 * 24);
+
+    const timePart = date
+      .toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      })
+      .toLowerCase(); // “2:39 pm”
+
+    if (diffDays === 0) {
+      return `Today at ${timePart}`;
+    }
+    if (diffDays === 1) {
+      return `Yesterday at ${timePart}`;
+    }
+
+    const datePart = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }); // “Jan 15, 2024”
+
+    return `${datePart} at ${timePart}`;
   }
 }

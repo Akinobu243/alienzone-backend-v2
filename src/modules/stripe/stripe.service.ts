@@ -198,23 +198,24 @@ export class StripeService {
             });
           }
           break;
-        case 'CHARACTER':
-          // check if user already has character
-          const userCharacter = await this.prisma.userCharacter.findFirst({
-            where: {
-              userId: transaction.userId,
-              characterId: reward.characterId,
-            },
-          });
-          if (!userCharacter) {
-            await this.prisma.userCharacter.create({
-              data: {
-                userId: transaction.userId,
-                characterId: reward.characterId,
-              },
-            });
-          }
-          break;
+        // TODO: figure out character reward from stripe since characters are now on chain
+        // case 'CHARACTER':
+        //   // check if user already has character
+        //   const userCharacter = await this.prisma.userCharacter.findFirst({
+        //     where: {
+        //       userId: transaction.userId,
+        //       characterId: reward.characterId,
+        //     },
+        //   });
+        //   if (!userCharacter) {
+        //     await this.prisma.userCharacter.create({
+        //       data: {
+        //         userId: transaction.userId,
+        //         characterId: reward.characterId,
+        //       },
+        //     });
+        //   }
+        //   break;
         case 'STARS':
           await this.prisma.user.update({
             where: { id: transaction.userId },

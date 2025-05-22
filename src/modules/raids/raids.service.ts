@@ -1,4 +1,11 @@
-import { Element, Prisma, RewardType, RuneType, User } from '@prisma/client';
+import {
+  Alien,
+  AlienPart,
+  Prisma,
+  RewardType,
+  RuneType,
+  User,
+} from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,12 +13,16 @@ import { RaidReward } from './dto/raids.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { levelRequirements } from 'src/configs/global.config';
 import { QuestService } from '../quest/quest.service';
+import { CharacterService } from '../character/character.service';
+import { ProfileService } from '../profile/profile.service';
 
 @Injectable()
 export class RaidsService {
   constructor(
     private prisma: PrismaService,
     private questService: QuestService,
+    private characterService: CharacterService,
+    private profileService: ProfileService,
   ) {}
 
   public async getRaidsList() {
@@ -37,6 +48,7 @@ export class RaidsService {
           id: elementId,
         },
       });
+
       if (!element) {
         throw new BadRequestException('Element not found');
       }
@@ -90,6 +102,7 @@ export class RaidsService {
       const raid = await this.prisma.raid.findUnique({
         where: { id: raidId },
       });
+
       if (!raid) {
         throw new BadRequestException('Raid not found');
       }
@@ -97,57 +110,81 @@ export class RaidsService {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress: userWalletAddress },
       });
+
       if (!user) {
         throw new BadRequestException('User not found');
       }
 
       const aliens = await this.prisma.alien.findMany({
         where: {
-          userId: user.id,
-          onTeam: true,
+          id: { in: user.teamAlienIds, notIn: user.raidAlienIds },
+        },
+        include: {
+          element: true,
         },
       });
+
       if (aliens.length === 0) {
-        throw new BadRequestException('No Aliens found in team');
+        throw new BadRequestException(
+          'No Aliens found in team or team alien is in a raid',
+        );
       }
 
-      for (const alien of aliens) {
-        if (alien.inRaid) {
-          throw new BadRequestException('An alien is already in raid');
-        }
-      }
+      const userCharacters = await (
+        await this.characterService.getUserCharacters(userWalletAddress)
+      ).userCharacters;
 
-      const characters = await this.prisma.userCharacter.findMany({
-        where: {
-          userId: user.id,
-          onTeam: true,
-        },
-      });
-      if (characters.length === 0) {
+      const teamCharacters = userCharacters.filter(
+        (character) => character.onTeam,
+      );
+
+      if (teamCharacters.length === 0) {
         throw new BadRequestException('No Characters found in team');
       }
 
-      for (const character of characters) {
+      for (const character of teamCharacters) {
         if (character.inRaid) {
           throw new BadRequestException('A character is already in raid');
         }
       }
 
-      if (aliens.length + characters.length > 5) {
+      if (aliens.length + teamCharacters.length > 5) {
         throw new BadRequestException(
           'Too many aliens and characters selected. Maximum is 5',
         );
       }
 
+      if (raid.isHunt) {
+        for (const alien of aliens) {
+          if (alien.elementId !== raid.elementId) {
+            throw new BadRequestException(
+              'Alien element does not match Hunt element',
+            );
+          }
+        }
+        for (const character of teamCharacters) {
+          if (character.element.id !== raid.elementId) {
+            throw new BadRequestException(
+              'Character element does not match Hunt element',
+            );
+          }
+        }
+      }
+      console.log('aliens ====>', aliens);
+      console.log('characters ====>', teamCharacters);
+
       const alienIds = aliens.map((alien) => alien.id);
-      const characterIds = characters.map((character) => character.characterId);
+      const characterIds = teamCharacters.map((character) => character.id);
 
       const raidDuration = await this.calculateRaidDuration(
         raidId,
         aliens,
-        characters,
+        teamCharacters,
         user,
       );
+
+      console.log('raidDuration ===>', raidDuration);
+
       if (!raidDuration) {
         throw new BadRequestException('Error calculating raid duration');
       }
@@ -163,9 +200,7 @@ export class RaidsService {
         aliens: {
           connect: alienIds.map((id) => ({ id })),
         },
-        characters: {
-          connect: characterIds.map((id) => ({ id })),
-        },
+        characterIds,
         raidFinishTime: new Date(raidDuration * 1000 + Date.now()),
       };
 
@@ -177,6 +212,7 @@ export class RaidsService {
         console.error('Error progressing raid quest:', error);
       }
 
+      console.log('raidHistory ====>', raidHistory);
       return {
         success: true,
         raidHistory,
@@ -194,6 +230,7 @@ export class RaidsService {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress: userWalletAddress },
       });
+
       if (!user) {
         throw new BadRequestException('User not found');
       }
@@ -227,15 +264,15 @@ export class RaidsService {
               element: true,
             },
           },
-          characters: {
-            include: {
-              character: {
-                include: {
-                  element: true,
-                },
-              },
-            },
-          },
+          // characters: {
+          //   include: {
+          //     character: {
+          //       include: {
+          //         element: true,
+          //       },
+          //     },
+          //   },
+          // },
           raid: {
             include: {
               rewards: true,
@@ -248,13 +285,19 @@ export class RaidsService {
       // console.log('Raids found:', raids.length);
 
       for (const raid of raids) {
+        const raidCharacters = await this.prisma.character.findMany({
+          where: {
+            id: { in: raid.characterIds },
+          },
+          include: {
+            element: true,
+          },
+        });
         const raidAliens = raid.aliens;
-        const raidCharacters = raid.characters;
         const raidRewards = raid.raid.rewards;
         const raidUserId = raid.userId;
-        const raidElementId = raid.raid.elementId;
         const raidDuration = await this.calculateRaidDuration(
-          raid.id,
+          raid.raidId,
           raidAliens,
           raidCharacters,
           raid.user,
@@ -276,6 +319,11 @@ export class RaidsService {
           for (const reward of raidRewards) {
             let rewardAmount = reward.amount;
             let rewardType: string;
+
+            console.log(
+              `Initial reward: ${reward.type} Amount: ${reward.amount}`,
+            );
+
             if (reward.type === RewardType.XP) {
               rewardType = 'experience';
               if (
@@ -283,7 +331,32 @@ export class RaidsService {
                 raid.user.lastXpBoost.getTime() + 24 * 60 * 60 * 1000 >
                   Date.now()
               ) {
-                rewardAmount += reward.amount * raid.user.xpBoost;
+                rewardAmount += reward.amount * (raid.user.xpBoost / 100);
+                console.log(
+                  `XP boost added from consumable: ${
+                    reward.amount * (raid.user.xpBoost / 100)
+                  }`,
+                );
+              }
+
+              // Get raid aliens boosts
+              for (const alien of raidAliens) {
+                const equippedPartsResponse =
+                  await this.profileService.getEquippedAlienParts(
+                    raid.user.walletAddress,
+                    alien.id,
+                  );
+                for (const partType in equippedPartsResponse.parts) {
+                  const part: AlienPart = equippedPartsResponse.parts[partType];
+
+                  if (!part || !part.xpBoost) continue;
+                  rewardAmount += reward.amount * (part.xpBoost / 100);
+                  console.log(
+                    `XP boost added from part ${partType}: ${
+                      reward.amount * (part.xpBoost / 100)
+                    }`,
+                  );
+                }
               }
             } else if (reward.type === RewardType.STARS) {
               rewardType = 'stars';
@@ -292,7 +365,32 @@ export class RaidsService {
                 raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 >
                   Date.now()
               ) {
-                rewardAmount += reward.amount * raid.user.starsBoost;
+                rewardAmount += reward.amount * (raid.user.starsBoost / 100);
+                console.log(
+                  `Stars boost added from consumable: ${
+                    reward.amount * (raid.user.starsBoost / 100)
+                  }`,
+                );
+              }
+
+              // Get raid aliens boosts
+              for (const alien of raidAliens) {
+                const equippedPartsResponse =
+                  await this.profileService.getEquippedAlienParts(
+                    raid.user.walletAddress,
+                    alien.id,
+                  );
+                for (const partType in equippedPartsResponse.parts) {
+                  const part: AlienPart = equippedPartsResponse.parts[partType];
+
+                  if (!part || !part.starBoost) continue;
+                  rewardAmount += reward.amount * (part.starBoost / 100);
+                  console.log(
+                    `Stars boost added from part ${partType}: ${
+                      reward.amount * (part.starBoost / 100)
+                    }`,
+                  );
+                }
               }
             }
             await this.prisma.user.update({
@@ -303,15 +401,18 @@ export class RaidsService {
                 },
               },
             });
-            console.log('Reward processed:', reward.type, reward.amount);
+            console.log(
+              `Final reward: ${reward.type} Amount: ${reward.amount}`,
+            );
 
             const user = await this.prisma.user.findUnique({
               where: { id: raidUserId },
             });
             const userLevel = user.level;
             const levelRequirement = levelRequirements[userLevel];
+
             if (user.experience >= levelRequirement.requiredPoints) {
-              console.log('User level up:', userLevel + 1);
+              console.log(`User level up: ${userLevel + 1}`);
               await this.prisma.user.update({
                 where: { id: raidUserId },
                 data: { level: userLevel + 1 },
@@ -328,10 +429,7 @@ export class RaidsService {
           // Reward Reputation points
           const teamStrength =
             raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
-            raidCharacters.reduce(
-              (acc, character) => acc + character.character.power,
-              0,
-            );
+            raidCharacters.reduce((acc, character) => acc + character.power, 0);
           const raidDurationInMinutes = Math.floor(raidDuration / 60);
           const reputationPoints = raidDurationInMinutes * teamStrength;
           console.log('Reputation points rewarded:', reputationPoints);
@@ -385,9 +483,12 @@ export class RaidsService {
     user: User,
   ) {
     try {
+      // console.log(`Calculating raid duration for raidId: ${raidId}`);
+
       const raid = await this.prisma.raid.findUnique({
         where: { id: raidId },
       });
+
       if (!raid) {
         throw new BadRequestException('Raid not found');
       }
@@ -401,27 +502,54 @@ export class RaidsService {
         const alienElement = alien.element;
 
         if (alienElement.weaknessId === raidElementId) {
+          // console.log(`Weakness found.`);
           newRaidDuration += raidDuration * 0.02;
         } else if (alienElement.strengthId === raidElementId) {
+          // console.log(`Strength found.`);
           newRaidDuration -= raidDuration * 0.02;
         }
       }
       for (const character of raidCharacters) {
-        const characterElement = character.character.element;
+        const characterElement = character.element;
 
         if (characterElement.weaknessId === raidElementId) {
+          // console.log(`Weakness found.`);
           newRaidDuration += raidDuration * 0.02;
         } else if (characterElement.strengthId === raidElementId) {
+          // console.log(`Strength found.`);
           newRaidDuration -= raidDuration * 0.02;
         }
       }
+
+      // console.log(`Raid duration after alien/character weakness/strength: ${newRaidDuration}`);
 
       if (
         user.lastRaidBoost &&
         user.lastRaidBoost.getTime() + 24 * 60 * 60 * 1000 > Date.now()
       ) {
-        newRaidDuration -= raidDuration * user.raidTimeBoost;
+        // console.log(`Raid boost found.`);
+        newRaidDuration -= raidDuration * (user.raidTimeBoost / 100);
       }
+
+      // console.log(`Raid duration after user boost: ${newRaidDuration}`);
+
+      // Calculate raid duration based on equipped parts on each alien in raid
+      for (const alien of raidAliens) {
+        const equippedPartsResponse =
+          await this.profileService.getEquippedAlienParts(
+            user.walletAddress,
+            alien.id,
+          );
+
+        for (const partType in equippedPartsResponse.parts) {
+          const part: AlienPart = equippedPartsResponse.parts[partType];
+
+          if (!part || !part.raidTimeBoost) continue;
+          // console.log(`Part boost found for part: ${partType}`);
+          newRaidDuration -= raidDuration * (part.raidTimeBoost / 100);
+        }
+      }
+      // console.log(`Raid duration after alien part boosts: ${newRaidDuration}`);
 
       return newRaidDuration;
     } catch (error) {

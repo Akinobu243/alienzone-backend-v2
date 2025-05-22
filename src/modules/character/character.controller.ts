@@ -8,7 +8,7 @@ import {
   BadRequestException,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CharacterService } from './character.service';
@@ -69,6 +69,7 @@ export class CharacterController {
     @Body('image') image?: string,
     @Body('upgradeAmountRequired') upgradeAmountRequired?: number,
     @Body('upgradesToId') upgradesToId?: number,
+    @Body('tokenId') tokenId?: number,
   ) {
     id = parseInt(id.toString());
     if (power !== undefined) {
@@ -91,6 +92,7 @@ export class CharacterController {
       image,
       upgradeAmountRequired,
       upgradesToId,
+      tokenId,
     );
   }
 
@@ -99,6 +101,13 @@ export class CharacterController {
   async deleteCharacter(@Body('id') id: number) {
     id = parseInt(id.toString());
     return this.characterService.deleteCharacter(id);
+  }
+
+  // Fetches metadata from the blockchain and s3 and updates the character list in the database
+  @UseGuards(AdminGuard)
+  @Post('/update-character-list')
+  async updateCharacterList() {
+    return this.characterService.updateCharacterList();
   }
 
   @UseGuards(AdminGuard)
@@ -185,8 +194,26 @@ export class CharacterController {
 
   @UseGuards(AuthGuard)
   @Get('/tiers')
-  async getTiers(@Query('characterId') characterId: number) {
-    characterId = parseInt(characterId.toString());
-    return this.characterService.getTiers(characterId);
+  async getTiers(@Request() req) {
+    return this.characterService.getAllCharacterTiers(
+      req.walletAddress.toLowerCase(),
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/handle-failed-mint')
+  @ApiOperation({ summary: 'Makes the character mintable again.' })
+  @ApiBody({
+    description: 'The UUID of the character that failed to mint.',
+    schema: { type: 'string' },
+  })
+  async handleFailedMint(
+    @Request() req,
+    @Body('unmintedCharacterId') unmintedCharacterId: string,
+  ) {
+    return this.characterService.handleFailedMintCharacter(
+      req.walletAddress.toLowerCase(),
+      unmintedCharacterId,
+    );
   }
 }

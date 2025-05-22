@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -32,10 +32,20 @@ export class ProfileController {
   @Post('/create-alien')
   @UseInterceptors(FileInterceptor('image'))
   async createAlien(
-    @Body() createAlienDTO: CreateAlienDTO,
+    @Body() body: any,
     @UploadedFile() image: Express.Multer.File,
     @Request() req,
   ) {
+    // Parse numeric fields from strings to numbers
+    const createAlienDTO: CreateAlienDTO = {
+      name: body.name,
+      elementId: parseInt(body.elementId, 10),
+      strengthPoints: body.strengthPoints,
+      eyesId: parseInt(body.eyesId, 10),
+      hairId: parseInt(body.hairId, 10),
+      mouthId: parseInt(body.mouthId, 10),
+    };
+
     return this.profileService.createAlien(
       req.walletAddress.toLowerCase(),
       createAlienDTO,
@@ -47,12 +57,6 @@ export class ProfileController {
   @Get('/get-aliens')
   async getAliens(@Request() req) {
     return this.profileService.getAliens(req.walletAddress.toLowerCase());
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('/get-characters')
-  async getCharacters(@Request() req) {
-    return this.profileService.getCharacters(req.walletAddress.toLowerCase());
   }
 
   @UseGuards(AuthGuard)
@@ -173,10 +177,16 @@ export class ProfileController {
   @UseGuards(AuthGuard)
   @Get('/get-equipped-alien-parts')
   async getEquippedAlienParts(@Request() req) {
-    return this.profileService.getEquippedAlienParts(
+    const response = await this.profileService.getEquippedAlienParts(
       req.walletAddress,
       req.alienId,
     );
+
+    if (response.success) {
+      return response.parts;
+    } else {
+      return response;
+    }
   }
 
   @UseGuards(AuthGuard)
@@ -190,14 +200,28 @@ export class ProfileController {
   async equipAlienPart(
     @Request() req,
     @Body('alienId') alienId: number,
-    @Body('partIds') partIds: number[],
+    @Body('parts') parts: { type: string; id: number }[],
   ) {
     return this.profileService.equipAlienPart(
       req.walletAddress,
       alienId,
-      partIds,
+      parts,
     );
   }
+
+  // @UseGuards(AuthGuard)
+  // @Post('/equip-alien-part')
+  // async equipAlienPart(
+  //   @Request() req,
+  //   @Body('alienId') alienId: number,
+  //   @Body('partIds') partIds: number[],
+  // ) {
+  //   return this.profileService.equipAlienPart(
+  //     req.walletAddress,
+  //     alienId,
+  //     partIds,
+  //   );
+  // }
 
   @UseGuards(AuthGuard)
   @Post('/update-alien-image')
@@ -211,5 +235,66 @@ export class ProfileController {
 
     const walletAddress = req.walletAddress.toLowerCase();
     return this.profileService.updateAlienImage(walletAddress, alienId, image);
+  }
+
+  @ApiOperation({ summary: 'Get forgeable alien parts and user rune amounts' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved forgeable parts and rune amounts',
+    schema: {
+      example: {
+        success: true,
+        alienParts: [
+          {
+            id: 1,
+            name: 'Alien Part A',
+            description: 'A powerful alien part.',
+            power: 50,
+            type: 'HEAD',
+            image: 'https://example.com/alien-part-a.png',
+            forgeRuneType: 'COMMON',
+            forgeRuneAmount: 5,
+          },
+          {
+            id: 2,
+            name: 'Alien Part B',
+            description: 'Another powerful alien part.',
+            power: 70,
+            type: 'BODY',
+            image: 'https://example.com/alien-part-b.png',
+            forgeRuneType: 'RARE',
+            forgeRuneAmount: 3,
+          },
+        ],
+        userRuneAmounts: {
+          COMMON: 10,
+          RARE: 5,
+          EPIC: 2,
+          LEGENDARY: 1,
+        },
+      },
+    },
+  })
+  @UseGuards(AuthGuard)
+  @Get('/get-forge-parts')
+  async getForgeParts(@Request() req) {
+    return this.profileService.getForgeParts(req.walletAddress.toLowerCase());
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/forge-parts')
+  async forgeParts(@Request() req, @Body('alienPartId') alienPartId: number) {
+    return this.profileService.forgeParts(
+      req.walletAddress.toLowerCase(),
+      alienPartId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/get-default-alien-parts')
+  async getDefaultAlienParts(@Request() req) {
+    return this.profileService.getDefaultAlienParts(
+      req.walletAddress.toLowerCase(),
+    );
   }
 }
