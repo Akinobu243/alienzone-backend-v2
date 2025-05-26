@@ -1202,6 +1202,7 @@ export class CharacterService {
       const ownedCharacter = userCharacters.find(
         (chr) => chr.id === characterId,
       );
+
       if (!ownedCharacter) {
         throw new BadRequestException('Character not found in user list');
       }
@@ -1220,6 +1221,15 @@ export class CharacterService {
         user.walletAddress,
       );
 
+      let newCharacter = null;
+      if (character.upgradesToId) {
+        newCharacter = await this.prisma.character.findUnique({
+          where: {
+            id: character.upgradesToId,
+          },
+        });
+      }
+
       return {
         success: true,
         serverSignature: serverSignature,
@@ -1228,6 +1238,7 @@ export class CharacterService {
         oldTokenAmount: character.upgradeReq,
         newTokenId: character.upgradesToId,
         character,
+        newCharacter,
       };
     } catch (error) {
       return {
