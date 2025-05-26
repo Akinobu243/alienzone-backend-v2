@@ -2093,33 +2093,52 @@ export class ProfileService {
         },
       });
 
-      // Create a new alien part for the user
-      await this.prisma.alienPartGroup.upsert({
+      // Check if the user already has a part group for this type
+      const existingTypeGroup = await this.prisma.alienPartGroup.findFirst({
         where: {
-          id: alienPartId,
-        },
-        update: {
+          userId: user.id,
           parts: {
-            connect: {
+            none: {
               id: alienPartId,
-            },
-          },
-        },
-        create: {
-          name: alienPart.name,
-          description: alienPart.description,
-          parts: {
-            connect: {
-              id: alienPartId,
-            },
-          },
-          user: {
-            connect: {
-              id: user.id,
             },
           },
         },
       });
+
+      // Create a new alien part group or update existing one
+      if (existingTypeGroup) {
+        // Update existing group
+        await this.prisma.alienPartGroup.update({
+          where: {
+            id: existingTypeGroup.id,
+          },
+          data: {
+            parts: {
+              connect: {
+                id: alienPartId,
+              },
+            },
+          },
+        });
+      } else {
+        // Create new group
+        await this.prisma.alienPartGroup.create({
+          data: {
+            name: alienPart.name,
+            description: alienPart.description,
+            parts: {
+              connect: {
+                id: alienPartId,
+              },
+            },
+            user: {
+              connect: {
+                id: user.id,
+              },
+            },
+          },
+        });
+      }
 
       return {
         success: true,
