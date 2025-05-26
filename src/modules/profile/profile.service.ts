@@ -1519,10 +1519,7 @@ export class ProfileService {
         .map((wearable) => wearable.alienPart);
 
       // Combine userAlienParts and wearableAlienParts into a single array
-      const userAlienParts = [
-        ...userAlienPartGroups.flatMap((group) => group.parts),
-        ...wearableAlienParts,
-      ];
+      const userAlienParts = [...userAlienPartGroups, ...wearableAlienParts];
 
       return {
         success: true,
