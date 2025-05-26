@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { ethers } from 'ethers';
-import wearablesContractABI from './wearablesContractABI.json';
+import wearablesContractABI from './wearablesContractAbi.json';
 
 @Injectable()
 export class StoreService {
