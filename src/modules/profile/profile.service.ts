@@ -1518,8 +1518,29 @@ export class ProfileService {
         .filter((wearable) => wearable.alienPart)
         .map((wearable) => wearable.alienPart);
 
+      // Convert wearableAlienParts to the same structure as userAlienPartGroups
+      const wearableAlienPartGroups = [];
+      for (const part of wearableAlienParts) {
+        // Create a group for each wearable part duplicate as well
+        for (let i = 0; i < part.balance; i++) {
+          wearableAlienPartGroups.push({
+            id: part.id,
+            name: part.name,
+            type: part.type,
+            image: part.image,
+            isDefault: part.isDefault,
+            parts: [part],
+            createdAt: part.createdAt,
+            updatedAt: part.updatedAt,
+          });
+        }
+      }
+
       // Combine userAlienParts and wearableAlienParts into a single array
-      const userAlienParts = [...userAlienPartGroups, ...wearableAlienParts];
+      const userAlienParts = [
+        ...userAlienPartGroups,
+        ...wearableAlienPartGroups,
+      ];
 
       return {
         success: true,

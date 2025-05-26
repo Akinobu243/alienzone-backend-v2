@@ -102,8 +102,11 @@ export class StoreService {
         wearable.subject,
         address,
       );
-      if (balance > 0) {
-        userWearables.push({ ...wearable, balance });
+      if (Math.floor(Number(balance)) > 0) {
+        userWearables.push({
+          ...wearable,
+          balance: Math.floor(Number(balance)),
+        });
       }
     }
 
