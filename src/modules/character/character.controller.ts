@@ -166,6 +166,16 @@ export class CharacterController {
   }
 
   @UseGuards(AuthGuard)
+  @Post('/update-gear-balance')
+  async updateGearBalance(@Request() req, @Body('gearId') gearId: number) {
+    gearId = parseInt(gearId.toString());
+    return this.characterService.updateGearBalance(
+      req.walletAddress.toLowerCase(),
+      gearId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
   @Post('/mint-character')
   async mintCharacter(
     @Request() req,
