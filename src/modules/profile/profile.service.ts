@@ -107,6 +107,20 @@ export class ProfileService {
     image: Express.Multer.File,
   ) {
     try {
+      if (
+        !createAlienDTO.name ||
+        !createAlienDTO.elementId ||
+        createAlienDTO.elementId <= 0 ||
+        !createAlienDTO.eyesId ||
+        createAlienDTO.eyesId <= 0 ||
+        !createAlienDTO.hairId ||
+        createAlienDTO.hairId <= 0 ||
+        !createAlienDTO.mouthId ||
+        createAlienDTO.mouthId <= 0
+      ) {
+        throw new BadRequestException('Missing required fields');
+      }
+
       const element = await this.prisma.element.findUnique({
         where: {
           id: Number(createAlienDTO.elementId),
