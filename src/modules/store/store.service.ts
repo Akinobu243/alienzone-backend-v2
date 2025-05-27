@@ -98,9 +98,15 @@ export class StoreService {
     });
     if (!wearable) throw new Error('Wearable not found');
 
-    const currentSupply = await this.contract.wearablesSupply(subject);
-    const buyPrice = await this.contract.getBuyPrice(subject, 1);
-    const sellPrice = await this.contract.getSellPrice(subject, 1);
+    const currentSupply = Number(await this.contract.wearablesSupply(subject));
+    const buyPrice = Number(
+      await this.contract.getBuyPrice(subject, ethers.parseEther('0.001')),
+    );
+    const sellPrice = 0; // TODO: debug issue with getSellPrice
+    // await this.contract.getSellPrice(
+    //   subject,
+    //   ethers.parseEther('0.001'),
+    // );
 
     return {
       ...wearable,
