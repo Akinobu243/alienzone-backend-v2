@@ -7,7 +7,7 @@ import wearablesContractABI from './wearablesContractAbi.json';
 @Injectable()
 export class StoreService {
   private contractAddress = process.env.WEARABLES_CONTRACT_ADDRESS;
-  private provider = new ethers.JsonRpcProvider(process.env.RPC_PROVIDER);
+  private provider = new ethers.JsonRpcProvider(process.env.ETH_RPC_PROVIDER);
   private contract = new ethers.Contract(
     this.contractAddress,
     wearablesContractABI,
@@ -16,14 +16,33 @@ export class StoreService {
 
   constructor(private prisma: PrismaService) {}
 
-  async updateWearables() {
+  async updateWearables(useLocalMetadata = false) {
     const events = await this.contract.queryFilter(
       this.contract.filters.WearableCreated(),
     );
     for (const event of events) {
       if (!('args' in event)) continue;
 
-      const { subject, name, metadata, factors } = event.args;
+      var { creator, subject, name, metadata, factors, state } = event.args;
+      const supplyFactor = factors[0];
+      const curveFactor = factors[1];
+      const initialPriceFactor = factors[2];
+
+      // Fix the metadata URL if it doesn't include the API version (first token has wrong URL)
+      if (!metadata.includes('/api/v1/')) {
+        metadata = metadata.replace(
+          'https://api.alienzone.io/',
+          'https://api.alienzone.io/api/v1/',
+        );
+      }
+
+      // To test locally
+      if (useLocalMetadata) {
+        metadata = metadata.replace(
+          'https://api.alienzone.io',
+          'http://localhost:3300',
+        );
+      }
 
       // Fetch metadata from the provided link
       const metadataResponse = await axios.get(metadata);
@@ -42,14 +61,14 @@ export class StoreService {
         update: {
           name,
           metadata,
-          totalSupply: factors.supplyFactor,
+          totalSupply: Number(supplyFactor),
           alienPartId: alienPart.id,
         },
         create: {
           subject,
           name,
           metadata,
-          totalSupply: factors.supplyFactor,
+          totalSupply: Number(supplyFactor),
           alienPartId: alienPart.id,
         },
       });
@@ -64,8 +83,8 @@ export class StoreService {
     });
 
     for (const wearable of wearables) {
-      wearable.totalSupply = await this.contract.wearablesSupply(
-        wearable.subject,
+      wearable.totalSupply = Number(
+        await this.contract.wearablesSupply(wearable.subject),
       );
     }
 

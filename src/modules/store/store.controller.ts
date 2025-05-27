@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('store')
 @Controller('/store')
@@ -10,8 +10,25 @@ export class StoreController {
 
   @UseGuards(AdminGuard)
   @Post('/update-wearables')
-  async updateWearables() {
-    return this.storeService.updateWearables();
+  @ApiBody({
+    description: 'Update wearables metadata',
+    schema: {
+      type: 'object',
+      properties: {
+        useLocalMetadata: {
+          type: 'boolean',
+          description:
+            'Use local metadata instead of fetching from the production API',
+          default: false,
+        },
+      },
+      required: [],
+    },
+  })
+  async updateWearables(
+    @Body('useLocalMetadata') useLocalMetadata: boolean = false,
+  ) {
+    return this.storeService.updateWearables(useLocalMetadata);
   }
 
   @Get('/wearables')

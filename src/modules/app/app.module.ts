@@ -25,6 +25,7 @@ import { QuestModule } from '../quest/quest.module';
 import { ChatModule } from '../chat/chat.module';
 import { FriendsModule } from '../friends/friends.module';
 import { StoreModule } from '../store/store.module';
+import { WearablesModule } from '../wearables/wearables.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { StoreModule } from '../store/store.module';
     ChatModule,
     FriendsModule,
     StoreModule,
+    WearablesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
