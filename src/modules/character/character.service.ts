@@ -1107,16 +1107,16 @@ export class CharacterService {
         }
 
         // Deduct 4 gear items from user
-        await prisma.userGearItem.update({
-          where: {
-            id: userGear.id,
-          },
-          data: {
-            quantity: {
-              decrement: burnAmount,
-            },
-          },
-        });
+        // await prisma.userGearItem.update({
+        //   where: {
+        //     id: userGear.id,
+        //   },
+        //   data: {
+        //     quantity: {
+        //       decrement: burnAmount,
+        //     },
+        //   },
+        // });
 
         const { serverSignature, nonce } = await this.generateServerSignature(
           [character.tokenId],
@@ -1129,6 +1129,86 @@ export class CharacterService {
           serverSignature,
           character,
           nonce,
+        };
+      });
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async updateGearBalance(walletAddress: string, gearItemId: number) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const userGear = await this.prisma.userGearItem.findFirst({
+        where: {
+          userId: user.id,
+          gearItemId: gearItemId,
+        },
+      });
+
+      if (!userGear) {
+        throw new BadRequestException('User does not have this gear');
+      }
+
+      const burnAmount = 4;
+
+      if (userGear.quantity < burnAmount) {
+        throw new BadRequestException(
+          `User does not have enough gear to burn. Required: ${burnAmount}`,
+        );
+      }
+
+      // Use a transaction to ensure atomicity
+      return await this.prisma.$transaction(async (prisma) => {
+        // Reward the user with the associated character of the burned gear
+        const gearItem = await prisma.gearItem.findUnique({
+          where: {
+            id: gearItemId,
+          },
+        });
+
+        const character = await prisma.character.findFirst({
+          where: {
+            isPortal2: true,
+            name: {
+              contains: gearItem.type,
+              mode: 'insensitive',
+            },
+            tier: 1,
+          },
+        });
+
+        if (!character) {
+          throw new BadRequestException('Character not found');
+        }
+
+        // Deduct 4 gear items from user
+        await prisma.userGearItem.update({
+          where: {
+            id: userGear.id,
+          },
+          data: {
+            quantity: {
+              decrement: burnAmount,
+            },
+          },
+        });
+
+        return {
+          success: true,
+          character,
         };
       });
     } catch (error) {
