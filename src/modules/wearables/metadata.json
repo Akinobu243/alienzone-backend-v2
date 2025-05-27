@@ -1,0 +1,14 @@
+{
+    "1": {
+        "type": "EYES",
+        "description": "The eyes of an alien",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/choroi.png",
+        "power": 100
+    },
+    "2": {
+        "type": "HAIR",
+        "description": "The hair of an prisoner alien",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/hair/prisoner.png",
+        "power": 200
+    }
+}
