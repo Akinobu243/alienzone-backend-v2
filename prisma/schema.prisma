@@ -390,6 +390,7 @@ model AlienPart {
   price             Float?
   hash              String?          @unique @default(uuid())
   power             Int              @default(0)
+  userPowers        Json?            @default("[]")
   isDefault         Boolean          @default(false)
   isForgeable       Boolean          @default(false)
   forgeRuneType     RuneType?

@@ -297,4 +297,13 @@ export class ProfileController {
       req.walletAddress.toLowerCase(),
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/enhance-parts')
+  async enhanceParts(@Request() req, @Body('alienPartId') alienPartId: number) {
+    return this.profileService.enhanceParts(
+      req.walletAddress.toLowerCase(),
+      alienPartId,
+    );
+  }
 }

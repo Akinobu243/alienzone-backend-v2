@@ -1560,6 +1560,7 @@ export class ProfileService {
         success: true,
         userAlienParts,
         elements: elementsArray,
+        alienPartsList: userAlienPartGroups.flatMap((group) => group.parts),
       };
     } catch (error) {
       return {
@@ -2181,18 +2182,17 @@ export class ProfileService {
     }
   }
 
-  public async forgePartsOld(
+  public async enhanceParts(
     walletAddress: string,
     alienPartId: number,
   ): Promise<{
     success: boolean;
+    message?: string;
     error?: any;
   }> {
     try {
       const user = await this.prisma.user.findUnique({
-        where: {
-          walletAddress,
-        },
+        where: { walletAddress },
       });
 
       if (!user) {
@@ -2200,79 +2200,103 @@ export class ProfileService {
       }
 
       const alienPart = await this.prisma.alienPart.findUnique({
-        where: {
-          id: alienPartId,
-        },
+        where: { id: alienPartId },
       });
 
       if (!alienPart) {
         throw new BadRequestException('Alien part not found');
       }
 
-      const runeType = alienPart.forgeRuneType;
-      const runeAmount = alienPart.forgeRuneAmount;
+      // Check if the user owns this part
+      const existingPartGroup = await this.prisma.alienPartGroup.findFirst({
+        where: {
+          userId: user.id,
+          parts: {
+            some: { id: alienPartId },
+          },
+        },
+      });
 
-      if (!runeType || !runeAmount) {
-        throw new BadRequestException('Alien part cannot be forged');
+      if (!existingPartGroup) {
+        return {
+          success: false,
+          message: `You don't own the ${alienPart.name}`,
+        };
       }
 
+      const runeType = alienPart.forgeRuneType;
+
+      if (!runeType) {
+        throw new BadRequestException('This alien part cannot be enhanced');
+      }
+
+      const REQUIRED_RUNES = 4;
       const userRunes = user.runes.filter((rune) => rune === runeType);
 
-      if (userRunes.length < runeAmount) {
+      if (userRunes.length < REQUIRED_RUNES) {
         throw new BadRequestException(
-          `Insufficient ${runeType} runes. Required: ${runeAmount} ${runeType} runes`,
+          `Insufficient ${runeType} runes. Required: ${REQUIRED_RUNES} ${runeType} runes`,
         );
       }
 
-      const newUserRuneList = [];
-      let i = 0;
-      for (const rune of userRunes) {
-        if (rune !== runeType || i >= runeAmount) {
-          newUserRuneList.push(rune);
-        } else {
-          i++;
+      // Get current user powers or initialize if not exists
+      const currentPowers = (alienPart.userPowers || []) as {
+        userId: number;
+        power: number;
+      }[];
+      const userPowerIndex = currentPowers.findIndex(
+        (p) => p.userId === user.id,
+      );
+
+      // Calculate new power
+      const POWER_INCREASE = 5;
+      const newPowers = [...currentPowers];
+
+      if (userPowerIndex === -1) {
+        // User doesn't have custom power yet, add new entry
+        newPowers.push({
+          userId: user.id,
+          power: alienPart.power + POWER_INCREASE,
+        });
+      } else {
+        // Update existing power
+        newPowers[userPowerIndex] = {
+          ...newPowers[userPowerIndex],
+          power: newPowers[userPowerIndex].power + POWER_INCREASE,
+        };
+      }
+
+      // Create a new runes array by removing required runes
+      const newRunes = [...user.runes];
+      let removedCount = 0;
+
+      for (let i = newRunes.length - 1; i >= 0; i--) {
+        if (newRunes[i] === runeType && removedCount < REQUIRED_RUNES) {
+          newRunes.splice(i, 1);
+          removedCount++;
+        }
+
+        if (removedCount === REQUIRED_RUNES) {
+          break;
         }
       }
 
-      // Deduct runes from user
-      await this.prisma.user.update({
-        where: {
-          walletAddress,
-        },
-        data: {
-          runes: newUserRuneList,
-        },
-      });
+      // Update both user runes and alien part power in a transaction
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { walletAddress },
+          data: { runes: newRunes },
+        }),
+        this.prisma.alienPart.update({
+          where: { id: alienPartId },
+          data: { userPowers: newPowers },
+        }),
+      ]);
 
-      // Create a new alien part for the user
-      await this.prisma.alienPartGroup.upsert({
-        where: {
-          id: alienPartId,
-        },
-        update: {
-          parts: {
-            connect: {
-              id: alienPartId,
-            },
-          },
-        },
-        create: {
-          name: alienPart.name,
-          description: alienPart.description,
-          parts: {
-            connect: {
-              id: alienPartId,
-            },
-          },
-          user: {
-            connect: {
-              id: user.id,
-            },
-          },
-        },
-      });
-
-      return { success: true };
+      return {
+        success: true,
+        message: `Successfully enhanced ${alienPart.name} part power by ${POWER_INCREASE}.`,
+      };
     } catch (error) {
       return { success: false, error };
     }
