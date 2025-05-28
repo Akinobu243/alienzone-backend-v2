@@ -1378,6 +1378,7 @@ export class ProfileService {
           strengthPoints: character.power,
           element: character.element,
           image: character.image,
+          teamImage: character.teamImage,
           type: 'character',
         });
       }

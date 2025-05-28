@@ -455,6 +455,7 @@ export class CharacterService {
       rarity: CharacterRarity;
       power: number;
       image: string | null;
+      teamImage: string | null;
       video: string | null;
       tokenId: number;
       upgradeReq: number | null;
@@ -541,6 +542,7 @@ export class CharacterService {
         userCharactersMap.set(character.tokenId, {
           character: {
             ...character,
+            teamImage: character.teamImage,
             inRaid,
             onTeam,
           },
