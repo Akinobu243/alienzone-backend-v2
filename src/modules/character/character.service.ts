@@ -286,6 +286,7 @@ export class CharacterService {
             rarity: item.rarity as CharacterRarity,
             power: item.power,
             image: item.image,
+            teamImage: item.teamImage,
             tier: item.tier,
             tokenId: item.tokenId,
             upgradeReq: item.upgradeReq,

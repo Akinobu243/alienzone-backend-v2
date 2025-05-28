@@ -242,6 +242,7 @@ model Character {
   rarity             CharacterRarity     @default(R)
   power              Int
   image              String?
+  teamImage          String?
   video              String?
   tokenId            Int                 @unique
   upgradeReq         Int?
