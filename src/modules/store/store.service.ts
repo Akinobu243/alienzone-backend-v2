@@ -62,7 +62,7 @@ export class StoreService {
           name,
           metadata,
           totalSupply: Number(ethers.formatEther(supplyFactor)),
-          totalSupplyInWei: supplyFactor,
+          totalSupplyInWei: supplyFactor.toString(),
           alienPartId: alienPart.id,
         },
         create: {
@@ -70,7 +70,7 @@ export class StoreService {
           name,
           metadata,
           totalSupply: Number(ethers.formatEther(supplyFactor)),
-          totalSupplyInWei: supplyFactor,
+          totalSupplyInWei: supplyFactor.toString(),
           alienPartId: alienPart.id,
         },
       });
@@ -94,15 +94,19 @@ export class StoreService {
       wearable.availability = Number(
         ethers.formatEther(wearable.availabilityInWei),
       );
-      wearable.buyPriceInWei = await this.contract.getBuyPriceAfterFee(
-        wearable.subject,
-        ethers.parseEther('0.001'),
-      );
+      wearable.buyPriceInWei = (
+        await this.contract.getBuyPriceAfterFee(
+          wearable.subject,
+          ethers.parseEther('0.001'),
+        )
+      ).toString();
       wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
-      wearable.sellPriceInWei = await this.contract.getSellPriceAfterFee(
-        wearable.subject,
-        ethers.parseEther('0.001'),
-      );
+      wearable.sellPriceInWei = (
+        await this.contract.getSellPriceAfterFee(
+          wearable.subject,
+          ethers.parseEther('0.001'),
+        )
+      ).toString();
       wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
     }
 
@@ -123,15 +127,19 @@ export class StoreService {
     wearable.availability = Number(
       ethers.formatEther(wearable.availabilityInWei),
     );
-    wearable.buyPriceInWei = await this.contract.getBuyPriceAfterFee(
-      subject,
-      ethers.parseEther('0.001'),
-    );
+    wearable.buyPriceInWei = (
+      await this.contract.getBuyPriceAfterFee(
+        subject,
+        ethers.parseEther('0.001'),
+      )
+    ).toString();
     wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
-    wearable.sellPriceInWei = await this.contract.getSellPriceAfterFee(
-      subject,
-      ethers.parseEther('0.001'),
-    );
+    wearable.sellPriceInWei = (
+      await this.contract.getSellPriceAfterFee(
+        subject,
+        ethers.parseEther('0.001'),
+      )
+    ).toString();
     wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
 
     return wearable;
