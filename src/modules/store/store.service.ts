@@ -85,28 +85,55 @@ export class StoreService {
     });
 
     for (const wearable of wearables) {
+      // console.log(`Getting details for wearable: ${wearable.subject}`);
       const currentSupplyInWei = await this.contract.wearablesSupply(
         wearable.subject,
       );
+      // console.log(
+      //   `Current supply in wei for ${wearable.subject}: ${currentSupplyInWei}`,
+      // );
+
       wearable.availabilityInWei = (
         BigInt(wearable.totalSupplyInWei) - BigInt(currentSupplyInWei)
       ).toString();
       wearable.availability = Number(
         ethers.formatEther(wearable.availabilityInWei),
       );
-      wearable.buyPriceInWei = (
-        await this.contract.getBuyPriceAfterFee(
-          wearable.subject,
-          ethers.parseEther('0.001'),
-        )
-      ).toString();
+
+      try {
+        wearable.buyPriceInWei = (
+          await this.contract.getBuyPriceAfterFee(
+            wearable.subject,
+            ethers.parseEther('0.001'),
+          )
+        ).toString();
+      } catch (error) {
+        // console.error(
+        //   `Error fetching buy price for ${wearable.subject}: ${error}`,
+        // );
+        wearable.buyPriceInWei = '0';
+      }
+      console.log(
+        `Buy price in wei for ${wearable.subject}: ${wearable.buyPriceInWei}`,
+      );
       wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
-      wearable.sellPriceInWei = (
-        await this.contract.getSellPriceAfterFee(
-          wearable.subject,
-          ethers.parseEther('0.001'),
-        )
-      ).toString();
+
+      try {
+        wearable.sellPriceInWei = (
+          await this.contract.getSellPriceAfterFee(
+            wearable.subject,
+            ethers.parseEther('0.001'),
+          )
+        ).toString();
+      } catch (error) {
+        // console.error(
+        //   `Error fetching sell price for ${wearable.subject}: ${error}`,
+        // );
+        wearable.sellPriceInWei = '0';
+      }
+      console.log(
+        `Sell price in wei for ${wearable.subject}: ${wearable.sellPriceInWei}`,
+      );
       wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
     }
 
@@ -127,19 +154,35 @@ export class StoreService {
     wearable.availability = Number(
       ethers.formatEther(wearable.availabilityInWei),
     );
-    wearable.buyPriceInWei = (
-      await this.contract.getBuyPriceAfterFee(
-        subject,
-        ethers.parseEther('0.001'),
-      )
-    ).toString();
+
+    try {
+      wearable.buyPriceInWei = (
+        await this.contract.getBuyPriceAfterFee(
+          subject,
+          ethers.parseEther('0.001'),
+        )
+      ).toString();
+    } catch (error) {
+      // console.error(
+      //   `Error fetching buy price for ${subject}: ${error}`,
+      // );
+      wearable.buyPriceInWei = '0';
+    }
     wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
-    wearable.sellPriceInWei = (
-      await this.contract.getSellPriceAfterFee(
-        subject,
-        ethers.parseEther('0.001'),
-      )
-    ).toString();
+
+    try {
+      wearable.sellPriceInWei = (
+        await this.contract.getSellPriceAfterFee(
+          subject,
+          ethers.parseEther('0.001'),
+        )
+      ).toString();
+    } catch (error) {
+      // console.error(
+      //   `Error fetching sell price for ${subject}: ${error}`,
+      // );
+      wearable.sellPriceInWei = '0';
+    }
     wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
 
     return wearable;
