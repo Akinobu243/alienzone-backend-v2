@@ -61,14 +61,16 @@ export class StoreService {
         update: {
           name,
           metadata,
-          totalSupply: Number(supplyFactor),
+          totalSupply: Number(ethers.formatEther(supplyFactor)),
+          totalSupplyInWei: supplyFactor,
           alienPartId: alienPart.id,
         },
         create: {
           subject,
           name,
           metadata,
-          totalSupply: Number(supplyFactor),
+          totalSupply: Number(ethers.formatEther(supplyFactor)),
+          totalSupplyInWei: supplyFactor,
           alienPartId: alienPart.id,
         },
       });
@@ -83,9 +85,25 @@ export class StoreService {
     });
 
     for (const wearable of wearables) {
-      wearable.totalSupply = Number(
-        await this.contract.wearablesSupply(wearable.subject),
+      const currentSupplyInWei = await this.contract.wearablesSupply(
+        wearable.subject,
       );
+      wearable.availabilityInWei = (
+        BigInt(wearable.totalSupplyInWei) - BigInt(currentSupplyInWei)
+      ).toString();
+      wearable.availability = Number(
+        ethers.formatEther(wearable.availabilityInWei),
+      );
+      wearable.buyPriceInWei = await this.contract.getBuyPriceAfterFee(
+        wearable.subject,
+        ethers.parseEther('0.001'),
+      );
+      wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
+      wearable.sellPriceInWei = await this.contract.getSellPriceAfterFee(
+        wearable.subject,
+        ethers.parseEther('0.001'),
+      );
+      wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
     }
 
     return wearables;
@@ -98,22 +116,25 @@ export class StoreService {
     });
     if (!wearable) throw new Error('Wearable not found');
 
-    const currentSupply = Number(await this.contract.wearablesSupply(subject));
-    const buyPrice = Number(
-      await this.contract.getBuyPrice(subject, ethers.parseEther('0.001')),
+    const currentSupplyInWei = await this.contract.wearablesSupply(subject);
+    wearable.availabilityInWei = (
+      BigInt(wearable.totalSupplyInWei) - BigInt(currentSupplyInWei)
+    ).toString();
+    wearable.availability = Number(
+      ethers.formatEther(wearable.availabilityInWei),
     );
-    const sellPrice = 0; // TODO: debug issue with getSellPrice
-    // await this.contract.getSellPrice(
-    //   subject,
-    //   ethers.parseEther('0.001'),
-    // );
+    wearable.buyPriceInWei = await this.contract.getBuyPriceAfterFee(
+      subject,
+      ethers.parseEther('0.001'),
+    );
+    wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
+    wearable.sellPriceInWei = await this.contract.getSellPriceAfterFee(
+      subject,
+      ethers.parseEther('0.001'),
+    );
+    wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
 
-    return {
-      ...wearable,
-      currentSupply,
-      buyPrice,
-      sellPrice,
-    };
+    return wearable;
   }
 
   async getUserWearables(address: string) {
@@ -123,14 +144,18 @@ export class StoreService {
     const userWearables = [];
 
     for (const wearable of wearables) {
-      const balance = await this.contract.wearablesBalance(
+      var balance = await this.contract.wearablesBalance(
         wearable.subject,
         address,
       );
+      balance = ethers.formatEther(balance);
+      // 1 balance = 0.001 ETH
+      balance = Math.floor(parseFloat(balance) * 1000); // Convert to whole number
+
       if (Math.floor(Number(balance)) > 0) {
         userWearables.push({
           ...wearable,
-          balance: Math.floor(Number(balance)),
+          balance,
         });
       }
     }

@@ -45,9 +45,4 @@ export class StoreController {
   async getUserWearables(@Param('address') address: string) {
     return this.storeService.getUserWearables(address);
   }
-
-  @Get('/test')
-  async test() {
-    return 'THIS WORKS';
-  }
 }

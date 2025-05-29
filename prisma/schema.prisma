@@ -562,13 +562,20 @@ model Friendship {
 }
 
 model Wearable {
-  id          Int        @id @default(autoincrement())
-  subject     String     @unique
-  name        String
-  metadata    String // Link to metadata containing alien part details
-  totalSupply Int
-  alienPart   AlienPart? @relation(fields: [alienPartId], references: [id])
-  alienPartId Int?
+  id                 Int        @id @default(autoincrement())
+  subject            String     @unique
+  name               String
+  metadata           String // Link to metadata containing alien part details
+  totalSupplyInWei   String
+  totalSupply        Float
+  availabilityInWei  String?
+  availability       Float?
+  buyPrice           Float?
+  buyPriceInWei      String?
+  sellPrice          Float?
+  sellPriceInWei     String?
+  alienPart          AlienPart? @relation(fields: [alienPartId], references: [id])
+  alienPartId        Int?
 
   @@index([alienPartId])
 }
