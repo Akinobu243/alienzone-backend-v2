@@ -128,7 +128,6 @@ export class ProfileController {
   }
 
   @UseGuards(AuthGuard)
-  @UseGuards(AuthGuard)
   @Post('/use-referral-code')
   async useReferralCode(@Request() req, @Body('code') code: string) {
     return this.profileService.useReferralCode(req.walletAddress, code);
