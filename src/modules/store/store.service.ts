@@ -61,16 +61,20 @@ export class StoreService {
         update: {
           name,
           metadata,
-          totalSupply: Number(ethers.formatEther(supplyFactor)),
-          totalSupplyInWei: supplyFactor.toString(),
+          totalSupply: Number(supplyFactor),
+          totalSupplyInWei: ethers
+            .parseEther(supplyFactor.toString())
+            .toString(),
           alienPartId: alienPart.id,
         },
         create: {
           subject,
           name,
           metadata,
-          totalSupply: Number(ethers.formatEther(supplyFactor)),
-          totalSupplyInWei: supplyFactor.toString(),
+          totalSupply: Number(supplyFactor),
+          totalSupplyInWei: ethers
+            .parseEther(supplyFactor.toString())
+            .toString(),
           alienPartId: alienPart.id,
         },
       });
