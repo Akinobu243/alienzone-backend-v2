@@ -1529,15 +1529,13 @@ export class ProfileService {
       const ownedWearables = await this.storeService.getUserWearables(
         walletAddress,
       );
-      const wearableAlienParts = ownedWearables
-        .filter((wearable) => wearable.alienPart)
-        .map((wearable) => wearable.alienPart);
 
       // Convert wearableAlienParts to the same structure as userAlienPartGroups
       const wearableAlienPartGroups = [];
-      for (const part of wearableAlienParts) {
+      for (const wearable of ownedWearables) {
+        const part = wearable.alienPart;
         // Create a group for each wearable part duplicate as well
-        for (let i = 0; i < part.balance; i++) {
+        for (let i = 0; i < wearable.balance; i++) {
           wearableAlienPartGroups.push({
             id: part.id,
             name: part.name,
@@ -1561,7 +1559,10 @@ export class ProfileService {
         success: true,
         userAlienParts,
         elements: elementsArray,
-        alienPartsList: userAlienPartGroups.flatMap((group) => group.parts),
+        alienPartsList: [
+          ...userAlienPartGroups.flatMap((group) => group.parts),
+          ...wearableAlienPartGroups.flatMap((group) => group.parts),
+        ],
       };
     } catch (error) {
       return {
