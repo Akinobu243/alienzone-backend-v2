@@ -7,7 +7,7 @@ import wearablesContractABI from './wearablesContractAbi.json';
 @Injectable()
 export class StoreService {
   private contractAddress = process.env.WEARABLES_CONTRACT_ADDRESS;
-  private provider = new ethers.JsonRpcProvider(process.env.ETH_RPC_PROVIDER);
+  private provider = new ethers.JsonRpcProvider(process.env.RPC_PROVIDER);
   private contract = new ethers.Contract(
     this.contractAddress,
     wearablesContractABI,
