@@ -385,7 +385,7 @@ export async function seed(prisma: PrismaClient) {
       forgeRuneAmount: 1,
     },
     {
-      type: AlienPartType.HEAD,
+      type: AlienPartType.HAIR,
       name: 'Froggy Hood',
       description: 'Froggy Hood',
       image:
