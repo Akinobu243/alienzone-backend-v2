@@ -6,6 +6,7 @@ import {
   ItemQuality,
   ItemType,
   RuneType,
+  Prisma,
 } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
@@ -2005,6 +2006,10 @@ export class ProfileService {
           image: part.image,
           forgeRuneType: part.forgeRuneType,
           forgeRuneAmount: part.forgeRuneAmount,
+          forgeTime: part.forgeTime,
+          userForgeTime: (part.userForgeTime as any[]).find(
+            (forge) => forge.userId === user.id,
+          )?.timer,
         };
       });
 
@@ -2026,7 +2031,280 @@ export class ProfileService {
     }
   }
 
+  public async initiateForge(
+    walletAddress: string,
+    alienPartId: number,
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    error?: any;
+    timeLeft?: number;
+  }> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alienPart = await this.prisma.alienPart.findUnique({
+        where: {
+          id: alienPartId,
+        },
+      });
+
+      if (!alienPart) {
+        throw new BadRequestException('Alien part not found');
+      }
+
+      // Check if the user already has this part
+      const existingPartGroup = await this.prisma.alienPartGroup.findFirst({
+        where: {
+          userId: user.id,
+          parts: {
+            some: {
+              id: alienPartId,
+            },
+          },
+        },
+      });
+
+      if (existingPartGroup) {
+        return {
+          success: false,
+          message: `You already own the ${alienPart.name}`,
+        };
+      }
+
+      const runeType = alienPart.forgeRuneType;
+      const runeAmount = alienPart.forgeRuneAmount;
+
+      if (!runeType || !runeAmount) {
+        throw new BadRequestException('Alien part cannot be forged');
+      }
+
+      const userRunes = user.runes.filter((rune) => rune === runeType);
+
+      if (userRunes.length < runeAmount) {
+        throw new BadRequestException(
+          `Insufficient ${runeType} runes. Required: ${runeAmount} ${runeType} runes`,
+        );
+      }
+
+      // Check if there's an ongoing forge for this user and part
+      const userForgeTime = ((alienPart as any).userForgeTime || []) as {
+        userId: number;
+        timer: string;
+      }[];
+
+      const existingForge = userForgeTime.find(
+        (forge) => forge.userId === user.id,
+      );
+
+      if (existingForge) {
+        const timeLeft = Math.max(
+          0,
+          new Date(existingForge.timer).getTime() - new Date().getTime(),
+        );
+
+        if (timeLeft > 0) {
+          return {
+            success: false,
+            message: 'Forge already in progress',
+            timeLeft: Math.ceil(timeLeft / 1000), // Convert to seconds
+          };
+        }
+      }
+
+      // Create a new runes array by removing only the required amount of the specific rune type
+      const newRunes = [...user.runes];
+      let removedCount = 0;
+
+      for (let i = newRunes.length - 1; i >= 0; i--) {
+        if (newRunes[i] === runeType && removedCount < runeAmount) {
+          newRunes.splice(i, 1);
+          removedCount++;
+        }
+
+        if (removedCount === runeAmount) {
+          break;
+        }
+      }
+
+      // Calculate forge end time
+      const forgeEndTime = new Date(
+        new Date().getTime() + ((alienPart as any).forgeTime || 300) * 1000,
+      );
+
+      // Update user runes and add forge timer
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: {
+            walletAddress,
+          },
+          data: {
+            runes: newRunes,
+          },
+        }),
+        this.prisma.alienPart.update({
+          where: {
+            id: alienPartId,
+          },
+          data: {
+            userForgeTime: [
+              ...(userForgeTime.filter((forge) => forge.userId !== user.id) ||
+                []),
+              {
+                userId: user.id,
+                timer: forgeEndTime.toISOString(),
+              },
+            ] as Prisma.JsonArray,
+          },
+        }),
+      ]);
+
+      return {
+        success: true,
+        message: `Started forging ${alienPart.name}. Will be ready in ${
+          (alienPart as any).forgeTime || 300
+        } seconds.`,
+        timeLeft: (alienPart as any).forgeTime || 300,
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  // This method will be called by the cron job
   public async forgeParts(
+    walletAddress: string,
+    alienPartId: number,
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    error?: any;
+  }> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const alienPart = await this.prisma.alienPart.findUnique({
+        where: {
+          id: alienPartId,
+        },
+      });
+
+      if (!alienPart) {
+        throw new BadRequestException('Alien part not found');
+      }
+
+      // Check if there's a completed forge for this user and part
+      const userForgeTime = ((alienPart as any).userForgeTime || []) as {
+        userId: number;
+        timer: string;
+      }[];
+
+      const existingForge = userForgeTime.find(
+        (forge) => forge.userId === user.id,
+      );
+      if (!existingForge) {
+        return {
+          success: false,
+          message: 'No forge in progress',
+        };
+      }
+
+      const timeLeft = Math.max(
+        0,
+        new Date(existingForge.timer).getTime() - new Date().getTime(),
+      );
+      if (timeLeft > 0) {
+        return {
+          success: false,
+          message: 'Forge still in progress',
+        };
+      }
+
+      // Check if the user already has a part group for this type
+      const existingTypeGroup = await this.prisma.alienPartGroup.findFirst({
+        where: {
+          userId: user.id,
+          parts: {
+            none: {
+              id: alienPartId,
+            },
+          },
+        },
+      });
+
+      // Create a new alien part group or update existing one
+      if (existingTypeGroup) {
+        // Update existing group
+        await this.prisma.alienPartGroup.update({
+          where: {
+            id: existingTypeGroup.id,
+          },
+          data: {
+            parts: {
+              connect: {
+                id: alienPartId,
+              },
+            },
+          },
+        });
+      } else {
+        // Create new group
+        await this.prisma.alienPartGroup.create({
+          data: {
+            name: alienPart.name,
+            description: alienPart.description,
+            parts: {
+              connect: {
+                id: alienPartId,
+              },
+            },
+            user: {
+              connect: {
+                id: user.id,
+              },
+            },
+          },
+        });
+      }
+
+      // Remove the forge timer for this user
+      await this.prisma.alienPart.update({
+        where: {
+          id: alienPartId,
+        },
+        data: {
+          userForgeTime: userForgeTime.filter(
+            (forge) => forge.userId !== user.id,
+          ) as Prisma.JsonArray,
+        },
+      });
+
+      return {
+        success: true,
+        message: `Successfully forged ${alienPart.name} part.`,
+      };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  public async forgePartsOld1(
     walletAddress: string,
     alienPartId: number,
   ): Promise<{
@@ -2169,7 +2447,6 @@ export class ProfileService {
       return { success: false, error };
     }
   }
-
   public async enhanceParts(
     walletAddress: string,
     alienPartId: number,

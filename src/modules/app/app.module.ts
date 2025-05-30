@@ -26,6 +26,7 @@ import { ChatModule } from '../chat/chat.module';
 import { FriendsModule } from '../friends/friends.module';
 import { StoreModule } from '../store/store.module';
 import { WearablesModule } from '../wearables/wearables.module';
+import { ForgeModule } from '../forge/forge.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { WearablesModule } from '../wearables/wearables.module';
     FriendsModule,
     StoreModule,
     WearablesModule,
+    ForgeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

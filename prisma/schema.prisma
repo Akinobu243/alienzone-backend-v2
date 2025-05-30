@@ -391,6 +391,8 @@ model AlienPart {
   hash              String?          @unique @default(uuid())
   power             Int              @default(0)
   userPowers        Json?            @default("[]")
+  forgeTime         Int              @default(300) // Default forge time in seconds (5 minutes)
+  userForgeTime     Json?            @default("[]") // Array of {userId: number, timer: DateTime}
   isDefault         Boolean          @default(false)
   isForgeable       Boolean          @default(false)
   forgeRuneType     RuneType?

@@ -283,7 +283,7 @@ export class ProfileController {
   @UseGuards(AuthGuard)
   @Post('/forge-parts')
   async forgeParts(@Request() req, @Body('alienPartId') alienPartId: number) {
-    return this.profileService.forgeParts(
+    return this.profileService.initiateForge(
       req.walletAddress.toLowerCase(),
       alienPartId,
     );
