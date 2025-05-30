@@ -1605,28 +1605,14 @@ export class ProfileService {
         throw new BadRequestException('Alien not found');
       }
 
-      const userAlienPartGroup = await this.prisma.alienPartGroup.findMany({
-        where: {
-          userId: user.id,
-        },
-        include: {
-          parts: true,
-        },
-      });
+      // Get user's owned alien parts and elements
+      const ownedAlienParts = await this.getOwnedAlienParts(walletAddress);
+      if (!ownedAlienParts.success) {
+        throw new BadRequestException(ownedAlienParts.error);
+      }
+      const { elements: userElements, alienPartsList } = ownedAlienParts;
 
-      // Get user's elements
-      const userElements = await this.prisma.userElement.findMany({
-        where: {
-          userId: user.id,
-        },
-        select: {
-          elementId: true,
-        },
-      });
-
-      const userElementIds = userElements.map((ue) => ue.elementId);
-
-      const userAlienParts = userAlienPartGroup.flatMap((group) => group.parts);
+      const userElementIds = userElements.map((ue) => ue.id);
 
       // Map from frontend part type to database field
       const partTypeToFieldMap = {
@@ -1701,7 +1687,7 @@ export class ProfileService {
         }
 
         // Verify the user owns this part
-        if (!userAlienParts.some((userPart) => userPart.id === id)) {
+        if (!alienPartsList.some((userPart) => userPart.id === id)) {
           throw new BadRequestException(
             `Alien part with ID ${id} not found in user inventory`,
           );
