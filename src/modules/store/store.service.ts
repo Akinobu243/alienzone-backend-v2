@@ -17,6 +17,9 @@ export class StoreService {
   constructor(private prisma: PrismaService) {}
 
   async updateWearables(useLocalMetadata = false) {
+    // Clear existing wearables and alien parts
+    await this.prisma.wearable.deleteMany();
+
     const events = await this.contract.queryFilter(
       this.contract.filters.WearableCreated(),
     );
