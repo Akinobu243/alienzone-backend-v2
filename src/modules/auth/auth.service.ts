@@ -95,6 +95,20 @@ export class AuthService {
         });
       }
 
+      // Check if email is already taken
+      if (registerUser.email) {
+        const userWithEmail = await this.userService.findUser({
+          email: registerUser.email,
+        });
+
+        if (userWithEmail) {
+          throw new BadRequestException({
+            success: false,
+            message: 'Email is already taken',
+          });
+        }
+      }
+
       const referrerCode = registerUser?.refferalCode || null;
       let referrer: User | null = null;
 
@@ -117,6 +131,7 @@ export class AuthService {
       user = await this.userService.createUser({
         walletAddress: userWalletAddress,
         name: registerUser.name,
+        email: registerUser.email,
         country: registerUser.country,
         twitterId: registerUser.twitterId || '',
         enterprise: registerUser.enterprise || '',

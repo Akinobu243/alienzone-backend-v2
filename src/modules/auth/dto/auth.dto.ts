@@ -1,11 +1,4 @@
-import { User } from '@prisma/client';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthResponseDTO {
@@ -21,6 +14,10 @@ export class RegisterUserDTO {
   @IsString()
   @ApiProperty()
   country: string;
+
+  @IsEmail()
+  @ApiProperty()
+  email: string;
 
   @IsOptional()
   @ApiProperty()

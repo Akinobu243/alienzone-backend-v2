@@ -80,6 +80,7 @@ enum ItemQuality {
 model User {
   id                    Int                    @id @default(autoincrement())
   walletAddress         String                 @unique
+  email                 String                 @unique
   name                  String
   country               String
   twitterId             String?
