@@ -8,6 +8,7 @@ import { seed as seedPacks } from './packs.seed';
 import { seed as seedItems } from './items.seed';
 import { seed as seedDailyRewards } from './dailyRewards.seed';
 import { seed as seedHunts } from './hunts.seed';
+import { seed as seedStore } from './store.seed';
 
 const prisma = new PrismaClient();
 
@@ -23,6 +24,7 @@ async function main() {
     await seedDailyRewards(prisma);
     await seedAlienPartGroups(prisma);
     await seedHunts(prisma);
+    await seedStore(prisma);
 
     console.log('Seed completed successfully');
   } catch (error) {
