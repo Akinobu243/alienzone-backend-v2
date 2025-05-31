@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
-import { StoreService } from 'src/modules/store/store.service';
+import { StoreService } from '../../src/modules/store/store.service';
 
 export async function seed(prisma: PrismaClient) {
   const configService = new ConfigService();
