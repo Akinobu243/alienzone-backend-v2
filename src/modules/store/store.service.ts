@@ -120,9 +120,9 @@ export class StoreService {
         // );
         wearable.buyPriceInWei = '0';
       }
-      console.log(
-        `Buy price in wei for ${wearable.subject}: ${wearable.buyPriceInWei}`,
-      );
+      // console.log(
+      //   `Buy price in wei for ${wearable.subject}: ${wearable.buyPriceInWei}`,
+      // );
       wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
 
       try {
@@ -138,9 +138,9 @@ export class StoreService {
         // );
         wearable.sellPriceInWei = '0';
       }
-      console.log(
-        `Sell price in wei for ${wearable.subject}: ${wearable.sellPriceInWei}`,
-      );
+      // console.log(
+      //   `Sell price in wei for ${wearable.subject}: ${wearable.sellPriceInWei}`,
+      // );
       wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
     }
 
