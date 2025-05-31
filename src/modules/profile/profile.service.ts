@@ -108,6 +108,7 @@ export class ProfileService {
     image: Express.Multer.File,
   ) {
     try {
+      // Validate required fields
       if (
         !createAlienDTO.name ||
         !createAlienDTO.elementId ||
@@ -119,9 +120,25 @@ export class ProfileService {
         !createAlienDTO.mouthId ||
         createAlienDTO.mouthId <= 0
       ) {
-        throw new BadRequestException('Missing required fields');
+        return {
+          success: false,
+          error: 'Missing or invalid required fields',
+        };
       }
 
+      // Find the user
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not found',
+        };
+      }
+
+      // Validate element exists
       const element = await this.prisma.element.findUnique({
         where: {
           id: Number(createAlienDTO.elementId),
@@ -129,95 +146,133 @@ export class ProfileService {
       });
 
       if (!element) {
-        throw new BadRequestException('Element not found');
+        return {
+          success: false,
+          error: 'Element not found',
+        };
       }
 
-      if (createAlienDTO.eyesId) {
-        const eyes = await this.prisma.alienPart.findUnique({
+      // Validate all required parts exist and are of correct type
+      const [eyes, hair, mouth] = await Promise.all([
+        this.prisma.alienPart.findUnique({
           where: { id: Number(createAlienDTO.eyesId) },
-        });
-
-        if (!eyes) {
-          throw new BadRequestException('Eyes part not found');
-        }
-      }
-
-      if (createAlienDTO.hairId) {
-        const hair = await this.prisma.alienPart.findUnique({
+        }),
+        this.prisma.alienPart.findUnique({
           where: { id: Number(createAlienDTO.hairId) },
-        });
-
-        if (!hair) {
-          throw new BadRequestException('Hair part not found');
-        }
-      }
-
-      if (createAlienDTO.mouthId) {
-        const mouth = await this.prisma.alienPart.findUnique({
+        }),
+        this.prisma.alienPart.findUnique({
           where: { id: Number(createAlienDTO.mouthId) },
-        });
+        }),
+      ]);
 
-        if (!mouth) {
-          throw new BadRequestException('Mouth part not found');
-        }
+      if (!eyes || eyes.type !== 'EYES') {
+        return {
+          success: false,
+          error: 'Invalid or missing eyes part',
+        };
       }
 
-      const alien = await this.prisma.alien.create({
-        data: {
-          name: createAlienDTO.name,
-          element: {
-            connect: {
-              id: Number(createAlienDTO.elementId),
+      if (!hair || hair.type !== 'HAIR') {
+        return {
+          success: false,
+          error: 'Invalid or missing hair part',
+        };
+      }
+
+      if (!mouth || mouth.type !== 'MOUTH') {
+        return {
+          success: false,
+          error: 'Invalid or missing mouth part',
+        };
+      }
+
+      // First create the alien with a transaction
+      const alien = await this.prisma.$transaction(
+        async (prisma) => {
+          return await prisma.alien.create({
+            data: {
+              name: createAlienDTO.name,
+              element: {
+                connect: {
+                  id: Number(createAlienDTO.elementId),
+                },
+              },
+              strengthPoints: Number(createAlienDTO.strengthPoints),
+              equipmentPower: 0,
+              selected: true,
+              user: {
+                connect: { walletAddress },
+              },
+              eyes: {
+                connect: { id: Number(createAlienDTO.eyesId) },
+              },
+              hair: {
+                connect: { id: Number(createAlienDTO.hairId) },
+              },
+              mouth: {
+                connect: { id: Number(createAlienDTO.mouthId) },
+              },
             },
-          },
-          strengthPoints: Number(createAlienDTO.strengthPoints),
-          equipmentPower: 0,
-          selected: true,
-          user: {
-            connect: { walletAddress },
-          },
-          eyes: {
-            connect: { id: Number(createAlienDTO.eyesId) },
-          },
-          hair: {
-            connect: { id: Number(createAlienDTO.hairId) },
-          },
-          mouth: {
-            connect: { id: Number(createAlienDTO.mouthId) },
-          },
+            include: {
+              element: true,
+              eyes: true,
+              hair: true,
+              mouth: true,
+            },
+          });
         },
-      });
+        {
+          timeout: 10000, // 10 second timeout
+        },
+      );
 
-      // Loop over all parts and forge them
-      for (const part of [
-        createAlienDTO.eyesId,
-        createAlienDTO.hairId,
-        createAlienDTO.mouthId,
-      ]) {
-        if (part) {
-          await this.forgeDefaultAlienParts(
-            walletAddress,
-            part,
-            createAlienDTO.elementId,
-          );
-        }
-      }
-      if (createAlienDTO.elementId) {
-        const user = await this.prisma.user.findUnique({
-          where: {
-            walletAddress,
-          },
-        });
+      // Then create alien part groups in a separate transaction
+      await this.prisma.$transaction(
+        async (prisma) => {
+          const partIds = [
+            createAlienDTO.eyesId,
+            createAlienDTO.hairId,
+            createAlienDTO.mouthId,
+          ];
+          for (const partId of partIds) {
+            const part = await prisma.alienPart.findUnique({
+              where: { id: Number(partId) },
+            });
 
-        await this.prisma.userElement.create({
-          data: {
-            userId: user.id,
-            elementId: createAlienDTO.elementId,
-          },
-        });
-      }
+            if (part) {
+              await prisma.alienPartGroup.create({
+                data: {
+                  name: part.name,
+                  description: part.description,
+                  parts: {
+                    connect: {
+                      id: partId,
+                    },
+                  },
+                  user: {
+                    connect: {
+                      id: user.id,
+                    },
+                  },
+                  element: element
+                    ? {
+                        connect: {
+                          id: element.id,
+                        },
+                      }
+                    : undefined,
+                },
+              });
+            }
+          }
+        },
+        {
+          timeout: 10000, // 10 second timeout
+        },
+      );
 
-      // upload image to s3
+      // Upload image to s3 outside of any transaction
+      let imageUrl = null;
       try {
         const uploadParams = {
           Bucket: process.env.AWS_BUCKET_NAME,
@@ -227,26 +282,30 @@ export class ProfileService {
         };
         const uploadCommand = new PutObjectCommand(uploadParams);
         await this.s3.send(uploadCommand);
+        imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${createAlienDTO.name}.png`;
+
+        // Update alien with image URL in a separate operation
+        await this.prisma.alien.update({
+          where: { id: alien.id },
+          data: { image: imageUrl },
+        });
       } catch (error) {
         console.error(`Error uploading image to S3: ${error}`);
+        // Don't throw here, we'll still return the alien even if image upload fails
       }
-
-      await this.prisma.alien.update({
-        where: {
-          id: alien.id,
-        },
-        data: {
-          image: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/aliens/${alien.id}_${createAlienDTO.name}.png`,
-        },
-      });
 
       return {
         success: true,
+        alien: {
+          ...alien,
+          image: imageUrl,
+        },
       };
     } catch (error) {
+      console.error('Error in createAlien:', error);
       return {
         success: false,
-        error,
+        error: error.message || 'Failed to create alien',
       };
     }
   }

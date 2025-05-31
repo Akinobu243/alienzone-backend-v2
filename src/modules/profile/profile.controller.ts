@@ -9,6 +9,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -36,21 +37,51 @@ export class ProfileController {
     @UploadedFile() image: Express.Multer.File,
     @Request() req,
   ) {
-    // Parse numeric fields from strings to numbers
-    const createAlienDTO: CreateAlienDTO = {
-      name: body.name,
-      elementId: parseInt(body.elementId, 10),
-      strengthPoints: body.strengthPoints,
-      eyesId: parseInt(body.eyesId, 10),
-      hairId: parseInt(body.hairId, 10),
-      mouthId: parseInt(body.mouthId, 10),
-    };
+    try {
+      // Parse numeric fields from strings to numbers with validation
+      const eyesId = parseInt(body.eyesId, 10);
+      const hairId = parseInt(body.hairId, 10);
+      const mouthId = parseInt(body.mouthId, 10);
+      const elementId = parseInt(body.elementId, 10);
 
-    return this.profileService.createAlien(
-      req.walletAddress.toLowerCase(),
-      createAlienDTO,
-      image,
-    );
+      // Validate parsed values
+      if (
+        isNaN(eyesId) ||
+        isNaN(hairId) ||
+        isNaN(mouthId) ||
+        isNaN(elementId)
+      ) {
+        throw new BadRequestException(
+          'Invalid ID values provided for alien parts',
+        );
+      }
+
+      const createAlienDTO: CreateAlienDTO = {
+        name: body.name,
+        elementId: elementId,
+        strengthPoints: body.strengthPoints,
+        eyesId: eyesId,
+        hairId: hairId,
+        mouthId: mouthId,
+      };
+
+      console.log('createAlienDTO', createAlienDTO);
+
+      const result = await this.profileService.createAlien(
+        req.walletAddress.toLowerCase(),
+        createAlienDTO,
+        image,
+      );
+
+      if (!result.success) {
+        throw new BadRequestException('Failed to create alien');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error in createAlien:', error);
+      throw error;
+    }
   }
 
   @UseGuards(AuthGuard)
