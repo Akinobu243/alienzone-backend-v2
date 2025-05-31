@@ -1440,7 +1440,7 @@ export class CharacterService {
       };
 
       for (const char of allT1Characters) {
-        const allTiers = await this.getTiers(char.id);
+        const allTiers = await this.getTiers(char.tokenId);
         if (allTiers.success) {
           const charTiers = allTiers.characters;
           const t1Char = charTiers.find((c) => c.tier === 1);
