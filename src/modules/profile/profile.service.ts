@@ -234,6 +234,16 @@ export class ProfileService {
             createAlienDTO.hairId,
             createAlienDTO.mouthId,
           ];
+
+          // Create user-element relationship
+          await prisma.userElement.create({
+            data: {
+              userId: user.id,
+              elementId: createAlienDTO.elementId,
+            },
+          });
+
+          // Create alien part groups
           for (const partId of partIds) {
             const part = await prisma.alienPart.findUnique({
               where: { id: Number(partId) },
