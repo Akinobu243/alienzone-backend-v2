@@ -58,24 +58,24 @@ export class ProfileService {
         },
       });
 
-      // let isStarBoostActive = false;
-      // let isXpBoostActive = false;
-      // let isRaidBoostActive = false;
-      // if (user.starsBoost > 0) {
-      //   isStarBoostActive =
-      //     new Date().getTime() - user.lastStarBoost.getTime() <
-      //     24 * 60 * 60 * 1000;
-      // }
-      // if (user.xpBoost > 0) {
-      //   isXpBoostActive =
-      //     new Date().getTime() - user.lastXpBoost.getTime() <
-      //     24 * 60 * 60 * 1000;
-      // }
-      // if (user.raidTimeBoost > 0) {
-      //   isRaidBoostActive =
-      //     new Date().getTime() - user.lastRaidBoost.getTime() <
-      //     24 * 60 * 60 * 1000;
-      // }
+      let isStarBoostActive = false;
+      let isXpBoostActive = false;
+      let isRaidBoostActive = false;
+      if (user.starsBoost > 0) {
+        isStarBoostActive =
+          new Date().getTime() - user.lastStarBoost.getTime() <
+          24 * 60 * 60 * 1000;
+      }
+      if (user.xpBoost > 0) {
+        isXpBoostActive =
+          new Date().getTime() - user.lastXpBoost.getTime() <
+          24 * 60 * 60 * 1000;
+      }
+      if (user.raidTimeBoost > 0) {
+        isRaidBoostActive =
+          new Date().getTime() - user.lastRaidBoost.getTime() <
+          24 * 60 * 60 * 1000;
+      }
 
       return {
         success: true,
@@ -89,13 +89,11 @@ export class ProfileService {
         reputation: user.reputation,
         stars: user.stars,
         refferalCode: user.referralCode,
+        email: user.email,
         totalReferrals,
-        // starsBoost: isStarBoostActive ? user.starsBoost : 0,
-        // xpBoost: isXpBoostActive ? user.xpBoost : 0,
-        // raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
-        starsBoost: user.starsBoost,
-        xpBoost: user.xpBoost,
-        raidTimeBoost: user.raidTimeBoost,
+        starsBoost: isStarBoostActive ? user.starsBoost : 0,
+        xpBoost: isXpBoostActive ? user.xpBoost : 0,
+        raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
         claimedDailyRewards: user.claimedDailyRewards,
       };
     } catch (error) {
@@ -190,37 +188,12 @@ export class ProfileService {
         };
       }
 
-      // Calculate total boosts and power from all parts
-      const totalStarBoost =
-        (eyes.starBoost || 0) + (hair.starBoost || 0) + (mouth.starBoost || 0);
-      const totalXpBoost =
-        (eyes.xpBoost || 0) + (hair.xpBoost || 0) + (mouth.xpBoost || 0);
-      const totalRaidTimeBoost =
-        (eyes.raidTimeBoost || 0) +
-        (hair.raidTimeBoost || 0) +
-        (mouth.raidTimeBoost || 0);
       const totalPower =
         (eyes.power || 0) + (hair.power || 0) + (mouth.power || 0);
 
       // First create the alien with a transaction
       const alien = await this.prisma.$transaction(
         async (prisma) => {
-          // Update user with boost values
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              starsBoost: {
-                increment: totalStarBoost,
-              },
-              xpBoost: {
-                increment: totalXpBoost,
-              },
-              raidTimeBoost: {
-                increment: totalRaidTimeBoost,
-              },
-            },
-          });
-
           return await prisma.alien.create({
             data: {
               name: createAlienDTO.name,
@@ -1941,57 +1914,70 @@ export class ProfileService {
         power: newTotalBoosts.power - currentTotalBoosts.power,
       };
 
-      // Update the alien with all the new parts in a single operation
-      const updatedAlien = await this.prisma.alien.update({
-        where: { id: alien.id },
-        data: {
-          ...updateData,
-          equipmentPower: newTotalBoosts.power,
-        },
-        include: {
-          body: true,
-          clothes: true,
-          head: true,
-          eyes: true,
-          mouth: true,
-          hair: true,
-          marks: true,
-          powers: true,
-          accessories: true,
-          element: true,
-        },
-      });
+      // Perform all database operations in a transaction with increased timeout
+      const result = await this.prisma.$transaction(
+        async (prisma) => {
+          // Update the alien with all the new parts
+          const updatedAlien = await prisma.alien.update({
+            where: { id: alien.id },
+            data: {
+              ...updateData,
+              equipmentPower: newTotalBoosts.power,
+            },
+            include: {
+              body: true,
+              clothes: true,
+              head: true,
+              eyes: true,
+              mouth: true,
+              hair: true,
+              marks: true,
+              powers: true,
+              accessories: true,
+              element: true,
+            },
+          });
 
-      // Update user with boost changes and deduct stars in a single operation
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          stars: {
-            decrement: 150,
-          },
-          starsBoost: {
-            increment: boostChanges.starBoost,
-          },
-          xpBoost: {
-            increment: boostChanges.xpBoost,
-          },
-          raidTimeBoost: {
-            increment: boostChanges.raidTimeBoost,
-          },
+          // Update user with boost changes and deduct stars
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              stars: {
+                decrement: 150,
+              },
+              // starsBoost: {
+              //   increment: boostChanges.starBoost,
+              // },
+              // xpBoost: {
+              //   increment: boostChanges.xpBoost,
+              // },
+              // raidTimeBoost: {
+              //   increment: boostChanges.raidTimeBoost,
+              // },
+            },
+          });
+
+          return updatedAlien;
         },
-      });
+        {
+          timeout: 30000, // Increased timeout to 30 seconds
+          maxWait: 35000, // Maximum time to wait for transaction to start
+          isolationLevel: 'Serializable', // Highest isolation level for consistency
+        },
+      );
 
       return {
         success: true,
         message: `${parts.length} parts equipped successfully`,
-        alien: updatedAlien,
+        alien: result,
         boostChanges,
       };
     } catch (error) {
+      console.error('Error in equipAlienPart:', error);
       return {
         success: false,
         message: error.message || 'Failed to equip parts',
-        error,
+        error: error.toString(),
       };
     }
   }
