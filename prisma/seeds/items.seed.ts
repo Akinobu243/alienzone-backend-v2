@@ -18,51 +18,65 @@ export async function seed(prisma: PrismaClient) {
     {
       type: ItemType.SHEARS,
       quality: ItemQuality.BRONZE,
-      description: 'Basic shears for cutting alien plants',
+      description: 'Increase star reward amounts by 2%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Woolball%20(Shishi%20Cat).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Bronze%20Shears.png',
     },
     {
       type: ItemType.SHEARS,
       quality: ItemQuality.SILVER,
-      description: 'Medium quality shears for cutting alien plants',
+      description: 'Increase star reward amounts by 4%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Seal%20of%20the%20mystic%20guard%20(Karushi).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Silver%20Shears.png',
     },
     {
       type: ItemType.SHEARS,
       quality: ItemQuality.GOLDEN,
-      description: 'High quality shears for cutting alien plants',
+      description: 'Increase star reward amounts by 8%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Nano-Quantic%20Reactor%20(Nikola).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Golden%20Shears.png',
     },
     {
       type: ItemType.CUT,
       quality: ItemQuality.BRONZE,
-      description: 'Basic cutting tool for alien materials',
+      description: 'Decrease raid time by 2%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Flask%20(Dante).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Bronze%20Cut.png',
     },
     {
       type: ItemType.CUT,
       quality: ItemQuality.SILVER,
-      description: 'Medium quality cutting tool for alien materials',
+      description: 'Decrease raid time by 4%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Eternal%20Ice%20(The%20Twins).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Silver%20Cut.png',
+    },
+    {
+      type: ItemType.CUT,
+      quality: ItemQuality.GOLDEN,
+      description: 'Decrease raid time by 8%',
+      image:
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Golden%20Cut.png',
     },
     {
       type: ItemType.KNIFE,
       quality: ItemQuality.BRONZE,
-      description: 'Basic knife for alien crafting',
+      description: 'Increase XP reward amounts by 2%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Bronze%20Knife.png',
+    },
+    {
+      type: ItemType.KNIFE,
+      quality: ItemQuality.SILVER,
+      description: 'Increase XP reward amounts by 4%',
+      image:
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Silver%20Knife.png',
     },
     {
       type: ItemType.KNIFE,
       quality: ItemQuality.GOLDEN,
-      description: 'High quality knife for alien crafting',
+      description: 'Increase XP reward amounts by 8%',
       image:
-        'https://alienzone-v2.s3.amazonaws.com/gear-items/Daffodil%20(Tembin).png',
+        'https://alienzone-v2.s3.amazonaws.com/buff-items/Golden%20Knife.png',
     },
   ];
 
