@@ -22,8 +22,8 @@ export class RaidsController {
 
   @UseGuards(AuthGuard)
   @Get('/get-list')
-  async getRaidsList() {
-    return this.raidsService.getRaidsList();
+  async getRaidsList(@Request() req) {
+    return this.raidsService.getRaidsList(req.walletAddress.toLowerCase());
   }
 
   @UseGuards(AdminGuard)

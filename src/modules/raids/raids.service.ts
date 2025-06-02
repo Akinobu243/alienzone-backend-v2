@@ -25,13 +25,73 @@ export class RaidsService {
     private profileService: ProfileService,
   ) {}
 
-  public async getRaidsList() {
-    return await this.prisma.raid.findMany({
+  public async getRaidsList(walletAddress: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress: walletAddress.toLowerCase() },
+      include: {
+        aliens: true,
+      },
+    });
+
+    const aliens = await this.prisma.alien.findMany({
+      where: {
+        id: { in: user.teamAlienIds, notIn: user.raidAlienIds },
+      },
+      include: {
+        element: true,
+      },
+    });
+
+    if (aliens.length === 0) {
+      throw new BadRequestException(
+        'No Aliens found in team or team alien is in a raid',
+      );
+    }
+
+    const userCharacterRequest = await this.characterService.getUserCharacters(
+      walletAddress,
+    );
+    const userCharacters = userCharacterRequest.success
+      ? userCharacterRequest.userCharacters
+      : [];
+
+    const teamCharacters = userCharacters.filter(
+      (character) => character.onTeam,
+    );
+
+    var raids = await this.prisma.raid.findMany({
       include: {
         rewards: true,
         element: true,
       },
     });
+
+    raids = await Promise.all(
+      raids.map(async (raid) => {
+        const raidReputationPoints = await this.calculateRaidReputation(
+          raid.id,
+          aliens,
+          teamCharacters,
+          user,
+        );
+        const newRaidData = {
+          ...raid,
+          rewards: [
+            ...raid.rewards,
+            {
+              id: 0,
+              type: RewardType.REP,
+              amount: raidReputationPoints,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
+        };
+        return newRaidData;
+      }),
+    );
+
+    return raids;
   }
 
   public async createRaid(
@@ -427,11 +487,12 @@ export class RaidsService {
           }
 
           // Reward Reputation points
-          const teamStrength =
-            raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
-            raidCharacters.reduce((acc, character) => acc + character.power, 0);
-          const raidDurationInMinutes = Math.floor(raidDuration / 60);
-          const reputationPoints = raidDurationInMinutes * teamStrength;
+          const reputationPoints = await this.calculateRaidReputation(
+            raid.raidId,
+            raidAliens,
+            raidCharacters,
+            raid.user,
+          );
           console.log('Reputation points rewarded:', reputationPoints);
 
           // Reward runes
@@ -556,5 +617,35 @@ export class RaidsService {
       console.log('Error calculating raid duration:', error);
       return null;
     }
+  }
+
+  private async calculateRaidReputation(
+    raidId: number,
+    raidAliens: Alien[],
+    raidCharacters: any[],
+    raidUser: User,
+  ): Promise<number> {
+    const raid = await this.prisma.raid.findUnique({
+      where: { id: raidId },
+    });
+
+    if (!raid) {
+      throw new BadRequestException('Raid not found');
+    }
+
+    const raidDuration = await this.calculateRaidDuration(
+      raidId,
+      raidAliens,
+      raidCharacters,
+      raidUser,
+    );
+
+    const teamStrength =
+      raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
+      raidCharacters.reduce((acc, character) => acc + character.power, 0);
+    const raidDurationInMinutes = Math.max(Math.floor(raidDuration / 60), 1); // Ensure at least 1 minute
+    const reputationPoints = raidDurationInMinutes * teamStrength;
+
+    return reputationPoints;
   }
 }
