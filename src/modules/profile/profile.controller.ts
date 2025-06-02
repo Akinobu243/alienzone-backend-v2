@@ -17,11 +17,15 @@ import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAlienDTO } from './dto/profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('profile')
 @Controller('/profile')
 export class ProfileController {
-  constructor(private profileService: ProfileService) {}
+  constructor(
+    private profileService: ProfileService,
+    private prisma: PrismaService,
+  ) {}
 
   @UseGuards(AuthGuard)
   @Get('/get-profile')
@@ -113,13 +117,15 @@ export class ProfileController {
       limit = 10;
     }
 
-    return this.profileService.getLeaderboard(
+    const leaderboardData = await this.profileService.getLeaderboard(
       req.walletAddress,
       offset,
       limit,
       filter,
       search,
     );
+
+    return leaderboardData;
   }
 
   @UseGuards(AuthGuard)

@@ -234,6 +234,16 @@ export class ProfileService {
             createAlienDTO.hairId,
             createAlienDTO.mouthId,
           ];
+
+          // Create user-element relationship
+          await prisma.userElement.create({
+            data: {
+              userId: user.id,
+              elementId: createAlienDTO.elementId,
+            },
+          });
+
+          // Create alien part groups
           for (const partId of partIds) {
             const part = await prisma.alienPart.findUnique({
               where: { id: Number(partId) },
@@ -362,6 +372,21 @@ export class ProfileService {
         },
         skip: offset,
         take: limit,
+        include: {
+          aliens: {
+            include: {
+              element: true,
+              eyes: true,
+              hair: true,
+              mouth: true,
+            },
+          },
+          UserElement: {
+            include: {
+              element: true,
+            },
+          },
+        },
       });
     } else if (filter === 'likes') {
       const likedUserIds = (
@@ -386,6 +411,21 @@ export class ProfileService {
         },
         skip: offset,
         take: limit,
+        include: {
+          aliens: {
+            include: {
+              element: true,
+              eyes: true,
+              hair: true,
+              mouth: true,
+            },
+          },
+          UserElement: {
+            include: {
+              element: true,
+            },
+          },
+        },
       });
     } else {
       users = await this.prisma.user.findMany({
@@ -400,11 +440,41 @@ export class ProfileService {
         },
         skip: offset,
         take: limit,
+        include: {
+          aliens: {
+            include: {
+              element: true,
+              eyes: true,
+              hair: true,
+              mouth: true,
+            },
+          },
+          UserElement: {
+            include: {
+              element: true,
+            },
+          },
+        },
       });
     }
 
     const currentUser = await this.prisma.user.findUnique({
       where: { walletAddress },
+      include: {
+        aliens: {
+          include: {
+            element: true,
+            eyes: true,
+            hair: true,
+            mouth: true,
+          },
+        },
+        UserElement: {
+          include: {
+            element: true,
+          },
+        },
+      },
     });
 
     let currentUserRank = null;
@@ -484,7 +554,8 @@ export class ProfileService {
           createdAt: user.createdAt,
           twitterId: user.twitterId,
           isLiked: likedUserIds.includes(user.id),
-          // isLiked: true,
+          aliens: user.aliens,
+          elements: user.UserElement.map((ue) => ue.element),
         };
       }),
       // only return if user is not in users array
@@ -493,6 +564,7 @@ export class ProfileService {
       )
         ? undefined
         : {
+            id: currentUser.id,
             name: currentUser.name,
             country: currentUser.country,
             enterprise: currentUser.enterprise,
@@ -503,6 +575,8 @@ export class ProfileService {
             rank: currentUserRank,
             stars: currentUser.stars,
             createdAt: currentUser.createdAt,
+            aliens: currentUser.aliens,
+            elements: currentUser.UserElement.map((ue) => ue.element),
           },
     };
   }
