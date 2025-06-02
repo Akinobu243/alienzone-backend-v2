@@ -100,6 +100,25 @@ export class InventoryService {
         },
       });
 
+      // Get user items
+      const userItems = await this.prisma.userItem.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          item: true,
+        },
+      });
+
+      const formattedItems = userItems.map((userItem) => ({
+        id: userItem.item.id,
+        name: `${userItem.item.quality} ${userItem.item.type}`,
+        quantity: userItem.quantity,
+        image: userItem.item.image,
+        description: userItem.item.description,
+        type: 'CONSUMABLE' as const,
+      }));
+
       // Format the characters to match InventoryGroupsDto
       const formattedCharacters = userCharacters.map((userChar) => {
         return {
@@ -158,6 +177,7 @@ export class InventoryService {
       }));
 
       return [
+        ...formattedItems,
         ...formattedCharacters,
         ...formattedElements,
         ...formattedAlienParts,
