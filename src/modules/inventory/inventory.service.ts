@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InventoryResponseDto } from './dto/inventory.dto';
 import { CharacterService } from '../character/character.service';
+import { StoreService } from '../store/store.service';
 
 @Injectable()
 export class InventoryService {
   constructor(
     private prisma: PrismaService,
     private characterService: CharacterService,
+    private storeSevice: StoreService,
   ) {}
 
   /**
@@ -61,7 +63,11 @@ export class InventoryService {
       //   },
       // });
 
-      const alienPartGroup = await this.prisma.alienPartGroup.findFirst({
+      const wearableAlienParts = await this.storeSevice.getUserWearables(
+        walletAddress.toLowerCase(),
+      );
+
+      const alienPartGroup = await this.prisma.alienPartGroup.findMany({
         where: {
           userId: user.id,
         },
@@ -72,8 +78,16 @@ export class InventoryService {
 
       let alienParts = [];
 
-      if (alienPartGroup) {
-        alienParts = alienPartGroup.parts;
+      for (const group of alienPartGroup) {
+        if (group.parts) {
+          alienParts = [...alienParts, ...group.parts];
+        }
+      }
+
+      for (const wearable of wearableAlienParts) {
+        if (wearable.alienPart) {
+          alienParts.push(wearable.alienPart);
+        }
       }
 
       // Get user gear items
