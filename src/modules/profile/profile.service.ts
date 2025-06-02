@@ -186,9 +186,37 @@ export class ProfileService {
         };
       }
 
+      // Calculate total boosts and power from all parts
+      const totalStarBoost =
+        (eyes.starBoost || 0) + (hair.starBoost || 0) + (mouth.starBoost || 0);
+      const totalXpBoost =
+        (eyes.xpBoost || 0) + (hair.xpBoost || 0) + (mouth.xpBoost || 0);
+      const totalRaidTimeBoost =
+        (eyes.raidTimeBoost || 0) +
+        (hair.raidTimeBoost || 0) +
+        (mouth.raidTimeBoost || 0);
+      const totalPower =
+        (eyes.power || 0) + (hair.power || 0) + (mouth.power || 0);
+
       // First create the alien with a transaction
       const alien = await this.prisma.$transaction(
         async (prisma) => {
+          // Update user with boost values
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              starsBoost: {
+                increment: totalStarBoost,
+              },
+              xpBoost: {
+                increment: totalXpBoost,
+              },
+              raidTimeBoost: {
+                increment: totalRaidTimeBoost,
+              },
+            },
+          });
+
           return await prisma.alien.create({
             data: {
               name: createAlienDTO.name,
@@ -198,7 +226,7 @@ export class ProfileService {
                 },
               },
               strengthPoints: Number(createAlienDTO.strengthPoints),
-              equipmentPower: 0,
+              equipmentPower: totalPower,
               selected: true,
               user: {
                 connect: { walletAddress },
@@ -1733,6 +1761,18 @@ export class ProfileService {
           id: alienId,
           userId: user.id,
         },
+        include: {
+          body: true,
+          clothes: true,
+          head: true,
+          eyes: true,
+          mouth: true,
+          hair: true,
+          marks: true,
+          powers: true,
+          accessories: true,
+          element: true,
+        },
       });
 
       if (!alien) {
@@ -1741,9 +1781,11 @@ export class ProfileService {
 
       // Get user's owned alien parts and elements
       const ownedAlienParts = await this.getOwnedAlienParts(walletAddress);
+
       if (!ownedAlienParts.success) {
         throw new BadRequestException(ownedAlienParts.error);
       }
+
       const { elements: userElements, alienPartsList } = ownedAlienParts;
 
       const userElementIds = userElements.map((ue) => ue.id);
@@ -1775,8 +1817,47 @@ export class ProfileService {
         accessories: 'ACCESSORIES',
       };
 
+      // Map from frontend part type to current alien part
+      const currentPartsMap = {
+        hair: alien.hair,
+        eyes: alien.eyes,
+        mouth: alien.mouth,
+        body: alien.body,
+        clothes: alien.clothes,
+        head: alien.head,
+        marks: alien.marks,
+        powers: alien.powers,
+        accessories: alien.accessories,
+      };
+
       // Prepare update data
       const updateData = {};
+
+      // Calculate current total boosts
+      const currentTotalBoosts = {
+        starBoost: 0,
+        xpBoost: 0,
+        raidTimeBoost: 0,
+        power: 0,
+      };
+
+      // Sum up current boosts
+      Object.values(currentPartsMap).forEach((part) => {
+        if (part) {
+          currentTotalBoosts.starBoost += part.starBoost || 0;
+          currentTotalBoosts.xpBoost += part.xpBoost || 0;
+          currentTotalBoosts.raidTimeBoost += part.raidTimeBoost || 0;
+          currentTotalBoosts.power += part.power || 0;
+        }
+      });
+
+      // Track new total boosts
+      const newTotalBoosts = {
+        starBoost: 0,
+        xpBoost: 0,
+        raidTimeBoost: 0,
+        power: 0,
+      };
 
       // Process each part with its type
       for (const part of parts) {
@@ -1829,12 +1910,40 @@ export class ProfileService {
 
         // Add to update data
         updateData[dbField] = id;
+
+        // Add new part's boosts to total
+        newTotalBoosts.starBoost += dbPart.starBoost || 0;
+        newTotalBoosts.xpBoost += dbPart.xpBoost || 0;
+        newTotalBoosts.raidTimeBoost += dbPart.raidTimeBoost || 0;
+        newTotalBoosts.power += dbPart.power || 0;
       }
+
+      // For parts not in the update, keep their current boosts
+      Object.entries(currentPartsMap).forEach(([type, part]) => {
+        if (part && !parts.some((p) => p.type === type)) {
+          newTotalBoosts.starBoost += part.starBoost || 0;
+          newTotalBoosts.xpBoost += part.xpBoost || 0;
+          newTotalBoosts.raidTimeBoost += part.raidTimeBoost || 0;
+          newTotalBoosts.power += part.power || 0;
+        }
+      });
+
+      // Calculate the differences
+      const boostChanges = {
+        starBoost: newTotalBoosts.starBoost - currentTotalBoosts.starBoost,
+        xpBoost: newTotalBoosts.xpBoost - currentTotalBoosts.xpBoost,
+        raidTimeBoost:
+          newTotalBoosts.raidTimeBoost - currentTotalBoosts.raidTimeBoost,
+        power: newTotalBoosts.power - currentTotalBoosts.power,
+      };
 
       // Update the alien with all the new parts in a single operation
       const updatedAlien = await this.prisma.alien.update({
         where: { id: alien.id },
-        data: updateData,
+        data: {
+          ...updateData,
+          equipmentPower: newTotalBoosts.power,
+        },
         include: {
           body: true,
           clothes: true,
@@ -1849,12 +1958,21 @@ export class ProfileService {
         },
       });
 
-      // Deduct stars from user after successful equipping
+      // Update user with boost changes and deduct stars in a single operation
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
           stars: {
             decrement: 150,
+          },
+          starsBoost: {
+            increment: boostChanges.starBoost,
+          },
+          xpBoost: {
+            increment: boostChanges.xpBoost,
+          },
+          raidTimeBoost: {
+            increment: boostChanges.raidTimeBoost,
           },
         },
       });
@@ -1863,6 +1981,7 @@ export class ProfileService {
         success: true,
         message: `${parts.length} parts equipped successfully`,
         alien: updatedAlien,
+        boostChanges,
       };
     } catch (error) {
       return {
