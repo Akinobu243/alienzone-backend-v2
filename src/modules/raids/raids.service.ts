@@ -42,12 +42,6 @@ export class RaidsService {
       },
     });
 
-    if (aliens.length === 0) {
-      throw new BadRequestException(
-        'No Aliens found in team or team alien is in a raid',
-      );
-    }
-
     const userCharacterRequest = await this.characterService.getUserCharacters(
       walletAddress,
     );
