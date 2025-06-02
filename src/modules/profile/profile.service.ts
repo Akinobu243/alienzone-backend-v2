@@ -76,6 +76,7 @@ export class ProfileService {
           new Date().getTime() - user.lastRaidBoost.getTime() <
           24 * 60 * 60 * 1000;
       }
+
       return {
         success: true,
         walletAddress: user.walletAddress,
@@ -88,6 +89,7 @@ export class ProfileService {
         reputation: user.reputation,
         stars: user.stars,
         refferalCode: user.referralCode,
+        email: user.email,
         totalReferrals,
         starsBoost: isStarBoostActive ? user.starsBoost : 0,
         xpBoost: isXpBoostActive ? user.xpBoost : 0,
