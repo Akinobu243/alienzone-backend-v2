@@ -58,25 +58,24 @@ export class ProfileService {
         },
       });
 
-      // let isStarBoostActive = false;
-      // let isXpBoostActive = false;
-      // let isRaidBoostActive = false;
-      // if (user.starsBoost > 0) {
-      //   isStarBoostActive =
-      //     new Date().getTime() - user.lastStarBoost.getTime() <
-      //     24 * 60 * 60 * 1000;
-      // }
-      // if (user.xpBoost > 0) {
-      //   isXpBoostActive =
-      //     new Date().getTime() - user.lastXpBoost.getTime() <
-      //     24 * 60 * 60 * 1000;
-      // }
-      // if (user.raidTimeBoost > 0) {
-      //   isRaidBoostActive =
-      //     new Date().getTime() - user.lastRaidBoost.getTime() <
-      //     24 * 60 * 60 * 1000;
-      // }
-
+      let isStarBoostActive = false;
+      let isXpBoostActive = false;
+      let isRaidBoostActive = false;
+      if (user.starsBoost > 0) {
+        isStarBoostActive =
+          new Date().getTime() - user.lastStarBoost.getTime() <
+          24 * 60 * 60 * 1000;
+      }
+      if (user.xpBoost > 0) {
+        isXpBoostActive =
+          new Date().getTime() - user.lastXpBoost.getTime() <
+          24 * 60 * 60 * 1000;
+      }
+      if (user.raidTimeBoost > 0) {
+        isRaidBoostActive =
+          new Date().getTime() - user.lastRaidBoost.getTime() <
+          24 * 60 * 60 * 1000;
+      }
       return {
         success: true,
         walletAddress: user.walletAddress,
@@ -90,12 +89,9 @@ export class ProfileService {
         stars: user.stars,
         refferalCode: user.referralCode,
         totalReferrals,
-        // starsBoost: isStarBoostActive ? user.starsBoost : 0,
-        // xpBoost: isXpBoostActive ? user.xpBoost : 0,
-        // raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
-        starsBoost: user.starsBoost,
-        xpBoost: user.xpBoost,
-        raidTimeBoost: user.raidTimeBoost,
+        starsBoost: isStarBoostActive ? user.starsBoost : 0,
+        xpBoost: isXpBoostActive ? user.xpBoost : 0,
+        raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
         claimedDailyRewards: user.claimedDailyRewards,
       };
     } catch (error) {
