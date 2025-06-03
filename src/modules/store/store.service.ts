@@ -3,6 +3,7 @@ import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { ethers } from 'ethers';
 import wearablesContractABI from './wearablesContractAbi.json';
+import { QuestService } from '../quest/quest.service';
 
 @Injectable()
 export class StoreService {
@@ -14,7 +15,10 @@ export class StoreService {
     this.provider,
   );
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private questService: QuestService,
+  ) {}
 
   async updateWearables(useLocalMetadata = false) {
     // Clear existing wearables and alien parts
@@ -223,5 +227,33 @@ export class StoreService {
     }
 
     return userWearables;
+  }
+
+  async progressBoughtQuest(subject: string, walletAddress: string) {
+    try {
+      const wearable = await this.prisma.wearable.findUnique({
+        where: { subject },
+        include: { alienPart: true },
+      });
+      if (!wearable) throw new Error('Wearable not found');
+
+      const balance = Number(
+        ethers.formatEther(
+          await this.contract.wearablesBalance(wearable.subject, walletAddress),
+        ),
+      );
+      if (balance === 0) {
+        throw new Error('User does not own this wearable');
+      }
+
+      return this.questService.progressBuyQuest(walletAddress);
+    } catch (error) {
+      // console.error(`Error progressing bought quest: ${error.message}`);
+      return {
+        success: false,
+        error: error,
+        message: `Error progressing bought quest: ${error.message}`,
+      };
+    }
   }
 }

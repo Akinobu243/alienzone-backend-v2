@@ -893,26 +893,121 @@ export class QuestService {
         throw new BadRequestException('No buy quests available');
       }
 
-      const userBuyQuests = await this.prisma.userQuest.findMany({
-        where: {
-          userId: user.id,
-          questId: { in: buyQuests.map((q) => q.id) },
-          isCompleted: false,
-        },
-        include: { quest: true },
-      });
+      // Get current date info for tracking using UTC
+      const todayUTC = this.getTodayUTC();
+      const currentWeekStartUTC = this.getCurrentWeekStartUTC();
 
-      for (const userQuest of userBuyQuests) {
-        await this.prisma.userQuest.update({
-          where: { id: userQuest.id },
-          data: {
-            currentProgress: {
-              increment: 1,
+      // Process daily quests
+      const dailyBuyQuests = buyQuests.filter((q) => q.frequency === 'daily');
+      for (const quest of dailyBuyQuests) {
+        // Check if user already has this quest for today
+        const existingDailyQuest = await this.prisma.userQuest.findFirst({
+          where: {
+            userId: user.id,
+            questId: quest.id,
+            createdAt: {
+              gte: todayUTC,
             },
-            isCompleted:
-              userQuest.currentProgress + 1 >= userQuest.quest.requiredNumber,
           },
         });
+
+        if (!existingDailyQuest) {
+          // Create new daily quest progress with initial progress of 1
+          await this.prisma.userQuest.create({
+            data: {
+              userId: user.id,
+              questId: quest.id,
+              currentProgress: 1,
+              isCompleted: 1 >= quest.requiredNumber,
+            },
+          });
+        } else if (!existingDailyQuest.isCompleted) {
+          // Update existing quest if not completed
+          const newProgress = existingDailyQuest.currentProgress + 1;
+          await this.prisma.userQuest.update({
+            where: { id: existingDailyQuest.id },
+            data: {
+              currentProgress: newProgress,
+              isCompleted: newProgress >= quest.requiredNumber,
+            },
+          });
+        }
+        // If already completed, do nothing
+      }
+
+      // Process weekly quests
+      const weeklyBuyQuests = buyQuests.filter((q) => q.frequency === 'weekly');
+      for (const quest of weeklyBuyQuests) {
+        // Check if user already has this quest for current week
+        const existingWeeklyQuest = await this.prisma.userQuest.findFirst({
+          where: {
+            userId: user.id,
+            questId: quest.id,
+            createdAt: {
+              gte: currentWeekStartUTC,
+            },
+          },
+        });
+
+        if (!existingWeeklyQuest) {
+          // Create new weekly quest progress with initial progress of 1
+          await this.prisma.userQuest.create({
+            data: {
+              userId: user.id,
+              questId: quest.id,
+              currentProgress: 1,
+              isCompleted: 1 >= quest.requiredNumber,
+            },
+          });
+        } else if (!existingWeeklyQuest.isCompleted) {
+          // Update existing quest if not completed
+          const newProgress = existingWeeklyQuest.currentProgress + 1;
+          await this.prisma.userQuest.update({
+            where: { id: existingWeeklyQuest.id },
+            data: {
+              currentProgress: newProgress,
+              isCompleted: newProgress >= quest.requiredNumber,
+            },
+          });
+        }
+        // If already completed, do nothing
+      }
+
+      // Process one-time quests (if any)
+      const oneTimeBuyQuests = buyQuests.filter(
+        (q) => q.frequency !== 'daily' && q.frequency !== 'weekly',
+      );
+      for (const quest of oneTimeBuyQuests) {
+        // Check if user already has this quest
+        const existingQuest = await this.prisma.userQuest.findFirst({
+          where: {
+            userId: user.id,
+            questId: quest.id,
+            isCompleted: false,
+          },
+        });
+
+        if (!existingQuest) {
+          // Create new quest progress with initial progress of 1
+          await this.prisma.userQuest.create({
+            data: {
+              userId: user.id,
+              questId: quest.id,
+              currentProgress: 1,
+              isCompleted: 1 >= quest.requiredNumber,
+            },
+          });
+        } else {
+          // Update existing quest
+          const newProgress = existingQuest.currentProgress + 1;
+          await this.prisma.userQuest.update({
+            where: { id: existingQuest.id },
+            data: {
+              currentProgress: newProgress,
+              isCompleted: newProgress >= quest.requiredNumber,
+            },
+          });
+        }
       }
 
       return {

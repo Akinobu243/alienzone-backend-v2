@@ -54,4 +54,26 @@ export class StoreController {
       req.walletAddress.toLowerCase(),
     );
   }
+
+  @UseGuards(AuthGuard)
+  @ApiBody({
+    description: 'Progress a quest for the user',
+    schema: {
+      type: 'object',
+      properties: {
+        subject: {
+          type: 'string',
+          description: 'The subject of the bought wearable',
+        },
+      },
+      required: ['subject'],
+    },
+  })
+  @Post(`/wearables/bought-quest`)
+  async progressBoughtQuest(@Body('subject') subject: string, @Request() req) {
+    return this.storeService.progressBoughtQuest(
+      subject,
+      req.walletAddress.toLowerCase(),
+    );
+  }
 }
