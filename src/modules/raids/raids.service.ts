@@ -463,10 +463,10 @@ export class RaidsService {
               where: { id: raidUserId },
             });
 
-            if (levelRequirements[user.level + 1]) {
+            // Use user.level in levelRequirements because level is 1-based
+            if (levelRequirements[user.level]) {
               while (
-                user.experience >=
-                levelRequirements[user.level + 1]?.requiredPoints
+                user.experience >= levelRequirements[user.level]?.requiredPoints
               ) {
                 console.log(`User level up: ${user.level + 1}`);
                 user = await this.prisma.user.update({
@@ -482,7 +482,7 @@ export class RaidsService {
                   console.error('Error progressing level quest:', error);
                 }
 
-                if (!levelRequirements[user.level + 1]) {
+                if (!levelRequirements[user.level]) {
                   console.log('Max level reached');
                   break;
                 }
@@ -539,6 +539,35 @@ export class RaidsService {
     }
 
     return null;
+  }
+
+  public async testLevelUp() {
+    var user = await this.prisma.user.findUnique({
+      where: { id: 1 },
+    });
+
+    // Use user.level in levelRequirements because level is 1-based
+    if (levelRequirements[user.level]) {
+      while (user.experience >= levelRequirements[user.level]?.requiredPoints) {
+        console.log(`User level up: ${user.level + 1}`);
+
+        user = await this.prisma.user.update({
+          where: { id: 1 },
+          data: { level: user.level + 1 },
+        });
+
+        try {
+          await this.questService.progressLevelQuest(user.walletAddress);
+        } catch (error) {
+          console.error('Error progressing level quest:', error);
+        }
+
+        if (!levelRequirements[user.level]) {
+          console.log('Max level reached');
+          break;
+        }
+      }
+    }
   }
 
   private async calculateRaidDuration(
