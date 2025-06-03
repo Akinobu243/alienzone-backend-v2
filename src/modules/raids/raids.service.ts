@@ -459,23 +459,33 @@ export class RaidsService {
               `Final reward: ${reward.type} Amount: ${reward.amount}`,
             );
 
-            const user = await this.prisma.user.findUnique({
+            var user = await this.prisma.user.findUnique({
               where: { id: raidUserId },
             });
-            const userLevel = user.level;
-            const levelRequirement = levelRequirements[userLevel];
 
-            if (user.experience >= levelRequirement.requiredPoints) {
-              console.log(`User level up: ${userLevel + 1}`);
-              await this.prisma.user.update({
-                where: { id: raidUserId },
-                data: { level: userLevel + 1 },
-              });
+            if (levelRequirements[user.level + 1]) {
+              while (
+                user.experience >=
+                levelRequirements[user.level + 1]?.requiredPoints
+              ) {
+                console.log(`User level up: ${user.level + 1}`);
+                user = await this.prisma.user.update({
+                  where: { id: raidUserId },
+                  data: { level: user.level + 1 },
+                });
 
-              try {
-                await this.questService.progressLevelQuest(user.walletAddress);
-              } catch (error) {
-                console.error('Error progressing level quest:', error);
+                try {
+                  await this.questService.progressLevelQuest(
+                    user.walletAddress,
+                  );
+                } catch (error) {
+                  console.error('Error progressing level quest:', error);
+                }
+
+                if (!levelRequirements[user.level + 1]) {
+                  console.log('Max level reached');
+                  break;
+                }
               }
             }
           }
