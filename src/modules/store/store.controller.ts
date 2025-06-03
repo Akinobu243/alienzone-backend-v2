@@ -1,7 +1,16 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { StoreService } from './store.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('store')
 @Controller('/store')
@@ -31,18 +40,18 @@ export class StoreController {
     return this.storeService.updateWearables(useLocalMetadata);
   }
 
+  @UseGuards(AuthGuard)
   @Get('/wearables')
-  async getWearables() {
+  async getWearables(@Request() req) {
     return this.storeService.getWearables();
   }
 
+  @UseGuards(AuthGuard)
   @Get('/wearables/:subject')
-  async getWearableDetails(@Param('subject') subject: string) {
-    return this.storeService.getWearableDetails(subject);
-  }
-
-  @Get('/wearables/user-wearables/:address')
-  async getUserWearables(@Param('address') address: string) {
-    return this.storeService.getUserWearables(address);
+  async getWearableDetails(@Param('subject') subject: string, @Request() req) {
+    return this.storeService.getWearableDetails(
+      subject,
+      req.walletAddress.toLowerCase(),
+    );
   }
 }

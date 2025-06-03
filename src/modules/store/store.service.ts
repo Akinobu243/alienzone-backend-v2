@@ -147,7 +147,7 @@ export class StoreService {
     return wearables;
   }
 
-  async getWearableDetails(subject: string) {
+  async getWearableDetails(subject: string, walletAddress: string) {
     const wearable = await this.prisma.wearable.findUnique({
       where: { subject },
       include: { alienPart: true },
@@ -191,8 +191,10 @@ export class StoreService {
       wearable.sellPriceInWei = '0';
     }
     wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
-
-    return wearable;
+    const heldAmount = ethers.formatEther(
+      await this.contract.wearablesBalance(subject, walletAddress),
+    );
+    return { ...wearable, heldAmount };
   }
 
   async getUserWearables(address: string) {
