@@ -191,8 +191,10 @@ export class StoreService {
       wearable.sellPriceInWei = '0';
     }
     wearable.sellPrice = Number(ethers.formatEther(wearable.sellPriceInWei));
-    const heldAmount = ethers.formatEther(
-      await this.contract.wearablesBalance(subject, walletAddress),
+    const heldAmount = Number(
+      ethers.formatEther(
+        await this.contract.wearablesBalance(subject, walletAddress),
+      ),
     );
     return { ...wearable, heldAmount };
   }
