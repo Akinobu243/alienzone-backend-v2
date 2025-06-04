@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -318,11 +318,34 @@ export class ProfileController {
   }
 
   @UseGuards(AuthGuard)
+  @ApiBody({
+    description: 'Forging request payload',
+    schema: {
+      type: 'object',
+      properties: {
+        alienPartId: {
+          type: 'number',
+          description: 'ID of the alien part to forge (optional)',
+          nullable: true,
+        },
+        elementId: {
+          type: 'number',
+          description: 'ID of the element to forge (optional)',
+          nullable: true,
+        }
+      },
+    },
+  })
   @Post('/forge-parts')
-  async forgeParts(@Request() req, @Body('alienPartId') alienPartId: number) {
+  async forgeParts(
+    @Request() req,
+    @Body('alienPartId') alienPartId?: number,
+    @Body('elementId') elementId?: number,
+  ) {
     return this.profileService.initiateForge(
       req.walletAddress.toLowerCase(),
       alienPartId,
+      elementId,
     );
   }
 

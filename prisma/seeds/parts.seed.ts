@@ -12,6 +12,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 3, // Thunder
       strengthId: 2, // Fire
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 2,
@@ -23,6 +26,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 1, // Water
       strengthId: 5, // Love
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 3,
@@ -34,6 +40,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 4, // Plasma
       strengthId: 1, // Water
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 4,
@@ -45,6 +54,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 7, // Gravity
       strengthId: 3, // Thunder
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 5,
@@ -56,6 +68,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 2, // Fire
       strengthId: 8, // Gamma
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 6,
@@ -67,6 +82,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 1, // Water
       strengthId: 7, // Gravity
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 7,
@@ -78,6 +96,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 6, // Life
       strengthId: 4, // Plasma
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
     {
       id: 8,
@@ -89,6 +110,9 @@ export async function seed(prisma: PrismaClient) {
       weaknessId: 5, // Love
       strengthId: 6, // Life
       isDefault: true,
+      isForgeable: true,
+      forgeRuneType: RuneType.UNCOMMON,
+      forgeRuneAmount: 1,
     },
   ];
   const alienParts = [
@@ -112,9 +136,6 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/shita.png',
       price: 0,
       isDefault: true,
-      isForgeable: true,
-      forgeRuneType: RuneType.UNCOMMON,
-      forgeRuneAmount: 1,
       starBoost: 0,
       xpBoost: 0,
       raidTimeBoost: 0,
@@ -127,9 +148,6 @@ export async function seed(prisma: PrismaClient) {
         'https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/mouth/niyaniya.png',
       price: 0,
       isDefault: true,
-      isForgeable: true,
-      forgeRuneType: RuneType.UNCOMMON,
-      forgeRuneAmount: 1,
       starBoost: 0,
       xpBoost: 0,
       raidTimeBoost: 0,

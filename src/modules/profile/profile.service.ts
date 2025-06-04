@@ -7,6 +7,7 @@ import {
   ItemType,
   RuneType,
   Prisma,
+  Element,
 } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
@@ -2259,6 +2260,12 @@ export class ProfileService {
         };
       });
 
+      const elements = await this.prisma.element.findMany({
+        where: {
+          isForgeable: true,
+        }
+      });
+
       const userRuneData = {
         [RuneType.COMMON]: commonRunes.length,
         [RuneType.UNCOMMON]: uncommonRunes.length,
@@ -2270,6 +2277,7 @@ export class ProfileService {
       return {
         success: true,
         alienParts: alienPartData,
+        elements,
         userRuneAmounts: userRuneData,
       };
     } catch (error) {
@@ -2279,7 +2287,8 @@ export class ProfileService {
 
   public async initiateForge(
     walletAddress: string,
-    alienPartId: number,
+    alienPartId?: number,
+    elementId?: number,
   ): Promise<{
     success: boolean;
     message?: string;
@@ -2297,40 +2306,81 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      const alienPart = await this.prisma.alienPart.findUnique({
-        where: {
-          id: alienPartId,
-        },
-      });
+      var alienPart, element;
+      if (alienPartId) {
+        alienPart = await this.prisma.alienPart.findUnique({
+          where: {
+            id: alienPartId,
+          },
+        });
 
-      if (!alienPart) {
-        throw new BadRequestException('Alien part not found');
+        if (!alienPart) {
+          throw new BadRequestException('Alien part not found');
+        }
+      }
+      else if (elementId) {
+        element = await this.prisma.element.findUnique({
+          where: {
+            id: elementId
+          }
+        });
+        
+        if (!element) {
+          throw new BadRequestException('Element not found');
+        }
+      }
+      else {
+        throw new BadRequestException('Alien part id or Element id must not be empty.')
       }
 
-      // Check if the user already has this part
-      const existingPartGroup = await this.prisma.alienPartGroup.findFirst({
-        where: {
-          userId: user.id,
-          parts: {
-            some: {
-              id: alienPartId,
+      if (alienPartId) {
+        // Check if the user already has this part
+        const existingPartGroup = await this.prisma.alienPartGroup.findFirst({
+          where: {
+            userId: user.id,
+            parts: {
+              some: {
+                id: alienPartId,
+              },
             },
           },
-        },
-      });
+        });
 
-      if (existingPartGroup) {
-        return {
-          success: false,
-          message: `You already own the ${alienPart.name}`,
-        };
+        if (existingPartGroup) {
+          return {
+            success: false,
+            message: `You already own the ${alienPart.name}`,
+          };
+        }
+      }
+      else if (elementId) {
+        const existingElement = await this.prisma.userElement.findFirst({
+          where: {
+            userId: user.id,
+            elementId: elementId,
+          }
+        })
+
+        if (existingElement) {
+          return {
+            success: false,
+            message: `You already own ${element.name}`,
+          }
+        }
       }
 
-      const runeType = alienPart.forgeRuneType;
-      const runeAmount = alienPart.forgeRuneAmount;
+      var runeType, runeAmount;
+      if (alienPartId) {
+        runeType = alienPart.forgeRuneType;
+        runeAmount = alienPart.forgeRuneAmount;
+      }
+      else if (elementId) {
+        runeType = element.forgeRuneType;
+        runeAmount = element.forgeRuneAmount;
+      }
 
       if (!runeType || !runeAmount) {
-        throw new BadRequestException('Alien part cannot be forged');
+        throw new BadRequestException('This item cannot be forged');
       }
 
       const userRunes = user.runes.filter((rune) => rune === runeType);
@@ -2342,10 +2392,19 @@ export class ProfileService {
       }
 
       // Check if there's an ongoing forge for this user and part
-      const userForgeTime = ((alienPart as any).userForgeTime || []) as {
-        userId: number;
-        timer: string;
-      }[];
+      var userForgeTime;
+      if (alienPartId) {
+        userForgeTime = ((alienPart as any).userForgeTime || []) as {
+          userId: number;
+          timer: string;
+        }[];
+      }
+      else if (elementId) {
+        userForgeTime = ((element as any).userForgeTime || []) as {
+          userId: number;
+          timer: string;
+        }
+      }
 
       const existingForge = userForgeTime.find(
         (forge) => forge.userId === user.id,
@@ -2382,9 +2441,17 @@ export class ProfileService {
       }
 
       // Calculate forge end time
-      const forgeEndTime = new Date(
-        new Date().getTime() + ((alienPart as any).forgeTime || 300) * 1000,
-      );
+      var forgeEndTime;
+      if (alienPartId) {
+        forgeEndTime = new Date(
+          new Date().getTime() + ((alienPart as any).forgeTime || 300) * 1000,
+        );
+      }
+      else if (elementId) {
+        forgeEndTime = new Date(
+          new Date().getTime() + ((element as any).forgeTime || 300) * 1000,
+        );
+      }
 
       // Update user runes and add forge timer
       await this.prisma.$transaction([
@@ -2396,29 +2463,45 @@ export class ProfileService {
             runes: newRunes,
           },
         }),
-        this.prisma.alienPart.update({
-          where: {
-            id: alienPartId,
-          },
-          data: {
-            userForgeTime: [
-              ...(userForgeTime.filter((forge) => forge.userId !== user.id) ||
-                []),
-              {
-                userId: user.id,
-                timer: forgeEndTime.toISOString(),
-              },
-            ] as Prisma.JsonArray,
-          },
-        }),
+        alienPartId ? 
+          this.prisma.alienPart.update({
+            where: {
+              id: alienPartId,
+            },
+            data: {
+              userForgeTime: [
+                ...(userForgeTime.filter((forge) => forge.userId !== user.id) ||
+                  []),
+                {
+                  userId: user.id,
+                  timer: forgeEndTime.toISOString(),
+                },
+              ] as Prisma.JsonArray,
+            },
+          }) :
+          this.prisma.element.update({
+            where: {
+              id: elementId,
+            },
+            data: {
+             userForgeTime: [
+                ...(userForgeTime.filter((forge) => forge.userId !== user.id) ||
+                  []),
+                {
+                  userId: user.id,
+                  timer: forgeEndTime.toISOString(),
+                },
+              ] as Prisma.JsonArray,
+            },
+          }),
       ]);
 
       return {
         success: true,
-        message: `Started forging ${alienPart.name}. Will be ready in ${
-          (alienPart as any).forgeTime || 300
+        message: `Started forging ${alienPartId ? alienPart.name : element.name}. Will be ready in ${
+          (alienPartId ? alienPart : element as any).forgeTime || 300
         } seconds.`,
-        timeLeft: (alienPart as any).forgeTime || 300,
+        timeLeft: (alienPartId ? alienPart : element as any).forgeTime || 300,
       };
     } catch (error) {
       return { success: false, error };
@@ -2428,7 +2511,8 @@ export class ProfileService {
   // This method will be called by the cron job
   public async forgeParts(
     walletAddress: string,
-    alienPartId: number,
+    alienPartId?: number,
+    elementId?: number,
   ): Promise<{
     success: boolean;
     message?: string;
@@ -2445,18 +2529,33 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      const alienPart = await this.prisma.alienPart.findUnique({
-        where: {
-          id: alienPartId,
-        },
-      });
+      var alienPart, element;
+      if (alienPartId) {
+        alienPart = await this.prisma.alienPart.findUnique({
+          where: {
+            id: alienPartId,
+          },
+        });
 
-      if (!alienPart) {
-        throw new BadRequestException('Alien part not found');
+        if (!alienPart) {
+          throw new BadRequestException('Alien part not found');
+        }
+      } else if (elementId) {
+        element = await this.prisma.element.findUnique({
+          where: {
+            id: elementId,
+          },
+        });
+
+        if (!element) {
+          throw new BadRequestException('Element not found');
+        }
+      } else {
+        throw new BadRequestException('Alien part id or element id must not be null');
       }
 
       // Check if there's a completed forge for this user and part
-      const userForgeTime = ((alienPart as any).userForgeTime || []) as {
+      const userForgeTime = ((alienPartId ? alienPart : element as any).userForgeTime || []) as {
         userId: number;
         timer: string;
       }[];
@@ -2482,69 +2581,95 @@ export class ProfileService {
         };
       }
 
-      // Check if the user already has a part group for this type
-      const existingTypeGroup = await this.prisma.alienPartGroup.findFirst({
-        where: {
-          userId: user.id,
-          parts: {
-            none: {
-              id: alienPartId,
-            },
-          },
-        },
-      });
-
-      // Create a new alien part group or update existing one
-      if (existingTypeGroup) {
-        // Update existing group
-        await this.prisma.alienPartGroup.update({
+      if (alienPartId) {
+        // Check if the user already has a part group for this type
+        const existingTypeGroup = await this.prisma.alienPartGroup.findFirst({
           where: {
-            id: existingTypeGroup.id,
-          },
-          data: {
+            userId: user.id,
             parts: {
-              connect: {
+              none: {
                 id: alienPartId,
               },
             },
           },
         });
-      } else {
-        // Create new group
-        await this.prisma.alienPartGroup.create({
+
+        // Create a new alien part group or update existing one
+        if (existingTypeGroup) {
+          // Update existing group
+          await this.prisma.alienPartGroup.update({
+            where: {
+              id: existingTypeGroup.id,
+            },
+            data: {
+              parts: {
+                connect: {
+                  id: alienPartId,
+                },
+              },
+            },
+          });
+        } else {
+          // Create new group
+          await this.prisma.alienPartGroup.create({
+            data: {
+              name: alienPart.name,
+              description: alienPart.description,
+              parts: {
+                connect: {
+                  id: alienPartId,
+                },
+              },
+              user: {
+                connect: {
+                  id: user.id,
+                },
+              },
+            },
+          });
+        }
+
+        // Remove the forge timer for this user
+        await this.prisma.alienPart.update({
+          where: {
+            id: alienPartId,
+          },
           data: {
-            name: alienPart.name,
-            description: alienPart.description,
-            parts: {
-              connect: {
-                id: alienPartId,
-              },
-            },
-            user: {
-              connect: {
-                id: user.id,
-              },
-            },
+            userForgeTime: userForgeTime.filter(
+              (forge) => forge.userId !== user.id,
+            ) as Prisma.JsonArray,
           },
         });
+
+        return {
+          success: true,
+          message: `Successfully forged ${alienPart.name} part.`,
+        };
+      } else if (elementId) {
+        await this.prisma.userElement.create({
+          data: {
+            userId: user.id,
+            elementId: elementId,
+          }
+        });
+
+        // Remove the forge timer for this user
+        await this.prisma.element.update({
+          where: {
+            id: elementId,
+          },
+          data: {
+            userForgeTime: userForgeTime.filter(
+              (forge) => forge.userId !== user.id,
+            ) as Prisma.JsonArray,
+          },
+        });
+
+        return {
+          success: true,
+          message: `Successfully forged ${element.name} element.`,
+        };
       }
-
-      // Remove the forge timer for this user
-      await this.prisma.alienPart.update({
-        where: {
-          id: alienPartId,
-        },
-        data: {
-          userForgeTime: userForgeTime.filter(
-            (forge) => forge.userId !== user.id,
-          ) as Prisma.JsonArray,
-        },
-      });
-
-      return {
-        success: true,
-        message: `Successfully forged ${alienPart.name} part.`,
-      };
     } catch (error) {
       return { success: false, error };
     }

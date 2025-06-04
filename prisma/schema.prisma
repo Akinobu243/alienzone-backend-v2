@@ -210,25 +210,30 @@ model Alien {
 }
 
 model Element {
-  id             Int              @id @default(autoincrement())
-  name           String
-  image          String
-  background     String?
-  aliens         Alien[]
-  weakness       Element?         @relation("Strength", fields: [weaknessId], references: [id])
-  weaknessId     Int?
-  strength       Element?         @relation("Weakness", fields: [strengthId], references: [id])
-  strengthId     Int?
-  isDefault      Boolean          @default(false)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  AlienPartGroup AlienPartGroup[]
-  PackReward     PackReward[]
-  characters     Character[]
-  raids          Raid[]
-  strengths      Element[]        @relation("Strength")
-  weaknessess    Element[]        @relation("Weakness")
-  UserElement    UserElement[]
+  id              Int              @id @default(autoincrement())
+  name            String
+  image           String
+  background      String?
+  aliens          Alien[]
+  weakness        Element?         @relation("Strength", fields: [weaknessId], references: [id])
+  weaknessId      Int?
+  strength        Element?         @relation("Weakness", fields: [strengthId], references: [id])
+  strengthId      Int?
+  isDefault       Boolean          @default(false)
+  isForgeable     Boolean          @default(false)
+  forgeRuneType   RuneType?
+  forgeRuneAmount Int?
+  forgeTime       Int              @default(300) // Default forge time in seconds (5 minutes)
+  userForgeTime   Json?            @default("[]") // Array of {userId: number, timer: DateTime}
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  AlienPartGroup  AlienPartGroup[]
+  PackReward      PackReward[]
+  characters      Character[]
+  raids           Raid[]
+  strengths       Element[]        @relation("Strength")
+  weaknessess     Element[]        @relation("Weakness")
+  UserElement     UserElement[]
 }
 
 enum CharacterRarity {
@@ -566,20 +571,20 @@ model Friendship {
 }
 
 model Wearable {
-  id                 Int        @id @default(autoincrement())
-  subject            String     @unique
-  name               String
-  metadata           String // Link to metadata containing alien part details
-  totalSupplyInWei   String
-  totalSupply        Float
-  availabilityInWei  String?
-  availability       Float?
-  buyPrice           Float?
-  buyPriceInWei      String?
-  sellPrice          Float?
-  sellPriceInWei     String?
-  alienPart          AlienPart? @relation(fields: [alienPartId], references: [id])
-  alienPartId        Int?
+  id                Int        @id @default(autoincrement())
+  subject           String     @unique
+  name              String
+  metadata          String // Link to metadata containing alien part details
+  totalSupplyInWei  String
+  totalSupply       Float
+  availabilityInWei String?
+  availability      Float?
+  buyPrice          Float?
+  buyPriceInWei     String?
+  sellPrice         Float?
+  sellPriceInWei    String?
+  alienPart         AlienPart? @relation(fields: [alienPartId], references: [id])
+  alienPartId       Int?
 
   @@index([alienPartId])
 }

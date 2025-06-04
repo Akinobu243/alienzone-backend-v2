@@ -51,6 +51,7 @@ export class ForgeService {
               await this.profileService.forgeParts(
                 user.walletAddress,
                 alienPart.id,
+                null,
               );
               this.logger.log(
                 `Completed forge for user ${user.walletAddress} and part ${alienPart.id}`,
@@ -59,6 +60,46 @@ export class ForgeService {
           }
         }
       }
+
+      const elements = await this.prisma.element.findMany({
+        where: {
+          isForgeable: true,
+        },
+      });
+
+      for (const element of elements) {
+        const userForgeTime = (element.userForgeTime || []) as {
+          userId: number;
+          timer: string;
+        }[];
+
+        for (const forge of userForgeTime) {
+          const timeLeft = Math.max(
+            0,
+            new Date(forge.timer).getTime() - new Date().getTime(),
+          );
+
+          if (timeLeft <= 0) {
+            // Get user's wallet address
+            const user = await this.prisma.user.findUnique({
+              where: { id: forge.userId },
+            });
+
+            if (user) {
+              // Complete the forge
+              await this.profileService.forgeParts(
+                user.walletAddress,
+                null,
+                element.id,
+              );
+              this.logger.log(
+                `Completed forge for user ${user.walletAddress} and element ${element.id} ${element.name}`,
+              );
+            }
+          }
+        }
+      }
+
     } catch (error) {
       this.logger.error('Error in forge completion handler:', error);
     }
