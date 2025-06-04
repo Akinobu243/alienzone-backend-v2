@@ -328,6 +328,7 @@ export class CharacterService {
       const characters = await this.prisma.character.findMany({
         where: {
           isPortal2: false,
+          tier: 1,
         },
         include: {
           element: true,
