@@ -34,26 +34,9 @@ export class WheelService {
         },
       });
 
-      if (todaySpins >= 3) {
-        throw new BadRequestException(
-          'You have already used all 3 spins for today',
-        );
-      }
-
-      // Check if 5 minutes have passed since last spin
-      const lastSpin = await this.prisma.userSpin.findFirst({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      if (lastSpin) {
-        const lastSpinTime = new Date(lastSpin.createdAt);
-        const fiveMinutesAgo = new Date();
-        fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
-
-        if (lastSpinTime > fiveMinutesAgo) {
-          throw new BadRequestException('Please wait 5 minutes between spins');
-        }
+      const canSpin = await this.canSpin(walletAddress);
+      if (!canSpin.canSpin) {
+        return canSpin;
       }
 
       // Logic for spinning the wheel and determining the result
