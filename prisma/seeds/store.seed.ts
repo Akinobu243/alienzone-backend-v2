@@ -2,15 +2,6 @@ import { PrismaClient } from '@prisma/client';
 import { ethers } from 'ethers';
 import axios from 'axios';
 import wearablesContractABI from '../../src/modules/store/wearablesContractAbi.json';
-import { AlienPartType } from '@prisma/client';
-
-// Fallback metadata for when the API is not available
-const fallbackMetadata = {
-  type: AlienPartType.BODY,
-  image: 'https://placeholder.com/image.png',
-  description: 'Default description',
-  power: 10,
-};
 
 export async function seed(prisma: PrismaClient) {
   const contractAddress = process.env.WEARABLES_CONTRACT_ADDRESS;
@@ -54,10 +45,10 @@ export async function seed(prisma: PrismaClient) {
         });
         metadataData = metadataResponse.data;
       } catch (error) {
-        console.log(
-          `Failed to fetch metadata for ${name}, using fallback data`,
+        console.error(
+          `Failed to fetch metadata for ${name}, skipping this item`,
         );
-        metadataData = fallbackMetadata;
+        continue; // Skip this iteration if metadata fetch fails
       }
 
       const { type, image, description, power } = metadataData;
