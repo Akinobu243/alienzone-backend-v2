@@ -1864,6 +1864,13 @@ export class ProfileService {
           throw new BadRequestException(`Invalid part type: ${type}`);
         }
 
+        // Special case: ID 111111 means remove the part
+        if (id === 111111) {
+          // Set the field to null to remove the part
+          updateData[dbField] = null;
+          continue;
+        }
+
         // Find the part in the database
         const dbPart = await this.prisma.alienPart.findUnique({
           where: { id },
