@@ -1409,7 +1409,7 @@ export class ProfileService {
     }
   }
 
-  public async getTeam(walletAddress: string) {
+  public async getTeam(walletAddress: string, raidId?: number | null) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -1459,6 +1459,15 @@ export class ProfileService {
         },
         include: {
           element: true,
+          hair: true,
+          eyes: true,
+          mouth: true,
+          body: true,
+          clothes: true,
+          head: true,
+          marks: true,
+          powers: true,
+          accessories: true,
         },
       });
 
@@ -1469,6 +1478,15 @@ export class ProfileService {
           },
           include: {
             element: true,
+            hair: true,
+            eyes: true,
+            mouth: true,
+            body: true,
+            clothes: true,
+            head: true,
+            marks: true,
+            powers: true,
+            accessories: true,
           },
         });
         await this.prisma.user.update({
@@ -1526,6 +1544,14 @@ export class ProfileService {
           type: 'character',
         });
       }
+      
+      // Calculate alien part boosts
+      const alienPartTotalBoosts = {
+        starBoost: 0,
+        xpBoost: 0,
+        raidTimeBoost: 0,
+      };
+      
       for (const alien of teamAliens) {
         teamStrengthPoints += alien.strengthPoints;
         synergies[alien.element.name] = synergies[alien.element.name] || 0;
@@ -1539,6 +1565,63 @@ export class ProfileService {
           type: 'alien',
           isSelected: alien.selected,
         });
+
+        // Map from frontend part type to current alien part
+        const currentPartsMap = {
+          hair: alien.hair,
+          eyes: alien.eyes,
+          mouth: alien.mouth,
+          body: alien.body,
+          clothes: alien.clothes,
+          head: alien.head,
+          marks: alien.marks,
+          powers: alien.powers,
+          accessories: alien.accessories,
+        };
+        
+        // Sum up current boosts
+        Object.values(currentPartsMap).forEach((part) => {
+          if (part) {
+            alienPartTotalBoosts.starBoost += part.starBoost || 0;
+            alienPartTotalBoosts.xpBoost += part.xpBoost || 0;
+            alienPartTotalBoosts.raidTimeBoost += part.raidTimeBoost || 0;
+          }
+        });
+        
+      }
+
+      var elementRaidTimeBoost = 0;
+
+      if (raidId) {
+        console.log(`RaidId: ${raidId}`);
+        const raid = await this.prisma.raid.findUnique({
+          where: {
+            id: raidId,
+          },
+          include: {
+            element: true,
+          }
+        });
+
+        if (!raid) {
+          throw new BadRequestException('Invalid raid id');
+        }
+
+        const raidElementId = raid.element.id;
+
+        for (const member of teamResponse) {
+          if (member.element.weaknessId === raidElementId) {
+            elementRaidTimeBoost -= 2;
+          } else if (member.element.strengthId === raidElementId) {
+            elementRaidTimeBoost += 2;
+          }
+        }
+      }
+
+      const totalBoosts = {
+        starBoost: (isStarBoostActive ? user.starsBoost : 0) + alienPartTotalBoosts.starBoost,
+        xpBoost: (isXpBoostActive ? user.xpBoost : 0) + alienPartTotalBoosts.xpBoost,
+        raidTimeBoost: (isRaidBoostActive ? user.raidTimeBoost : 0) + alienPartTotalBoosts.raidTimeBoost + elementRaidTimeBoost,
       }
 
       return {
@@ -1547,9 +1630,9 @@ export class ProfileService {
         team: teamResponse.reverse(),
         synergies: synergies,
         buffs: {
-          starsBoost: isStarBoostActive ? user.starsBoost : 0,
-          xpBoost: isXpBoostActive ? user.xpBoost : 0,
-          raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
+          starsBoost: totalBoosts.starBoost,
+          xpBoost: totalBoosts.xpBoost,
+          raidTimeBoost: totalBoosts.raidTimeBoost,
         },
       };
     } catch (error) {

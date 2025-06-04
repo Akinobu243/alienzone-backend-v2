@@ -204,10 +204,10 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-team')
-  @ApiQuery({ name: 'walletAddress', type: String, required: false })
-  async getTeam(@Request() req) {
+  @ApiQuery({ name: 'raidId', type: Number, required: false })
+  async getTeam(@Request() req, @Query('raidId') raidId?: number | null) {
     const walletAddress = req.query.walletAddress ?? req.walletAddress;
-    return this.profileService.getTeam(walletAddress);
+    return this.profileService.getTeam(walletAddress, Number(raidId));
   }
 
   @UseGuards(AuthGuard)
