@@ -1632,7 +1632,7 @@ export class ProfileService {
         buffs: {
           starsBoost: totalBoosts.starBoost,
           xpBoost: totalBoosts.xpBoost,
-          raidTimeBoost: totalBoosts.raidTimeBoost,
+          raidTimeBoost: -totalBoosts.raidTimeBoost, // Return raid time effect instead of boost
         },
       };
     } catch (error) {
