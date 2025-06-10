@@ -1078,7 +1078,7 @@ export class CharacterService {
         throw new BadRequestException('User does not have this gear');
       }
 
-      const burnAmount = 4;
+      const burnAmount = 3;
 
       if (userGear.quantity < burnAmount) {
         throw new BadRequestException(
@@ -1166,7 +1166,7 @@ export class CharacterService {
         throw new BadRequestException('User does not have this gear');
       }
 
-      const burnAmount = 4;
+      const burnAmount = 3;
 
       if (userGear.quantity < burnAmount) {
         throw new BadRequestException(

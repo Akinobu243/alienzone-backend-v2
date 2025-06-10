@@ -39,7 +39,8 @@ export class CharacterController {
       elementId = parseInt(elementId.toString());
     }
     if (upgradeAmountRequired !== undefined) {
-      upgradeAmountRequired = parseInt(upgradeAmountRequired.toString());
+      // upgradeAmountRequired = parseInt(upgradeAmountRequired.toString());
+      upgradeAmountRequired = 3;
     }
     if (upgradesToId !== undefined) {
       upgradesToId = parseInt(upgradesToId.toString());
