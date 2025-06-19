@@ -8,12 +8,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Element, User } from '@prisma/client';
-import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiQuery, ApiTags, ApiBasicAuth } from '@nestjs/swagger';
 
 import { RaidsService } from './raids.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CreateRaidDTO, EditRaidDTO, LaunchRaidDTO } from './dto/raids.dto';
+import { CreateRaidHuntDto } from './dto/create-raid-hunt.dto';
+import { RaidCreationGuard } from './guards/raid-creation.guard';
 
 @ApiTags('raids')
 @Controller('/raids')
@@ -67,5 +69,13 @@ export class RaidsController {
   @Get('/get-raid-history')
   async getRaidHistory(@Request() req) {
     return this.raidsService.getRaidHistory(req.walletAddress);
+  }
+
+  @UseGuards(RaidCreationGuard)
+  @Post('/create')
+  @ApiBasicAuth()
+  @ApiBody({ type: CreateRaidHuntDto })
+  async createRaidOrHunt(@Body() createRaidHuntDto: CreateRaidHuntDto) {
+    return this.raidsService.createRaidOrHunt(createRaidHuntDto);
   }
 }

@@ -15,6 +15,7 @@ import { levelRequirements } from 'src/configs/global.config';
 import { QuestService } from '../quest/quest.service';
 import { CharacterService } from '../character/character.service';
 import { ProfileService } from '../profile/profile.service';
+import { CreateRaidHuntDto } from './dto/create-raid-hunt.dto';
 
 @Injectable()
 export class RaidsService {
@@ -660,5 +661,63 @@ export class RaidsService {
     const reputationPoints = raidDurationInMinutes * teamStrength;
 
     return reputationPoints;
+  }
+
+  public async createRaidOrHunt(createRaidHuntDto: CreateRaidHuntDto) {
+    try {
+      const {
+        title,
+        description,
+        duration,
+        image,
+        elementId,
+        rewards,
+        isHunt,
+      } = createRaidHuntDto;
+
+      const element = await this.prisma.element.findUnique({
+        where: {
+          id: elementId,
+        },
+      });
+
+      if (!element) {
+        throw new BadRequestException('Element not found');
+      }
+
+      const data: Prisma.RaidCreateInput = {
+        title,
+        description,
+        duration,
+        image,
+        isHunt,
+        element: {
+          connect: {
+            id: elementId,
+          },
+        },
+        rewards: {
+          create: rewards,
+        },
+      };
+
+      const raid = await this.prisma.raid.create({
+        data,
+        include: {
+          rewards: true,
+          element: true,
+        },
+      });
+
+      return {
+        success: true,
+        raid,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
   }
 }
