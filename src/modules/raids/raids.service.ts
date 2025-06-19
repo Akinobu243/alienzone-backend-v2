@@ -648,6 +648,15 @@ export class RaidsService {
       raidAliens.reduce((acc, alien) => acc + alien.strengthPoints, 0) +
       raidCharacters.reduce((acc, character) => acc + character.power, 0);
     const raidDurationInMinutes = Math.max(Math.floor(raidDuration / 60), 1); // Ensure at least 1 minute
+
+    console.log('raidId ===>', {
+      raidId: raidId,
+      duration: raidDuration,
+      raidDurationInMinutes: raidDurationInMinutes,
+      strenght: teamStrength,
+    });
+    // console.log('raidDurationInMinutes ===>', raidDurationInMinutes);
+    // console.log('teamStrength ===>', teamStrength);
     const reputationPoints = raidDurationInMinutes * teamStrength;
 
     return reputationPoints;

@@ -11,9 +11,16 @@ import {
   UseInterceptors,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { ProfileService } from './profile.service';
+import { ReputationService } from './reputation.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAlienDTO } from './dto/profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -24,6 +31,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ProfileController {
   constructor(
     private profileService: ProfileService,
+    private reputationService: ReputationService,
     private prisma: PrismaService,
   ) {}
 
@@ -102,12 +110,24 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-leaderboard')
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'filter', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    type: String,
+    description:
+      'Date in YYYY-MM-DD format to get historical leaderboard data. If not provided, returns current week data.',
+  })
   async getLeaderboard(
     @Query('offset') offset: number,
     @Query('limit') limit: number,
     @Query('filter') filter: string,
     @Query('search') search: string,
     @Request() req,
+    @Query('date') date?: string,
   ) {
     if (offset === undefined) {
       offset = 0;
@@ -123,6 +143,7 @@ export class ProfileController {
       limit,
       filter,
       search,
+      date,
     );
 
     return leaderboardData;
@@ -332,7 +353,7 @@ export class ProfileController {
           type: 'number',
           description: 'ID of the element to forge (optional)',
           nullable: true,
-        }
+        },
       },
     },
   })
@@ -363,6 +384,36 @@ export class ProfileController {
     return this.profileService.enhanceParts(
       req.walletAddress.toLowerCase(),
       alienPartId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/reputation-history')
+  @ApiOperation({ summary: 'Get user reputation history' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved reputation history',
+    schema: {
+      example: {
+        success: true,
+        history: [
+          {
+            id: 1,
+            userId: 1,
+            points: 1000,
+            weekStarting: '2025-01-01T00:00:00.000Z',
+            weekEnding: '2025-01-07T23:59:59.999Z',
+            createdAt: '2025-01-08T00:00:00.000Z',
+          },
+        ],
+      },
+    },
+  })
+  async getReputationHistory(@Request() req, @Query('limit') limit?: number) {
+    return this.reputationService.getReputationHistory(
+      req.walletAddress,
+      limit,
     );
   }
 }

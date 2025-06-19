@@ -133,6 +133,7 @@ model User {
   receivedMessages      Message[]              @relation("ReceivedMessages")
   friendships           Friendship[]           @relation("UserFriendships")
   friendUserFriendships Friendship[]           @relation("FriendUserFriendships")
+  reputationHistory     WeeklyReputationHistory[]
 }
 
 model Raid {
@@ -587,4 +588,17 @@ model Wearable {
   alienPartId       Int?
 
   @@index([alienPartId])
+}
+
+model WeeklyReputationHistory {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  points       Int
+  weekStarting DateTime
+  weekEnding   DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([weekStarting, weekEnding])
 }

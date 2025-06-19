@@ -8,11 +8,12 @@ import { ProfileService } from './profile.service';
 import { CharacterModule } from '../character/character.module';
 import { StoreService } from '../store/store.service';
 import { QuestModule } from '../quest/quest.module';
+import { ReputationService } from './reputation.service';
 
 @Module({
   imports: [PrismaModule, CharacterModule, QuestModule],
   controllers: [ProfileController],
-  providers: [ProfileService, PrismaService, StoreService],
+  providers: [ProfileService, PrismaService, StoreService, ReputationService],
   exports: [ProfileService],
 })
 export class ProfileModule {}

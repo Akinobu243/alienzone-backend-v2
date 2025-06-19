@@ -68,6 +68,7 @@ export class ChatService {
         sender: {
           select: {
             walletAddress: true,
+            country: true,
           },
         },
       },
@@ -83,6 +84,7 @@ export class ChatService {
       timestamp: message.createdAt.getTime(),
       senderId: message.senderId,
       senderWalletAddress: message.sender.walletAddress,
+      country: message.sender.country,
     }));
   }
 
@@ -97,6 +99,7 @@ export class ChatService {
         sender: {
           select: {
             walletAddress: true,
+            country: true,
             name: true,
             aliens: {
               take: 1,
@@ -122,6 +125,7 @@ export class ChatService {
       senderId: m.senderId,
       senderName: m.sender.name,
       senderImage: m.sender.aliens[0]?.image ?? null,
+      senderCountry: m.sender.country,
       elementImage:
         m.sender.aliens.length > 0 ? m.sender.aliens[0].element.image : null,
     }));

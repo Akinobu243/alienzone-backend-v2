@@ -356,113 +356,124 @@ export class ProfileService {
     return items;
   }
 
+  private getWeekDates(date: Date) {
+    const targetDate = new Date(date);
+
+    // Calculate Friday (start of the week)
+    const weekStarting = new Date(targetDate);
+    const daysToFriday = (targetDate.getDay() + 2) % 7;
+    weekStarting.setDate(targetDate.getDate() - daysToFriday);
+    weekStarting.setHours(0, 0, 0, 0);
+
+    // Calculate Thursday (end of the week)
+    const weekEnding = new Date(weekStarting);
+    weekEnding.setDate(weekStarting.getDate() + 6); // Add 6 days to get to Thursday
+    weekEnding.setHours(23, 59, 59, 999);
+
+    return { weekStarting, weekEnding };
+  }
+
   public async getLeaderboard(
     walletAddress: string,
     offset: number,
     limit: number,
     filter: string,
     search: string,
+    date?: string,
   ) {
-    let users;
+    let users = [];
+    let historicalReputations = null;
 
-    if (filter === 'enterprises') {
-      users = await this.prisma.user.findMany({
-        where: {
-          enterprise: {
-            contains: search,
-            mode: 'insensitive',
+    // If date is provided, get historical data
+    if (date) {
+      const targetDate = new Date(date);
+      if (isNaN(targetDate.getTime())) {
+        throw new BadRequestException(
+          'Invalid date format. Please use YYYY-MM-DD',
+        );
+      }
+
+      const { weekStarting, weekEnding } = this.getWeekDates(targetDate);
+
+      console.log('==== weekStarting, weekEnding ====');
+      console.log(weekStarting, weekEnding);
+      console.log('==== weekStarting, weekEnding ====');
+
+      // Get historical reputation data for the week
+      historicalReputations =
+        await this.prisma.weeklyReputationHistory.findMany({
+          where: {
+            weekStarting,
+            weekEnding,
           },
-        },
-        orderBy: {
-          reputation: 'desc',
-        },
-        skip: offset,
-        take: limit,
-        include: {
-          aliens: {
-            include: {
-              element: true,
-              eyes: true,
-              hair: true,
-              mouth: true,
-            },
-          },
-          UserElement: {
-            include: {
-              element: true,
-            },
-          },
-        },
-      });
-    } else if (filter === 'likes') {
-      const likedUserIds = (
-        await this.prisma.user.findUnique({
-          where: { walletAddress },
           select: {
-            likedUserIds: true,
+            userId: true,
+            points: true,
           },
-        })
-      ).likedUserIds;
+        });
 
-      users = await this.prisma.user.findMany({
-        where: {
-          id: { in: likedUserIds },
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        orderBy: {
-          reputation: 'desc',
-        },
-        skip: offset,
-        take: limit,
-        include: {
-          aliens: {
-            include: {
-              element: true,
-              eyes: true,
-              hair: true,
-              mouth: true,
-            },
-          },
-          UserElement: {
-            include: {
-              element: true,
-            },
-          },
-        },
-      });
-    } else {
-      users = await this.prisma.user.findMany({
-        where: {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        orderBy: {
-          reputation: 'desc',
-        },
-        skip: offset,
-        take: limit,
-        include: {
-          aliens: {
-            include: {
-              element: true,
-              eyes: true,
-              hair: true,
-              mouth: true,
-            },
-          },
-          UserElement: {
-            include: {
-              element: true,
-            },
-          },
-        },
-      });
+      // No need to throw error if no historical data, just return empty results
+      if (historicalReputations.length === 0) {
+        return {
+          users: [],
+          thisUser: null,
+        };
+      }
     }
+
+    // Base query conditions
+    const baseWhere: any = {};
+    if (search) {
+      if (filter === 'enterprises') {
+        baseWhere.enterprise = {
+          contains: search,
+          mode: 'insensitive',
+        };
+      } else {
+        baseWhere.name = {
+          contains: search,
+          mode: 'insensitive',
+        };
+      }
+    }
+
+    if (filter === 'likes') {
+      const likedUserIds =
+        (
+          await this.prisma.user.findUnique({
+            where: { walletAddress },
+            select: {
+              likedUserIds: true,
+            },
+          })
+        )?.likedUserIds || [];
+
+      baseWhere.id = { in: likedUserIds };
+    }
+
+    // Get users based on filter
+    users =
+      (await this.prisma.user.findMany({
+        where: baseWhere,
+        orderBy: { reputation: 'desc' },
+        skip: offset,
+        take: limit,
+        include: {
+          aliens: {
+            include: {
+              element: true,
+              eyes: true,
+              hair: true,
+              mouth: true,
+            },
+          },
+          UserElement: {
+            include: {
+              element: true,
+            },
+          },
+        },
+      })) || [];
 
     const currentUser = await this.prisma.user.findUnique({
       where: { walletAddress },
@@ -483,88 +494,72 @@ export class ProfileService {
       },
     });
 
-    let currentUserRank = null;
+    if (!currentUser) {
+      return {
+        users: [],
+        thisUser: null,
+      };
+    }
 
-    if (filter === 'enterprises') {
-      currentUserRank = await this.prisma.user.count({
-        where: {
-          enterprise: {
-            contains: search,
-            mode: 'insensitive',
-          },
-          reputation: {
-            gt: currentUser.reputation,
-          },
-        },
-      });
-    } else if (filter === 'likes') {
-      const likedUserIds = (
+    let currentUserRank = null;
+    const currentUserHistoricalRep =
+      historicalReputations?.find((r) => r.userId === currentUser.id)?.points ??
+      0;
+
+    // Calculate rank based on historical or current data
+    if (historicalReputations) {
+      currentUserRank =
+        historicalReputations
+          .sort((a, b) => b.points - a.points)
+          .findIndex((r) => r.userId === currentUser.id) + 1;
+    } else {
+      const whereRank = { ...baseWhere };
+      whereRank.reputation = { gt: currentUser.reputation };
+      currentUserRank =
+        (await this.prisma.user.count({ where: whereRank })) + 1;
+    }
+
+    const likedUserIds =
+      (
         await this.prisma.user.findUnique({
-          where: { walletAddress },
+          where: { walletAddress: currentUser.walletAddress },
           select: {
             likedUserIds: true,
           },
         })
-      ).likedUserIds;
+      )?.likedUserIds || [];
 
-      currentUserRank = await this.prisma.user.count({
-        where: {
-          id: { in: likedUserIds },
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-          reputation: {
-            gt: currentUser.reputation,
-          },
-        },
-      });
-    } else {
-      currentUserRank = await this.prisma.user.count({
-        where: {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          },
-          reputation: {
-            gt: currentUser.reputation,
-          },
-        },
-      });
+    // If using historical data, sort users by their historical reputation
+    if (historicalReputations && users.length > 0) {
+      users = users
+        .map((user) => ({
+          ...user,
+          reputation:
+            historicalReputations.find((r) => r.userId === user.id)?.points ??
+            0,
+        }))
+        .sort((a, b) => b.reputation - a.reputation);
     }
 
-    const likedUserIds = (
-      await this.prisma.user.findUnique({
-        where: { walletAddress: currentUser.walletAddress },
-        select: {
-          likedUserIds: true,
-        },
-      })
-    ).likedUserIds;
-
-    currentUserRank += 1;
     return {
-      users: users.map((user, index) => {
-        return {
-          id: user.id,
-          name: user.name,
-          country: user.country,
-          enterprise: user.enterprise,
-          image: user.image,
-          level: user.level,
-          experience: user.experience,
-          reputation: user.reputation,
-          walletAddress: user.walletAddress,
-          rank: index + 1,
-          stars: user.stars,
-          createdAt: user.createdAt,
-          twitterId: user.twitterId,
-          isLiked: likedUserIds.includes(user.id),
-          aliens: user.aliens,
-          elements: user.UserElement.map((ue) => ue.element),
-        };
-      }),
-      // only return if user is not in users array
+      users: users.map((user, index) => ({
+        id: user.id,
+        name: user.name,
+        country: user.country,
+        enterprise: user.enterprise,
+        image: user.image,
+        level: user.level,
+        experience: user.experience,
+        reputation: user.reputation,
+        walletAddress: user.walletAddress,
+        rank: index + 1,
+        stars: user.stars,
+        createdAt: user.createdAt,
+        twitterId: user.twitterId,
+        isLiked: likedUserIds.includes(user.id),
+        aliens: user.aliens,
+        elements: user.UserElement.map((ue) => ue.element),
+      })),
       thisUser: users.some(
         (user) => user.walletAddress === currentUser.walletAddress,
       )
@@ -577,7 +572,9 @@ export class ProfileService {
             image: currentUser.image,
             level: currentUser.level,
             experience: currentUser.experience,
-            reputation: currentUser.reputation,
+            reputation: historicalReputations
+              ? currentUserHistoricalRep
+              : currentUser.reputation,
             rank: currentUserRank,
             stars: currentUser.stars,
             createdAt: currentUser.createdAt,
@@ -912,6 +909,7 @@ export class ProfileService {
       let updatedStreak = 1;
       let streakBroken = false;
       let weeklyResetRequired = false;
+      const streakLimit = 28;
 
       if (user.lastDailyClaimed) {
         const lastClaimed = new Date(user.lastDailyClaimed);
@@ -931,7 +929,7 @@ export class ProfileService {
           updatedStreak = user.dailyStreak + 1;
 
           // Check if we've completed a 6-day streak (this would be day 7)
-          if (updatedStreak > 6) {
+          if (updatedStreak > streakLimit) {
             // Reset streak after completing a full week
             updatedStreak = 1;
             weeklyResetRequired = true;
@@ -1544,14 +1542,14 @@ export class ProfileService {
           type: 'character',
         });
       }
-      
+
       // Calculate alien part boosts
       const alienPartTotalBoosts = {
         starBoost: 0,
         xpBoost: 0,
         raidTimeBoost: 0,
       };
-      
+
       for (const alien of teamAliens) {
         teamStrengthPoints += alien.strengthPoints;
         synergies[alien.element.name] = synergies[alien.element.name] || 0;
@@ -1578,7 +1576,7 @@ export class ProfileService {
           powers: alien.powers,
           accessories: alien.accessories,
         };
-        
+
         // Sum up current boosts
         Object.values(currentPartsMap).forEach((part) => {
           if (part) {
@@ -1587,7 +1585,6 @@ export class ProfileService {
             alienPartTotalBoosts.raidTimeBoost += part.raidTimeBoost || 0;
           }
         });
-        
       }
 
       var elementRaidTimeBoost = 0;
@@ -1600,7 +1597,7 @@ export class ProfileService {
           },
           include: {
             element: true,
-          }
+          },
         });
 
         if (!raid) {
@@ -1619,10 +1616,16 @@ export class ProfileService {
       }
 
       const totalBoosts = {
-        starBoost: (isStarBoostActive ? user.starsBoost : 0) + alienPartTotalBoosts.starBoost,
-        xpBoost: (isXpBoostActive ? user.xpBoost : 0) + alienPartTotalBoosts.xpBoost,
-        raidTimeBoost: (isRaidBoostActive ? user.raidTimeBoost : 0) + alienPartTotalBoosts.raidTimeBoost + elementRaidTimeBoost,
-      }
+        starBoost:
+          (isStarBoostActive ? user.starsBoost : 0) +
+          alienPartTotalBoosts.starBoost,
+        xpBoost:
+          (isXpBoostActive ? user.xpBoost : 0) + alienPartTotalBoosts.xpBoost,
+        raidTimeBoost:
+          (isRaidBoostActive ? user.raidTimeBoost : 0) +
+          alienPartTotalBoosts.raidTimeBoost +
+          elementRaidTimeBoost,
+      };
 
       return {
         success: true,
@@ -2353,7 +2356,7 @@ export class ProfileService {
       const elements = await this.prisma.element.findMany({
         where: {
           isForgeable: true,
-        }
+        },
       });
 
       const userRuneData = {
@@ -2407,20 +2410,20 @@ export class ProfileService {
         if (!alienPart) {
           throw new BadRequestException('Alien part not found');
         }
-      }
-      else if (elementId) {
+      } else if (elementId) {
         element = await this.prisma.element.findUnique({
           where: {
-            id: elementId
-          }
+            id: elementId,
+          },
         });
-        
+
         if (!element) {
           throw new BadRequestException('Element not found');
         }
-      }
-      else {
-        throw new BadRequestException('Alien part id or Element id must not be empty.')
+      } else {
+        throw new BadRequestException(
+          'Alien part id or Element id must not be empty.',
+        );
       }
 
       if (alienPartId) {
@@ -2442,20 +2445,19 @@ export class ProfileService {
             message: `You already own the ${alienPart.name}`,
           };
         }
-      }
-      else if (elementId) {
+      } else if (elementId) {
         const existingElement = await this.prisma.userElement.findFirst({
           where: {
             userId: user.id,
             elementId: elementId,
-          }
-        })
+          },
+        });
 
         if (existingElement) {
           return {
             success: false,
             message: `You already own ${element.name}`,
-          }
+          };
         }
       }
 
@@ -2463,8 +2465,7 @@ export class ProfileService {
       if (alienPartId) {
         runeType = alienPart.forgeRuneType;
         runeAmount = alienPart.forgeRuneAmount;
-      }
-      else if (elementId) {
+      } else if (elementId) {
         runeType = element.forgeRuneType;
         runeAmount = element.forgeRuneAmount;
       }
@@ -2488,12 +2489,11 @@ export class ProfileService {
           userId: number;
           timer: string;
         }[];
-      }
-      else if (elementId) {
+      } else if (elementId) {
         userForgeTime = ((element as any).userForgeTime || []) as {
           userId: number;
           timer: string;
-        }
+        };
       }
 
       const existingForge = userForgeTime.find(
@@ -2536,8 +2536,7 @@ export class ProfileService {
         forgeEndTime = new Date(
           new Date().getTime() + ((alienPart as any).forgeTime || 300) * 1000,
         );
-      }
-      else if (elementId) {
+      } else if (elementId) {
         forgeEndTime = new Date(
           new Date().getTime() + ((element as any).forgeTime || 300) * 1000,
         );
@@ -2553,45 +2552,49 @@ export class ProfileService {
             runes: newRunes,
           },
         }),
-        alienPartId ? 
-          this.prisma.alienPart.update({
-            where: {
-              id: alienPartId,
-            },
-            data: {
-              userForgeTime: [
-                ...(userForgeTime.filter((forge) => forge.userId !== user.id) ||
-                  []),
-                {
-                  userId: user.id,
-                  timer: forgeEndTime.toISOString(),
-                },
-              ] as Prisma.JsonArray,
-            },
-          }) :
-          this.prisma.element.update({
-            where: {
-              id: elementId,
-            },
-            data: {
-             userForgeTime: [
-                ...(userForgeTime.filter((forge) => forge.userId !== user.id) ||
-                  []),
-                {
-                  userId: user.id,
-                  timer: forgeEndTime.toISOString(),
-                },
-              ] as Prisma.JsonArray,
-            },
-          }),
+        alienPartId
+          ? this.prisma.alienPart.update({
+              where: {
+                id: alienPartId,
+              },
+              data: {
+                userForgeTime: [
+                  ...(userForgeTime.filter(
+                    (forge) => forge.userId !== user.id,
+                  ) || []),
+                  {
+                    userId: user.id,
+                    timer: forgeEndTime.toISOString(),
+                  },
+                ] as Prisma.JsonArray,
+              },
+            })
+          : this.prisma.element.update({
+              where: {
+                id: elementId,
+              },
+              data: {
+                userForgeTime: [
+                  ...(userForgeTime.filter(
+                    (forge) => forge.userId !== user.id,
+                  ) || []),
+                  {
+                    userId: user.id,
+                    timer: forgeEndTime.toISOString(),
+                  },
+                ] as Prisma.JsonArray,
+              },
+            }),
       ]);
 
       return {
         success: true,
-        message: `Started forging ${alienPartId ? alienPart.name : element.name}. Will be ready in ${
-          (alienPartId ? alienPart : element as any).forgeTime || 300
+        message: `Started forging ${
+          alienPartId ? alienPart.name : element.name
+        }. Will be ready in ${
+          (alienPartId ? alienPart : (element as any)).forgeTime || 300
         } seconds.`,
-        timeLeft: (alienPartId ? alienPart : element as any).forgeTime || 300,
+        timeLeft: (alienPartId ? alienPart : (element as any)).forgeTime || 300,
       };
     } catch (error) {
       return { success: false, error };
@@ -2641,11 +2644,14 @@ export class ProfileService {
           throw new BadRequestException('Element not found');
         }
       } else {
-        throw new BadRequestException('Alien part id or element id must not be null');
+        throw new BadRequestException(
+          'Alien part id or element id must not be null',
+        );
       }
 
       // Check if there's a completed forge for this user and part
-      const userForgeTime = ((alienPartId ? alienPart : element as any).userForgeTime || []) as {
+      const userForgeTime = ((alienPartId ? alienPart : (element as any))
+        .userForgeTime || []) as {
         userId: number;
         timer: string;
       }[];
@@ -2740,7 +2746,7 @@ export class ProfileService {
           data: {
             userId: user.id,
             elementId: elementId,
-          }
+          },
         });
 
         // Remove the forge timer for this user
