@@ -461,6 +461,12 @@ model Pack {
   updatedAt    DateTime      @updatedAt
   transactions Transaction[]
   users        User[]        @relation("PurchasedPacks")
+  type         PackType      @default(SPECIAL)
+}
+
+enum PackType {
+  SPECIAL
+  STARS
 }
 
 model PackReward {

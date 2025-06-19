@@ -1,4 +1,4 @@
-import { PrismaClient, PackRewardType } from '@prisma/client';
+import { PrismaClient, PackRewardType, PackType } from '@prisma/client';
 
 export async function seed(prisma: PrismaClient) {
   // Get references to existing data
@@ -14,13 +14,14 @@ export async function seed(prisma: PrismaClient) {
   await prisma.pack.deleteMany();
 
   // Create packs
-  const packs = [
+  const specialPacks = [
     {
       name: 'Starter Pack',
       description: 'Perfect for beginners, contains basic items and resources',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack1.png',
       price: 4.99,
       isActive: true,
+      type: PackType.SPECIAL,
       rewards: {
         create: [
           {
@@ -46,6 +47,7 @@ export async function seed(prisma: PrismaClient) {
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack2.png',
       price: 9.99,
       isActive: true,
+      type: PackType.SPECIAL,
       rewards: {
         create: [
           {
@@ -67,6 +69,7 @@ export async function seed(prisma: PrismaClient) {
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack3.png',
       price: 14.99,
       isActive: true,
+      type: PackType.SPECIAL,
       rewards: {
         create:
           characters.length > 0
@@ -96,7 +99,58 @@ export async function seed(prisma: PrismaClient) {
     },
   ];
 
-  for (const pack of packs) {
+  const starsPacks = [
+    {
+      name: 'Pile of Stars',
+      description: 'Perfect for beginners, contains basic items and resources',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack1.png',
+      price: 3.99,
+      isActive: true,
+      type: PackType.STARS,
+      rewards: {
+        create: [
+          {
+            type: PackRewardType.STARS,
+            amount: 500,
+          },
+        ],
+      },
+    },
+    {
+      name: 'Bag of Stars',
+      description: 'Unlock new elements for your aliens',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack2.png',
+      price: 8.99,
+      isActive: true,
+      type: PackType.STARS,
+      rewards: {
+        create: [
+          {
+            type: PackRewardType.STARS,
+            amount: 2500,
+          },
+        ],
+      },
+    },
+    {
+      name: 'Three bag of stars',
+      description: 'Unlock powerful new characters',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack3.png',
+      price: 10.99,
+      isActive: true,
+      type: PackType.STARS,
+      rewards: {
+        create: [
+          {
+            type: PackRewardType.STARS,
+            amount: 5000,
+          },
+        ],
+      },
+    },
+  ];
+
+  for (const pack of [...specialPacks, ...starsPacks]) {
     await prisma.pack.create({
       data: pack,
     });
