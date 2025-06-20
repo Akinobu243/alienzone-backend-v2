@@ -1,5 +1,5 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { InventoryService } from './inventory.service';
 import { InventoryResponseDto } from './dto/inventory.dto';
@@ -30,6 +30,7 @@ export class InventoryController {
 
   @UseGuards(AuthGuard)
   @Get('/get-store-inventory')
+  @ApiQuery({ name: 'walletAddress', required: false, type: String })
   @ApiOperation({
     summary: 'Get all inventory items for the authenticated user',
   })
@@ -41,9 +42,14 @@ export class InventoryController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getStoreInventory(@Request() req) {
-    return this.inventoryService.getStoreInventory(
-      req.walletAddress.toLowerCase(),
-    );
+  async getStoreInventory(
+    @Request() req,
+    @Query('walletAddress') queryWalletAddress?: string,
+  ) {
+    const walletAddress = (
+      queryWalletAddress || req.walletAddress
+    ).toLowerCase();
+
+    return this.inventoryService.getStoreInventory(walletAddress);
   }
 }
