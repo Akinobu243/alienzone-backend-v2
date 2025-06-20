@@ -4,41 +4,41 @@ export async function seed(prisma: PrismaClient) {
   try {
     console.log('Seeding daily rewards...');
     // Clear existing data first
-    // await prisma.dailyReward.deleteMany({});
+    await prisma.dailyReward.deleteMany({});
 
     // Create daily rewards for a week (plus a few extras)
     const dailyRewards = [
       // Days 1-6: Initial progression
-      // {
-      //   type: DailyRewardType.STARS,
-      //   amount: 2,
-      //   rewardDate: new Date(Date.now() + 86400000 * 0), // Today
-      // },
-      // {
-      //   type: DailyRewardType.STARS,
-      //   amount: 4,
-      //   rewardDate: new Date(Date.now() + 86400000 * 1),
-      // },
-      // {
-      //   type: DailyRewardType.STARS,
-      //   amount: 6,
-      //   rewardDate: new Date(Date.now() + 86400000 * 2),
-      // },
-      // {
-      //   type: DailyRewardType.STARS,
-      //   amount: 8,
-      //   rewardDate: new Date(Date.now() + 86400000 * 3),
-      // },
-      // {
-      //   type: DailyRewardType.STARS,
-      //   amount: 10,
-      //   rewardDate: new Date(Date.now() + 86400000 * 4),
-      // },
-      // {
-      //   type: DailyRewardType.STARS,
-      //   amount: 20,
-      //   rewardDate: new Date(Date.now() + 86400000 * 5),
-      // },
+      {
+        type: DailyRewardType.STARS,
+        amount: 2,
+        rewardDate: new Date(Date.now() + 86400000 * 0), // Today
+      },
+      {
+        type: DailyRewardType.STARS,
+        amount: 4,
+        rewardDate: new Date(Date.now() + 86400000 * 1),
+      },
+      {
+        type: DailyRewardType.STARS,
+        amount: 6,
+        rewardDate: new Date(Date.now() + 86400000 * 2),
+      },
+      {
+        type: DailyRewardType.STARS,
+        amount: 8,
+        rewardDate: new Date(Date.now() + 86400000 * 3),
+      },
+      {
+        type: DailyRewardType.STARS,
+        amount: 10,
+        rewardDate: new Date(Date.now() + 86400000 * 4),
+      },
+      {
+        type: DailyRewardType.STARS,
+        amount: 20,
+        rewardDate: new Date(Date.now() + 86400000 * 5),
+      },
       // Days 6-12: Increase by 4 each day
       {
         type: DailyRewardType.STARS,
