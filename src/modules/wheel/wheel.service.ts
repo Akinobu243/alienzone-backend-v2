@@ -300,17 +300,17 @@ export class WheelService {
         itemType: RuneType.RARE,
         message: 'You won a rare rune!',
       };
-    if (random < 99)
-      return {
-        type: 'rune',
-        itemType: RuneType.EPIC,
-        message: 'You won an epic rune!',
-      };
+    // if (random < 99)
     return {
       type: 'rune',
-      itemType: RuneType.LEGENDARY,
-      message: 'You won a legendary rune!',
+      itemType: RuneType.EPIC,
+      message: 'You won an epic rune!',
     };
+    // return {
+    //   type: 'rune',
+    //   itemType: RuneType.LEGENDARY,
+    //   message: 'You won a legendary rune!',
+    // };
   }
 
   private async updateUserRewards(userId: number, result: any) {
@@ -376,7 +376,7 @@ export class WheelService {
       { name: 'Common Rune', amount: 1 },
       { name: 'Rare Rune', amount: 1 },
       { name: 'Epic Rune', amount: 1 },
-      { name: 'Legendary Rune', amount: 1 },
+      // { name: 'Legendary Rune', amount: 1 },
     ];
   }
 }
