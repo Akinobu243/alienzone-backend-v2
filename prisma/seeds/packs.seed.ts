@@ -101,9 +101,9 @@ export async function seed(prisma: PrismaClient) {
 
   const starsPacks = [
     {
-      name: 'Pile of Stars',
-      description: 'Perfect for beginners, contains basic items and resources',
-      image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack1.png',
+      name: 'Pile of STARS',
+      description: '500 STARS',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack1.png',
       price: 3.99,
       isActive: true,
       type: PackType.STARS,
@@ -117,9 +117,9 @@ export async function seed(prisma: PrismaClient) {
       },
     },
     {
-      name: 'Bag of Stars',
-      description: 'Unlock new elements for your aliens',
-      image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack2.png',
+      name: 'Bag of STARS',
+      description: '2500 STARS',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack2.png',
       price: 8.99,
       isActive: true,
       type: PackType.STARS,
@@ -133,9 +133,9 @@ export async function seed(prisma: PrismaClient) {
       },
     },
     {
-      name: 'Three bag of stars',
-      description: 'Unlock powerful new characters',
-      image: 'https://alienzone-v2.s3.amazonaws.com/packs/pack3.png',
+      name: 'Three bag of STARS',
+      description: '5000 STARS',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack3.png',
       price: 10.99,
       isActive: true,
       type: PackType.STARS,
@@ -144,6 +144,38 @@ export async function seed(prisma: PrismaClient) {
           {
             type: PackRewardType.STARS,
             amount: 5000,
+          },
+        ],
+      },
+    },
+    {
+      name: 'Case of STARS',
+      description: '1000 STARS',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack4.png',
+      price: 15.99,
+      isActive: true,
+      type: PackType.STARS,
+      rewards: {
+        create: [
+          {
+            type: PackRewardType.STARS,
+            amount: 10000,
+          },
+        ],
+      },
+    },
+    {
+      name: 'Box of STARS',
+      description: '15000 STARS',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack5.png',
+      price: 20.99,
+      isActive: true,
+      type: PackType.STARS,
+      rewards: {
+        create: [
+          {
+            type: PackRewardType.STARS,
+            amount: 15000,
           },
         ],
       },
