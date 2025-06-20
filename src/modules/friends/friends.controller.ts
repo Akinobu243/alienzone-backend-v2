@@ -7,6 +7,7 @@ import {
   UseGuards,
   Query,
   BadRequestException,
+  Param,
 } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -35,6 +36,17 @@ export class FriendsController {
     @Body('friendWallet') friendWallet: string,
   ) {
     return this.friendsService.removeFriend(req.walletAddress, friendWallet);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/toggle-pin/:friendId')
+  async toggleFriendPin(@Request() req, @Param('friendId') friendId: string) {
+    console.log('toggleFriendPin', req.walletAddress, friendId);
+
+    return this.friendsService.toggleFriendPin(
+      req.walletAddress,
+      parseInt(friendId),
+    );
   }
 
   @UseGuards(AuthGuard)

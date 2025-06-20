@@ -205,6 +205,41 @@ export class FriendsService {
     }));
   }
 
+  async toggleFriendPin(userWallet: string, friendId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress: userWallet },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Find the friendship
+    const friendship = await this.prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { userId: user.id, friendId: friendId },
+          { userId: friendId, friendId: user.id },
+        ],
+      },
+    });
+
+    console.log('friendship ====>', friendship);
+
+    if (!friendship) {
+      throw new BadRequestException('Friendship not found');
+    }
+
+    // Toggle the isPinned status
+    await this.prisma.friendship.update({
+      where: { id: friendship.id },
+      data: { isPinned: !friendship.isPinned },
+    });
+
+    // Return updated friends list
+    return this.getFriends(userWallet);
+  }
+
   async getFriends(walletAddress: string) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress },
@@ -222,6 +257,9 @@ export class FriendsService {
       include: {
         user: true,
         friend: true,
+      },
+      orderBy: {
+        isPinned: 'desc', // Sort pinned friends first
       },
     });
 
@@ -282,6 +320,14 @@ export class FriendsService {
       lastMessages.map((item) => [item.friendId, item.message]),
     );
 
+    // Create a map of friendId to isPinned status
+    const pinnedMap = new Map(
+      friendships.map((f) => [
+        f.userId === userId ? f.friendId : f.userId,
+        f.isPinned,
+      ]),
+    );
+
     // Map to the required format
     return friends.map((friend) => ({
       id: friend.id,
@@ -290,6 +336,7 @@ export class FriendsService {
       image: friend.aliens.length > 0 ? friend.aliens[0].image : null,
       element: friend.aliens.length > 0 ? friend.aliens[0].element.image : null,
       message: messageMap.get(friend.id) || { content: '', timestamp: '' },
+      isPinned: pinnedMap.get(friend.id) || false,
     }));
   }
 

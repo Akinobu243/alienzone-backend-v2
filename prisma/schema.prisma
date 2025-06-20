@@ -572,6 +572,7 @@ model Friendship {
   id       Int @id @default(autoincrement())
   userId   Int
   friendId Int
+  isPinned Boolean @default(false)
 
   user   User @relation("UserFriendships", fields: [userId], references: [id])
   friend User @relation("FriendUserFriendships", fields: [friendId], references: [id])
