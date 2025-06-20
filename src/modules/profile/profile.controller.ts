@@ -37,8 +37,15 @@ export class ProfileController {
 
   @UseGuards(AuthGuard)
   @Get('/get-profile')
-  async getProfile(@Request() req) {
-    return this.profileService.getProfile(req.walletAddress.toLowerCase());
+  @ApiQuery({ name: 'walletAddress', required: false, type: String })
+  async getProfile(
+    @Request() req,
+    @Query('walletAddress') queryWalletAddress?: string,
+  ) {
+    const walletAddress = (
+      queryWalletAddress || req.walletAddress
+    ).toLowerCase();
+    return this.profileService.getProfile(walletAddress);
   }
 
   @UseGuards(AuthGuard)

@@ -38,71 +38,80 @@ export class ProfileService {
   });
 
   public async getProfile(walletAddress: string) {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          walletAddress: walletAddress.toLowerCase(),
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress: walletAddress.toLowerCase() },
+      include: {
+        aliens: {
+          include: {
+            element: true,
+            eyes: true,
+            hair: true,
+            mouth: true,
+          },
         },
-        include: {
-          claimedDailyRewards: true,
+        UserElement: {
+          include: {
+            element: true,
+          },
         },
-      });
+      },
+    });
 
-      if (!user) {
-        throw new BadRequestException('User not found');
-      }
-
-      // get total referrals
-      const totalReferrals = await this.prisma.user.count({
-        where: {
-          referrerId: user.id,
-        },
-      });
-
-      let isStarBoostActive = false;
-      let isXpBoostActive = false;
-      let isRaidBoostActive = false;
-      if (user.starsBoost > 0) {
-        isStarBoostActive =
-          new Date().getTime() - user.lastStarBoost.getTime() <
-          24 * 60 * 60 * 1000;
-      }
-      if (user.xpBoost > 0) {
-        isXpBoostActive =
-          new Date().getTime() - user.lastXpBoost.getTime() <
-          24 * 60 * 60 * 1000;
-      }
-      if (user.raidTimeBoost > 0) {
-        isRaidBoostActive =
-          new Date().getTime() - user.lastRaidBoost.getTime() <
-          24 * 60 * 60 * 1000;
-      }
-
-      return {
-        success: true,
-        walletAddress: user.walletAddress,
-        name: user.name,
-        country: user.country,
-        twitterId: user.twitterId,
-        image: user.image,
-        level: user.level,
-        experience: user.experience,
-        reputation: user.reputation,
-        stars: user.stars,
-        refferalCode: user.referralCode,
-        email: user.email,
-        totalReferrals,
-        starsBoost: isStarBoostActive ? user.starsBoost : 0,
-        xpBoost: isXpBoostActive ? user.xpBoost : 0,
-        raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
-        claimedDailyRewards: user.claimedDailyRewards,
-      };
-    } catch (error) {
+    if (!user) {
       return {
         success: false,
-        error,
+        error: 'User not found',
       };
     }
+
+    let isStarBoostActive = false;
+    let isXpBoostActive = false;
+    let isRaidBoostActive = false;
+    if (user.starsBoost > 0) {
+      isStarBoostActive =
+        new Date().getTime() - user.lastStarBoost.getTime() <
+        24 * 60 * 60 * 1000;
+    }
+    if (user.xpBoost > 0) {
+      isXpBoostActive =
+        new Date().getTime() - user.lastXpBoost.getTime() < 24 * 60 * 60 * 1000;
+    }
+    if (user.raidTimeBoost > 0) {
+      isRaidBoostActive =
+        new Date().getTime() - user.lastRaidBoost.getTime() <
+        24 * 60 * 60 * 1000;
+    }
+
+    const totalReferrals = await this.prisma.user.count({
+      where: {
+        referrerId: user.id,
+      },
+    });
+
+    return {
+      success: true,
+      id: user.id,
+      walletAddress: user.walletAddress,
+      name: user.name,
+      country: user.country,
+      twitterId: user.twitterId,
+      image: user.image,
+      level: user.level,
+      experience: user.experience,
+      reputation: user.reputation,
+      stars: user.stars,
+      refferalCode: user.referralCode,
+      email: user.email,
+      totalReferrals,
+      likedUserIds: user.likedUserIds,
+      createdAt: user.createdAt,
+      starsBoost: isStarBoostActive ? user.starsBoost : 0,
+      xpBoost: isXpBoostActive ? user.xpBoost : 0,
+      raidTimeBoost: isRaidBoostActive ? user.raidTimeBoost : 0,
+      claimedDailyRewardIds: user.claimedDailyRewardIds,
+      aliens: user.aliens,
+      elements: user.UserElement.map((ue) => ue.element),
+    };
   }
 
   public async createAlien(
@@ -607,6 +616,8 @@ export class ProfileService {
       }
 
       const alreadyLiked = user.likedUserIds.includes(userId);
+
+      console.log('alreadyLiked ====>', alreadyLiked);
 
       if (alreadyLiked) {
         await this.prisma.user.update({

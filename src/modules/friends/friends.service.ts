@@ -332,6 +332,7 @@ export class FriendsService {
     return friends.map((friend) => ({
       id: friend.id,
       name: friend.name,
+      walletAddress: friend.walletAddress,
       level: friend.level,
       image: friend.aliens.length > 0 ? friend.aliens[0].image : null,
       element: friend.aliens.length > 0 ? friend.aliens[0].element.image : null,

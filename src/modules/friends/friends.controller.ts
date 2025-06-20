@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('friends')
 @Controller('/friends')
@@ -51,8 +51,15 @@ export class FriendsController {
 
   @UseGuards(AuthGuard)
   @Get('/list')
-  async getFriends(@Request() req) {
-    return this.friendsService.getFriends(req.walletAddress);
+  @ApiQuery({ name: 'walletAddress', required: false, type: String })
+  async getFriends(
+    @Request() req,
+    @Query('walletAddress') queryWalletAddress?: string,
+  ) {
+    const walletAddress = (
+      queryWalletAddress || req.walletAddress
+    ).toLowerCase();
+    return this.friendsService.getFriends(walletAddress);
   }
 
   @UseGuards(AuthGuard)

@@ -190,4 +190,70 @@ export class InventoryService {
       };
     }
   }
+
+  public async getStoreInventory(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          walletAddress,
+        },
+        include: {
+          aliens: {
+            include: {
+              element: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const wearableAlienParts = await this.storeSevice.getUserWearables(
+        walletAddress.toLowerCase(),
+      );
+
+      const alienPartGroup = await this.prisma.alienPartGroup.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          parts: true,
+        },
+      });
+
+      let alienParts = [];
+
+      for (const group of alienPartGroup) {
+        if (group.parts) {
+          alienParts = [...alienParts, ...group.parts];
+        }
+      }
+
+      for (const wearable of wearableAlienParts) {
+        if (wearable.alienPart) {
+          alienParts.push(wearable.alienPart);
+        }
+      }
+
+      const formattedAlienParts = alienParts.map((part) => ({
+        id: part.id,
+        name: part.name,
+        quantity: 1,
+        image: part.image,
+        description: part.description,
+        rarity: part.rarity,
+        price: part.price,
+        type: part.type,
+      }));
+
+      return [...formattedAlienParts];
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
 }
