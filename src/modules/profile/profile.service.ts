@@ -262,9 +262,47 @@ export class ProfileService {
           for (const partId of partIds) {
             const part = await prisma.alienPart.findUnique({
               where: { id: Number(partId) },
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                availability: true,
+              },
             });
 
             if (part) {
+              // Get current availability and update it
+              const currentAvailability = (part.availability || []) as {
+                userId: number;
+                available: number;
+              }[];
+              const existingUserAvailability = currentAvailability.find(
+                (a) => a.userId === user.id,
+              );
+
+              if (existingUserAvailability) {
+                // Update existing availability
+                await prisma.alienPart.update({
+                  where: { id: Number(partId) },
+                  data: {
+                    availability: currentAvailability.map((a) =>
+                      a.userId === user.id ? { ...a, available: 1.0 } : a,
+                    ),
+                  },
+                });
+              } else {
+                // Add new availability entry
+                await prisma.alienPart.update({
+                  where: { id: Number(partId) },
+                  data: {
+                    availability: [
+                      ...currentAvailability,
+                      { userId: user.id, available: 1.0 },
+                    ],
+                  },
+                });
+              }
+
               await prisma.alienPartGroup.create({
                 data: {
                   name: part.name,
@@ -1721,6 +1759,8 @@ export class ProfileService {
         background: alien.element,
       };
 
+      console.log('Equipped Alien Parts: ', parts);
+
       return {
         success: true,
         parts: {
@@ -1802,6 +1842,113 @@ export class ProfileService {
         elements: elementsArray,
         alienPartsList: [
           ...userAlienPartGroups.flatMap((group) => group.parts),
+          ...wearableAlienPartGroups.flatMap((group) => group.parts),
+        ],
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async getDojoOwnedAlienParts(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const userAlienPartGroups = await this.prisma.alienPartGroup.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          parts: true,
+        },
+      });
+
+      // Filter groups to only include parts where user has availability 1 or greater
+      const filteredUserAlienPartGroups = userAlienPartGroups
+        .map((group) => ({
+          ...group,
+          parts: group.parts.filter((part) => {
+            const availability = part.availability as {
+              userId: number;
+              available: number;
+            }[];
+            return availability?.some(
+              (a) => a.userId === user.id && Number(a.available) >= 1,
+            );
+          }),
+        }))
+        .filter((group) => group.parts.length > 0); // Remove groups with no available parts
+
+      const elements = await this.prisma.userElement.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          element: true,
+        },
+      });
+
+      const elementsArray = elements.map((element) => element.element);
+
+      // Fetch owned wearables and their associated alien parts
+      const ownedWearables = await this.storeService.getUserWearables(
+        walletAddress,
+      );
+
+      // Convert wearableAlienParts to the same structure as userAlienPartGroups
+      const wearableAlienPartGroups = [];
+      for (const wearable of ownedWearables) {
+        const part = wearable.alienPart;
+
+        if (part) {
+          // Check availability for wearable parts
+          const availability = part.availability as {
+            userId: number;
+            available: number;
+          }[];
+          const isAvailable = availability?.some(
+            (a) => a.userId === user.id && Number(a.available) >= 1,
+          );
+
+          if (isAvailable) {
+            // Create a group for each wearable part duplicate as well
+            for (let i = 0; i < wearable.balance; i++) {
+              wearableAlienPartGroups.push({
+                id: part.id,
+                name: part.name,
+                type: part.type,
+                image: part.image,
+                isDefault: part.isDefault,
+                parts: [part],
+                createdAt: part.createdAt,
+                updatedAt: part.updatedAt,
+              });
+            }
+          }
+        }
+      }
+
+      // Combine filtered userAlienParts and wearableAlienParts into a single array
+      const userAlienParts = [
+        ...filteredUserAlienPartGroups,
+        ...wearableAlienPartGroups,
+      ];
+
+      return {
+        success: true,
+        userAlienParts,
+        elements: elementsArray,
+        alienPartsList: [
+          ...filteredUserAlienPartGroups.flatMap((group) => group.parts),
           ...wearableAlienPartGroups.flatMap((group) => group.parts),
         ],
       };
@@ -2716,6 +2863,43 @@ export class ProfileService {
               },
             },
           });
+
+          // Get current availability and update it
+          const currentPart = await this.prisma.alienPart.findUnique({
+            where: { id: alienPartId },
+            select: { availability: true },
+          });
+
+          const currentAvailability = (currentPart?.availability || []) as {
+            userId: number;
+            available: number;
+          }[];
+          const existingUserAvailability = currentAvailability.find(
+            (a) => a.userId === user.id,
+          );
+
+          if (existingUserAvailability) {
+            // Update existing availability
+            await this.prisma.alienPart.update({
+              where: { id: alienPartId },
+              data: {
+                availability: currentAvailability.map((a) =>
+                  a.userId === user.id ? { ...a, available: 1.0 } : a,
+                ),
+              },
+            });
+          } else {
+            // Add new availability entry
+            await this.prisma.alienPart.update({
+              where: { id: alienPartId },
+              data: {
+                availability: [
+                  ...currentAvailability,
+                  { userId: user.id, available: 1.0 },
+                ],
+              },
+            });
+          }
         } else {
           // Create new group
           await this.prisma.alienPartGroup.create({
@@ -2734,6 +2918,43 @@ export class ProfileService {
               },
             },
           });
+
+          // Get current availability and update it
+          const currentPart = await this.prisma.alienPart.findUnique({
+            where: { id: alienPartId },
+            select: { availability: true },
+          });
+
+          const currentAvailability = (currentPart?.availability || []) as {
+            userId: number;
+            available: number;
+          }[];
+          const existingUserAvailability = currentAvailability.find(
+            (a) => a.userId === user.id,
+          );
+
+          if (existingUserAvailability) {
+            // Update existing availability
+            await this.prisma.alienPart.update({
+              where: { id: alienPartId },
+              data: {
+                availability: currentAvailability.map((a) =>
+                  a.userId === user.id ? { ...a, available: 1.0 } : a,
+                ),
+              },
+            });
+          } else {
+            // Add new availability entry
+            await this.prisma.alienPart.update({
+              where: { id: alienPartId },
+              data: {
+                availability: [
+                  ...currentAvailability,
+                  { userId: user.id, available: 1.0 },
+                ],
+              },
+            });
+          }
         }
 
         // Remove the forge timer for this user
@@ -2925,6 +3146,7 @@ export class ProfileService {
       return { success: false, error };
     }
   }
+
   public async enhanceParts(
     walletAddress: string,
     alienPartId: number,

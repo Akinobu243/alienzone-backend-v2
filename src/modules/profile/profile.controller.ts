@@ -260,6 +260,12 @@ export class ProfileController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('/get-dojo-owned-alien-parts')
+  async getDojoOwnedAlienParts(@Request() req) {
+    return this.profileService.getDojoOwnedAlienParts(req.walletAddress);
+  }
+
+  @UseGuards(AuthGuard)
   @Post('/equip-alien-part')
   async equipAlienPart(
     @Request() req,

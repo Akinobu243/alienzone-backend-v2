@@ -231,10 +231,13 @@ export class StoreService {
 
   async progressBoughtQuest(subject: string, walletAddress: string) {
     try {
+      console.log('progressBoughtQuest', subject, walletAddress);
+
       const wearable = await this.prisma.wearable.findUnique({
         where: { subject },
         include: { alienPart: true },
       });
+
       if (!wearable) throw new Error('Wearable not found');
 
       const balance = Number(
@@ -242,8 +245,50 @@ export class StoreService {
           await this.contract.wearablesBalance(wearable.subject, walletAddress),
         ),
       );
+
       if (balance === 0) {
         throw new Error('User does not own this wearable');
+      }
+
+      console.log('balance', balance);
+
+      // Get the user to get their ID
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) throw new Error('User not found');
+
+      // Update alien part availability if it exists
+      if (wearable.alienPart) {
+        // Get current availability
+        const currentPart = await this.prisma.alienPart.findUnique({
+          where: { id: wearable.alienPart.id },
+          select: { availability: true },
+        });
+
+        const currentAvailability = (currentPart?.availability || []) as {
+          userId: number;
+          available: number;
+        }[];
+        const existingUserAvailability = currentAvailability.find(
+          (a) => a.userId === user.id,
+        );
+
+        // Update availability - either update existing entry or add new one
+        await this.prisma.alienPart.update({
+          where: { id: wearable.alienPart.id },
+          data: {
+            availability: existingUserAvailability
+              ? currentAvailability.map((a) =>
+                  a.userId === user.id ? { ...a, available: balance } : a,
+                )
+              : [
+                  ...currentAvailability,
+                  { userId: user.id, available: balance },
+                ],
+          },
+        });
       }
 
       return this.questService.progressBuyQuest(walletAddress);

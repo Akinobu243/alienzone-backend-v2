@@ -408,6 +408,7 @@ model AlienPart {
   starBoost         Int              @default(0)
   xpBoost           Int              @default(0)
   raidTimeBoost     Int              @default(0)
+  availability      Json             @default("[]") // Array of {userId: number, available: number}
   users             User[]
   packs             PackReward[]
   createdAt         DateTime         @default(now())
