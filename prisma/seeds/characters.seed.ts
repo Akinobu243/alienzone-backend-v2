@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 export async function seed(prisma: PrismaClient) {
   const configService = new ConfigService();
+
   // Create a PrismaService instance and pass it to CharacterService
   const prismaService = Object.assign(prisma, {
     onModuleInit: async () => {},
@@ -18,13 +19,23 @@ export async function seed(prisma: PrismaClient) {
   process.env.ADMIN_PRIVATE_KEY = configService.get('ADMIN_PRIVATE_KEY');
 
   try {
-    // Call updateCharacterList to seed characters
-    const result = await characterService.updateCharacterList();
+    // First update the character list
+    const updateResult = await characterService.updateCharacterList();
 
-    if (result.success) {
-      console.log('Characters seeded successfully');
+    if (!updateResult.success) {
+      console.error('Error updating character list:', updateResult.error);
+      return;
+    }
+
+    // Then update the upgradeReq for all characters
+    const attributeResult = await characterService.updateCharacterAttributes({
+      upgradeReq: 3,
+    });
+
+    if (attributeResult.success) {
+      console.log('Characters updated successfully');
     } else {
-      console.error('Error seeding characters:', result.error);
+      console.error('Error updating characters:', attributeResult.error);
     }
   } catch (error) {
     console.error('Error during seeding:', error);

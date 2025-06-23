@@ -1558,6 +1558,19 @@ export class CharacterService {
       };
     }
   }
+
+  public async updateCharacterAttributes(data: any) {
+    try {
+      await this.prisma.character.updateMany({
+        data,
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating character attributes:', error);
+      return { success: false, error };
+    }
+  }
 }
 
 // Helper function to convert stream to string
