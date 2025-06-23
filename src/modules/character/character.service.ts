@@ -228,7 +228,7 @@ export class CharacterService {
   public async updateCharacterList() {
     try {
       // Delete all characters from the database
-      await this.prisma.character.deleteMany();
+      // await this.prisma.character.deleteMany();
 
       // Fetch the total number of characters from the contract
       const contract = new ethers.Contract(
@@ -367,6 +367,7 @@ export class CharacterService {
       );
 
       const ignoredRarities = [rolledRarity];
+
       while (charactersByRarity.length === 0) {
         console.log(
           `No characters found for rarity: ${rolledRarity}. Rolling again...`,
@@ -386,6 +387,10 @@ export class CharacterService {
 
       if (!randomCharacter) {
         throw new BadRequestException('No characters available yet');
+      }
+
+      if (randomCharacter.tier !== 1) {
+        throw new BadRequestException('Only tier 1 characters can be summoned');
       }
 
       await this.prisma.unmintedCharacter.deleteMany({
@@ -596,6 +601,7 @@ export class CharacterService {
       const characters = await this.prisma.character.findMany({
         where: {
           isPortal2: false,
+          tier: 1,
         },
         include: {
           element: true,
@@ -654,6 +660,16 @@ export class CharacterService {
           ];
 
         // console.log('randomCharacter ===>', randomCharacter);
+
+        if (!randomCharacter) {
+          throw new BadRequestException('No characters available yet');
+        }
+
+        if (randomCharacter.tier !== 1) {
+          throw new BadRequestException(
+            'Only tier 1 characters can be summoned',
+          );
+        }
 
         await this.prisma.unmintedCharacter.create({
           data: {
