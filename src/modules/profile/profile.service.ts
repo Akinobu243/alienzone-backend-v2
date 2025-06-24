@@ -1759,8 +1759,6 @@ export class ProfileService {
         background: alien.element,
       };
 
-      console.log('Equipped Alien Parts: ', parts);
-
       return {
         success: true,
         parts: {
@@ -1811,39 +1809,72 @@ export class ProfileService {
         walletAddress,
       );
 
-      // Convert wearableAlienParts to the same structure as userAlienPartGroups
-      const wearableAlienPartGroups = [];
-      for (const wearable of ownedWearables) {
+      // Create a Map to track unique parts by their ID
+      const uniquePartsMap = new Map();
+
+      // First add all parts from userAlienPartGroups
+      userAlienPartGroups.forEach((group) => {
+        group.parts.forEach((part) => {
+          if (!uniquePartsMap.has(part.id)) {
+            uniquePartsMap.set(part.id, part);
+          }
+        });
+      });
+
+      // Create a Map to track unique groups by a composite key (name + type)
+      const uniqueGroupsMap = new Map();
+
+      // Add user alien part groups first
+      userAlienPartGroups.forEach((group) => {
+        const key = `${group.name}_${group.parts[0]?.type}`;
+
+        if (!uniqueGroupsMap.has(key)) {
+          uniqueGroupsMap.set(key, group);
+        }
+      });
+
+      // Add wearable groups, combining quantities if the same part exists
+      ownedWearables.forEach((wearable) => {
         const part = wearable.alienPart;
-        // Create a group for each wearable part duplicate as well
-        for (let i = 0; i < wearable.balance; i++) {
-          wearableAlienPartGroups.push({
+        if (!part) return;
+
+        // Add to unique parts if not already present
+        if (!uniquePartsMap.has(part.id)) {
+          uniquePartsMap.set(part.id, part);
+        }
+
+        const key = `${part.name}_${part.type}`;
+        const existingGroup = uniqueGroupsMap.get(key);
+
+        if (existingGroup) {
+          // If group exists, update the balance/quantity
+          existingGroup.quantity =
+            (existingGroup.quantity || 1) + wearable.balance;
+        } else {
+          // Create new group
+          uniqueGroupsMap.set(key, {
             id: part.id,
             name: part.name,
             type: part.type,
             image: part.image,
             isDefault: part.isDefault,
             parts: [part],
+            quantity: wearable.balance,
             createdAt: part.createdAt,
             updatedAt: part.updatedAt,
           });
         }
-      }
+      });
 
-      // Combine userAlienParts and wearableAlienParts into a single array
-      const userAlienParts = [
-        ...userAlienPartGroups,
-        ...wearableAlienPartGroups,
-      ];
+      // Convert Maps back to arrays
+      const uniqueGroups = Array.from(uniqueGroupsMap.values());
+      const uniqueParts = Array.from(uniquePartsMap.values());
 
       return {
         success: true,
-        userAlienParts,
+        userAlienParts: uniqueGroups,
         elements: elementsArray,
-        alienPartsList: [
-          ...userAlienPartGroups.flatMap((group) => group.parts),
-          ...wearableAlienPartGroups.flatMap((group) => group.parts),
-        ],
+        alienPartsList: uniqueParts,
       };
     } catch (error) {
       return {
@@ -1943,14 +1974,25 @@ export class ProfileService {
         ...wearableAlienPartGroups,
       ];
 
+      // Create a Set to track unique part IDs and filter out duplicates
+      const uniquePartIds = new Set();
+      const uniqueAlienPartsList = [
+        ...filteredUserAlienPartGroups.flatMap((group) => group.parts),
+        ...wearableAlienPartGroups.flatMap((group) => group.parts),
+      ].filter((part) => {
+        if (uniquePartIds.has(part.id)) {
+          return false;
+        }
+
+        uniquePartIds.add(part.id);
+        return true;
+      });
+
       return {
         success: true,
         userAlienParts,
         elements: elementsArray,
-        alienPartsList: [
-          ...filteredUserAlienPartGroups.flatMap((group) => group.parts),
-          ...wearableAlienPartGroups.flatMap((group) => group.parts),
-        ],
+        alienPartsList: uniqueAlienPartsList,
       };
     } catch (error) {
       return {
