@@ -170,6 +170,18 @@ export class RaidsService {
         throw new BadRequestException('User not found');
       }
 
+      // Check if user already has an active raid
+      const activeRaid = await this.prisma.raidHistory.findFirst({
+        where: {
+          userId: user.id,
+          inProgress: true,
+        },
+      });
+
+      if (activeRaid) {
+        throw new BadRequestException('You already have a raid in progress');
+      }
+
       const aliens = await this.prisma.alien.findMany({
         where: {
           id: { in: user.teamAlienIds, notIn: user.raidAlienIds },
