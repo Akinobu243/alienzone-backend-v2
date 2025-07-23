@@ -1941,29 +1941,17 @@ export class ProfileService {
         const part = wearable.alienPart;
 
         if (part) {
-          // Check availability for wearable parts
-          const availability = part.availability as {
-            userId: number;
-            available: number;
-          }[];
-          const isAvailable = availability?.some(
-            (a) => a.userId === user.id && Number(a.available) >= 1,
-          );
-
-          if (isAvailable) {
-            // Create a group for each wearable part duplicate as well
-            for (let i = 0; i < wearable.balance; i++) {
-              wearableAlienPartGroups.push({
-                id: part.id,
-                name: part.name,
-                type: part.type,
-                image: part.image,
-                isDefault: part.isDefault,
-                parts: [part],
-                createdAt: part.createdAt,
-                updatedAt: part.updatedAt,
-              });
-            }
+          for (let i = 0; i < wearable.balance; i++) {
+            wearableAlienPartGroups.push({
+              id: part.id,
+              name: part.name,
+              type: part.type,
+              image: part.image,
+              isDefault: part.isDefault,
+              parts: [part],
+              createdAt: part.createdAt,
+              updatedAt: part.updatedAt,
+            });
           }
         }
       }
@@ -1973,6 +1961,8 @@ export class ProfileService {
         ...filteredUserAlienPartGroups,
         ...wearableAlienPartGroups,
       ];
+
+      console.log('total userAlienParts ===>', userAlienParts.length);
 
       // Create a Set to track unique part IDs and filter out duplicates
       const uniquePartIds = new Set();
