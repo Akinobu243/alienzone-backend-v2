@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Element, User } from '@prisma/client';
-import { ApiBody, ApiQuery, ApiTags, ApiBasicAuth } from '@nestjs/swagger';
+import { ApiBody, ApiQuery, ApiTags, ApiBasicAuth, ApiBearerAuth } from '@nestjs/swagger';
 
 import { RaidsService } from './raids.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -30,6 +30,7 @@ export class RaidsController {
 
   @UseGuards(AdminGuard)
   @Post('/create-raid')
+  @ApiBearerAuth()
   @ApiBody({ type: CreateRaidDTO })
   async createRaid(@Body() createRaidDTO: CreateRaidDTO, @Request() req) {
     return this.raidsService.createRaid(
@@ -44,6 +45,7 @@ export class RaidsController {
 
   @UseGuards(AdminGuard)
   @Post('/edit-raid')
+  @ApiBearerAuth()
   @ApiBody({ type: EditRaidDTO })
   async editRaid(@Body() editRaidDto: EditRaidDTO, @Request() req) {
     return this.raidsService.editRaid(
