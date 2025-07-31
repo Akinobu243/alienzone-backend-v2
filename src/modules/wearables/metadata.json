@@ -28,5 +28,11 @@
         "description": "The eyes of an alien",
         "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/konryoku-orange-green.png",
         "power": 100
+    },
+    "6": {
+        "type": "EYES",
+        "description": "The eyes of an alien",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/traits/eyes/majime-blue.png",
+        "power": 100
     }
 }
