@@ -205,10 +205,6 @@ export class RaidsService {
         (character) => character.onTeam,
       );
 
-      if (teamCharacters.length === 0) {
-        throw new BadRequestException('No Characters found in team');
-      }
-
       for (const character of teamCharacters) {
         if (character.inRaid) {
           throw new BadRequestException('A character is already in raid');
