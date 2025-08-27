@@ -1949,6 +1949,7 @@ export class ProfileService {
               image: part.image,
               isDefault: part.isDefault,
               parts: [part],
+              quantity: wearable.balance,
               createdAt: part.createdAt,
               updatedAt: part.updatedAt,
             });
@@ -2170,6 +2171,22 @@ export class ProfileService {
         if (!alienPartsList.some((userPart) => userPart.id === id)) {
           throw new BadRequestException(
             `Alien part with ID ${id} not found in user inventory`,
+          );
+        }
+
+        if (
+          alienPartsList.some(
+            (userPart) =>
+              userPart.id === id &&
+              userPart.balance !== undefined &&
+              userPart.balance < 1,
+          )
+        ) {
+          const relevantPart = alienPartsList.find(
+            (userPart) => userPart.id === id,
+          );
+          throw new BadRequestException(
+            `Not enough balance for alien part: ${relevantPart?.name} (ID: ${id}). You have ${relevantPart?.balance}/1 balance.`,
           );
         }
 

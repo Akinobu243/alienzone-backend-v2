@@ -160,7 +160,7 @@ export class InventoryService {
       const formattedAlienParts = alienParts.map((part) => ({
         id: part.id,
         name: part.name,
-        quantity: 1,
+        quantity: part.balance || 1,
         image: part.image,
         description: part.description,
         type: 'ALIEN_PART' as const,
@@ -240,7 +240,7 @@ export class InventoryService {
       const formattedAlienParts = alienParts.map((part) => ({
         id: part.id,
         name: part.name,
-        quantity: 1,
+        quantity: part.balance || 1,
         image: part.image,
         description: part.description,
         rarity: part.rarity,
