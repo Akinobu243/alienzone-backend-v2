@@ -215,9 +215,8 @@ export class StoreService {
         address,
       );
       balance = ethers.formatEther(balance);
-      // 1 balance = 0.001 ETH
-      balance = Math.floor(parseFloat(balance) * 1000); // Convert to whole number
-
+      balance = parseFloat(balance);
+      
       if (Math.floor(Number(balance)) > 0) {
         userWearables.push({
           ...wearable,
