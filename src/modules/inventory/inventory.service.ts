@@ -86,7 +86,7 @@ export class InventoryService {
 
       for (const wearable of wearableAlienParts) {
         if (wearable.alienPart) {
-          alienParts.push(wearable.alienPart);
+          alienParts.push({ ...wearable.alienPart, balance: wearable.balance });
         }
       }
 
