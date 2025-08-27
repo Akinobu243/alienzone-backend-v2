@@ -217,7 +217,7 @@ export class StoreService {
       balance = ethers.formatEther(balance);
       balance = parseFloat(balance);
       
-      if (Math.floor(Number(balance)) > 0) {
+      if (Number(balance) >= 0.001) {
         userWearables.push({
           ...wearable,
           balance,
