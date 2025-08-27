@@ -2045,7 +2045,7 @@ export class ProfileService {
         throw new BadRequestException(ownedAlienParts.error);
       }
 
-      const { elements: userElements, alienPartsList } = ownedAlienParts;
+      const { elements: userElements, userAlienParts, alienPartsList } = ownedAlienParts;
 
       const userElementIds = userElements.map((ue) => ue.id);
 
@@ -2175,18 +2175,18 @@ export class ProfileService {
         }
 
         if (
-          alienPartsList.some(
+          userAlienParts.some(
             (userPart) =>
               userPart.id === id &&
-              userPart.balance !== undefined &&
-              userPart.balance < 1,
+              userPart.quantity !== undefined &&
+              userPart.quantity < 1,
           )
         ) {
-          const relevantPart = alienPartsList.find(
+          const relevantPart = userAlienParts.find(
             (userPart) => userPart.id === id,
           );
           throw new BadRequestException(
-            `Not enough balance for alien part: ${relevantPart?.name} (ID: ${id}). You have ${relevantPart?.balance}/1 balance.`,
+            `Not enough balance for alien part: ${relevantPart?.name}. You have ${relevantPart?.quantity}/1 balance.`,
           );
         }
 
