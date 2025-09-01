@@ -1710,7 +1710,8 @@ export class ProfileService {
       marks: AlienPart;
       powers: AlienPart;
       accessories: AlienPart;
-      background: Element;
+      element: Element;
+      background: AlienPart;
     };
     error?: string;
   }> {
@@ -1739,6 +1740,7 @@ export class ProfileService {
           powers: true,
           accessories: true,
           element: true,
+          background: true,
         },
       });
 
@@ -1756,14 +1758,15 @@ export class ProfileService {
         marks: alien.marks,
         powers: alien.powers,
         accessories: alien.accessories,
-        background: alien.element,
+        element: alien.element,
+        background: alien.background,
       };
 
       return {
         success: true,
         parts: {
           ...parts,
-          background: parts.background as unknown as Element,
+          element: parts.element as unknown as Element,
         },
       };
     } catch (error) {
@@ -1902,12 +1905,12 @@ export class ProfileService {
           parts: true,
         },
       });
-
       // Filter groups to only include parts where user has availability 1 or greater
       const filteredUserAlienPartGroups = userAlienPartGroups
         .map((group) => ({
           ...group,
           parts: group.parts.filter((part) => {
+            console.log('part ===>', part);
             const availability = part.availability as {
               userId: number;
               available: number;
@@ -2031,8 +2034,11 @@ export class ProfileService {
           powers: true,
           accessories: true,
           element: true,
+          background: true,
         },
       });
+
+      console.log('alien ===>', alienId, user.id);
 
       if (!alien) {
         throw new BadRequestException('Alien not found');
@@ -2061,6 +2067,7 @@ export class ProfileService {
         marks: 'marksId',
         powers: 'powersId',
         accessories: 'accessoriesId',
+        background: 'backgroundId',
       };
 
       // Map from frontend part type to database part type (for validation)
@@ -2074,6 +2081,7 @@ export class ProfileService {
         marks: 'MARKS',
         powers: 'POWERS',
         accessories: 'ACCESSORIES',
+        background: 'BACKGROUND',
       };
 
       // Map from frontend part type to current alien part
@@ -2087,6 +2095,7 @@ export class ProfileService {
         marks: alien.marks,
         powers: alien.powers,
         accessories: alien.accessories,
+        background: alien.background,
       };
 
       // Prepare update data
@@ -2240,6 +2249,7 @@ export class ProfileService {
               powers: true,
               accessories: true,
               element: true,
+              background: true,
             },
           });
 

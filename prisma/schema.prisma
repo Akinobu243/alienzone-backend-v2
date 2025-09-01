@@ -208,6 +208,8 @@ model Alien {
   powersId       Int?
   accessories    AlienPart?    @relation("AccessoriesPart", fields: [accessoriesId], references: [id])
   accessoriesId  Int?
+  background     AlienPart?    @relation("BackgroundPart", fields: [backgroundId], references: [id])
+  backgroundId   Int?
 }
 
 model Element {
@@ -387,6 +389,7 @@ enum AlienPartType {
   MARKS
   POWERS
   ACCESSORIES
+  BACKGROUND
 }
 
 model AlienPart {
@@ -425,6 +428,7 @@ model AlienPart {
   marksAliens       Alien[]          @relation("MarksPart")
   powersAliens      Alien[]          @relation("PowersPart")
   accessoriesAliens Alien[]          @relation("AccessoriesPart")
+  backgroundAliens  Alien[]          @relation("BackgroundPart")
   Wearable          Wearable[]
 }
 

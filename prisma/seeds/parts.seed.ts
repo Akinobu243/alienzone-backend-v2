@@ -444,6 +444,15 @@ export async function seed(prisma: PrismaClient) {
       xpBoost: 0,
       raidTimeBoost: 0,
     },
+    {
+      type: AlienPartType.BACKGROUND,
+      name: "Akairo's Lands",
+      description: "Akairo's Lands",
+      image:
+        "https://alienzone-v2.s3.us-west-1.amazonaws.com/store-items/Akairo's+Lands.png",
+      price: 1,
+      isDefault: false,
+    },
   ];
 
   try {
