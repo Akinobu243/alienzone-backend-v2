@@ -36,6 +36,7 @@ export class AuthService {
     registerUser?: RegisterUserDTO,
   ): Promise<AuthResponseDTO> {
     if (authUser.accessToken && authUser.accessToken.length > 0) {
+      console.log('authUser.accessToken', authUser.accessToken);
       const payload = this.jwtService.verify(authUser.accessToken);
       const user = await this.userService.findUser({
         walletAddress: payload.walletAddress,
@@ -141,7 +142,7 @@ export class AuthService {
         level: 1,
         experience: 0,
         reputation: 0,
-        stars: 0,
+        stars: 250,
         role: USER_ROLE,
       });
 
