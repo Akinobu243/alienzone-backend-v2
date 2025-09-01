@@ -115,7 +115,7 @@ export class StoreService {
         wearable.buyPriceInWei = (
           await this.contract.getBuyPriceAfterFee(
             wearable.subject,
-            ethers.parseEther('0.001'),
+            ethers.parseEther('1'),
           )
         ).toString();
       } catch (error) {
@@ -133,7 +133,7 @@ export class StoreService {
         wearable.sellPriceInWei = (
           await this.contract.getSellPriceAfterFee(
             wearable.subject,
-            ethers.parseEther('0.001'),
+            ethers.parseEther('1'),
           )
         ).toString();
       } catch (error) {
@@ -170,7 +170,7 @@ export class StoreService {
       wearable.buyPriceInWei = (
         await this.contract.getBuyPriceAfterFee(
           subject,
-          ethers.parseEther('0.001'),
+          ethers.parseEther('1'),
         )
       ).toString();
     } catch (error) {
@@ -185,7 +185,7 @@ export class StoreService {
       wearable.sellPriceInWei = (
         await this.contract.getSellPriceAfterFee(
           subject,
-          ethers.parseEther('0.001'),
+          ethers.parseEther('1'),
         )
       ).toString();
     } catch (error) {
