@@ -141,7 +141,7 @@ export class ProfileController {
     }
 
     if (limit === undefined) {
-      limit = 500;
+      limit = 10;
     }
 
     const leaderboardData = await this.profileService.getLeaderboard(

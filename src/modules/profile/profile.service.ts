@@ -504,7 +504,7 @@ export class ProfileService {
         where: baseWhere,
         orderBy: { reputation: 'desc' },
         skip: offset,
-        take: limit,
+        // take: limit, // TODO: uncomment this
         include: {
           aliens: {
             include: {
@@ -2051,7 +2051,11 @@ export class ProfileService {
         throw new BadRequestException(ownedAlienParts.error);
       }
 
-      const { elements: userElements, userAlienParts, alienPartsList } = ownedAlienParts;
+      const {
+        elements: userElements,
+        userAlienParts,
+        alienPartsList,
+      } = ownedAlienParts;
 
       const userElementIds = userElements.map((ue) => ue.id);
 
