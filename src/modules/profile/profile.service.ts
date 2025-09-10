@@ -1029,7 +1029,8 @@ export class ProfileService {
         case DailyRewardType.STARS:
           await this.rewardStars(
             walletAddress,
-            dailyReward.amount * updatedStreak,
+            dailyReward.totalAmount,
+            // dailyReward.amount * updatedStreak,
           );
           break;
         case DailyRewardType.XP:

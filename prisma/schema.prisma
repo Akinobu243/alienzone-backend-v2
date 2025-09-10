@@ -353,6 +353,7 @@ model DailyReward {
   type        DailyRewardType
   itemId      Int?
   amount      Int?
+  totalAmount Int?
   item        Item?           @relation(fields: [itemId], references: [id])
   alienPartId Int?
   alienPart   AlienPart?      @relation(fields: [alienPartId], references: [id])
