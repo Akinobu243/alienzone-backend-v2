@@ -394,7 +394,7 @@ export class RaidsService {
                 raid.user.lastXpBoost.getTime() + 24 * 60 * 60 * 1000 >
                   Date.now()
               ) {
-                rewardAmount += reward.amount * (raid.user.xpBoost / 100);
+                rewardAmount += Math.ceil(reward.amount * (raid.user.xpBoost / 100));
                 console.log(
                   `XP boost added from consumable: ${
                     reward.amount * (raid.user.xpBoost / 100)
@@ -413,7 +413,7 @@ export class RaidsService {
                   const part: AlienPart = equippedPartsResponse.parts[partType];
 
                   if (!part || !part.xpBoost) continue;
-                  rewardAmount += reward.amount * (part.xpBoost / 100);
+                  rewardAmount += Math.ceil(reward.amount * (part.xpBoost / 100));
                   console.log(
                     `XP boost added from part ${partType}: ${
                       reward.amount * (part.xpBoost / 100)
@@ -428,7 +428,7 @@ export class RaidsService {
                 raid.user.lastStarBoost.getTime() + 24 * 60 * 60 * 1000 >
                   Date.now()
               ) {
-                rewardAmount += reward.amount * (raid.user.starsBoost / 100);
+                rewardAmount += Math.ceil(reward.amount * (raid.user.starsBoost / 100));
                 console.log(
                   `Stars boost added from consumable: ${
                     reward.amount * (raid.user.starsBoost / 100)
@@ -465,7 +465,7 @@ export class RaidsService {
               },
             });
             console.log(
-              `Final reward: ${reward.type} Amount: ${reward.amount}`,
+              `Final reward: ${reward.type} Amount: ${rewardAmount}`,
             );
 
             var user = await this.prisma.user.findUnique({
