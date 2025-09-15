@@ -37,7 +37,7 @@ export class ProfileService {
     },
   });
 
-  public async getProfile(walletAddress: string) {
+  public async getProfile(walletAddress: string, privyId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress: walletAddress.toLowerCase() },
       include: {
@@ -56,6 +56,13 @@ export class ProfileService {
         },
       },
     });
+
+    if (privyId) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { privyId: privyId },
+      });
+    }
 
     if (!user) {
       return {
@@ -102,6 +109,7 @@ export class ProfileService {
       stars: user.stars,
       refferalCode: user.referralCode,
       email: user.email,
+      privyId: user.privyId,
       totalReferrals,
       likedUserIds: user.likedUserIds,
       createdAt: user.createdAt,
@@ -504,7 +512,7 @@ export class ProfileService {
         where: baseWhere,
         orderBy: { reputation: 'desc' },
         skip: offset,
-        take: limit,
+        // take: limit, // TODO: uncomment this
         include: {
           aliens: {
             include: {
@@ -590,7 +598,7 @@ export class ProfileService {
 
     return {
       users: users.map((user, index) => ({
-        id: user.id,
+        id: user.privyId,
         name: user.name,
         country: user.country,
         enterprise: user.enterprise,
@@ -1029,7 +1037,8 @@ export class ProfileService {
         case DailyRewardType.STARS:
           await this.rewardStars(
             walletAddress,
-            dailyReward.amount * updatedStreak,
+            dailyReward.totalAmount,
+            // dailyReward.amount * updatedStreak,
           );
           break;
         case DailyRewardType.XP:
@@ -2051,7 +2060,11 @@ export class ProfileService {
         throw new BadRequestException(ownedAlienParts.error);
       }
 
-      const { elements: userElements, userAlienParts, alienPartsList } = ownedAlienParts;
+      const {
+        elements: userElements,
+        userAlienParts,
+        alienPartsList,
+      } = ownedAlienParts;
 
       const userElementIds = userElements.map((ue) => ue.id);
 
