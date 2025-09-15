@@ -19,6 +19,10 @@ export class RegisterUserDTO {
   @ApiProperty()
   email: string;
 
+  @IsString()
+  @ApiProperty()
+  privyId: string;
+
   @IsOptional()
   @ApiProperty()
   twitterId?: string;

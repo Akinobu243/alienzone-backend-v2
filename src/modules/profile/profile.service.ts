@@ -37,7 +37,7 @@ export class ProfileService {
     },
   });
 
-  public async getProfile(walletAddress: string) {
+  public async getProfile(walletAddress: string, privyId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { walletAddress: walletAddress.toLowerCase() },
       include: {
@@ -56,6 +56,13 @@ export class ProfileService {
         },
       },
     });
+
+    if (privyId) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { privyId: privyId },
+      });
+    }
 
     if (!user) {
       return {
@@ -102,6 +109,7 @@ export class ProfileService {
       stars: user.stars,
       refferalCode: user.referralCode,
       email: user.email,
+      privyId: user.privyId,
       totalReferrals,
       likedUserIds: user.likedUserIds,
       createdAt: user.createdAt,

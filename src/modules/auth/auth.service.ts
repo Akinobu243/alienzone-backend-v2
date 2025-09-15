@@ -55,6 +55,13 @@ export class AuthService {
         });
       }
 
+      if (!user.privyId && payload.privyId) {
+        await this.userService.updateUser({
+          where: { id: user.id },
+          data: { privyId: payload.privyId },
+        });
+      }
+
       return {
         walletAddress: user.walletAddress,
         accessToken: authUser.accessToken,
@@ -133,6 +140,7 @@ export class AuthService {
         walletAddress: userWalletAddress,
         name: registerUser.name,
         email: registerUser.email,
+        privyId: registerUser.privyId,
         country: registerUser.country,
         twitterId: registerUser.twitterId || '',
         enterprise: registerUser.enterprise || '',
@@ -167,6 +175,14 @@ export class AuthService {
           }),
         ]);
       }
+    }
+
+    if (!user.privyId) {
+      await this.userService.updateUser({
+        where: { id: user.id },
+        data: { privyId: registerUser.privyId },
+      });
+      user.privyId = registerUser.privyId;
     }
 
     if (admin && user.role !== (ADMIN_ROLE as any)) {
