@@ -598,7 +598,7 @@ export class ProfileService {
 
     return {
       users: users.map((user, index) => ({
-        id: user.id,
+        id: user.privyId,
         name: user.name,
         country: user.country,
         enterprise: user.enterprise,
