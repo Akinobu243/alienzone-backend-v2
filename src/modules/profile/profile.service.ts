@@ -620,7 +620,7 @@ export class ProfileService {
       )
         ? undefined
         : {
-            id: currentUser.id,
+            id: currentUser.privyId,
             name: currentUser.name,
             country: currentUser.country,
             enterprise: currentUser.enterprise,
