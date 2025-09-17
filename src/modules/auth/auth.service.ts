@@ -16,6 +16,7 @@ import {
   INVALID_WALLET_ADDRESS,
   MISSING_SIGNED_MESSAGE_OR_SIGNATURE,
   UNAUTHORIZED,
+  USER_BANNED,
 } from 'src/shared/constants/strings';
 import { ADMIN_ROLE, USER_ROLE } from './auth.constants';
 import { ethers } from 'ethers';
@@ -48,6 +49,14 @@ export class AuthService {
           message: INVALID_ACCESS_TOKEN,
         });
       }
+
+      if (user.isBanned) {
+        throw new UnauthorizedException({
+          success: false,
+          message: USER_BANNED,
+        });
+      }
+
       if (admin && user.role !== (ADMIN_ROLE as any)) {
         throw new UnauthorizedException({
           success: false,
@@ -189,6 +198,13 @@ export class AuthService {
       throw new UnauthorizedException({
         success: false,
         message: UNAUTHORIZED,
+      });
+    }
+
+    if (user.isBanned) {
+      throw new UnauthorizedException({
+        success: false,
+        message: USER_BANNED,
       });
     }
 

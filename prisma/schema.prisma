@@ -135,6 +135,7 @@ model User {
   friendships           Friendship[]           @relation("UserFriendships")
   friendUserFriendships Friendship[]           @relation("FriendUserFriendships")
   reputationHistory     WeeklyReputationHistory[]
+  isBanned              Boolean                @default(false)
 }
 
 model Raid {

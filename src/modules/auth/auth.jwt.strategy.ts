@@ -5,6 +5,7 @@ import { User } from '@prisma/client';
 
 import { JWT_SECRET } from '../../shared/constants/global.constants';
 import { PrismaService } from '../prisma/prisma.service';
+import { USER_BANNED } from '../../shared/constants/strings';
 
 const cookieExtractor = (req) => req?.cookies.accessToken;
 
@@ -24,10 +25,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: User): Promise<User> {
     const walletAddress = payload.walletAddress;
-    const user = await this.prisma.user.findUnique({ where: { walletAddress } });
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress },
+    });
 
     if (!user) {
       throw new UnauthorizedException();
+    }
+
+    if (user.isBanned) {
+      throw new UnauthorizedException(USER_BANNED);
     }
 
     return user;

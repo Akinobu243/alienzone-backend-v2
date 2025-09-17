@@ -1,6 +1,5 @@
-import { Body, Controller, Post, Res, Response } from '@nestjs/common';
+import { Body, Controller, Post, Response } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { User } from '@prisma/client';
 
 import { JWT_EXPIRY_SECONDS } from '../../shared/constants/global.constants';
 
