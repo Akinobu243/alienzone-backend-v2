@@ -965,8 +965,6 @@ export class ProfileService {
       let nextRewardIndex = 0;
       let updatedStreak = 1;
       let streakBroken = false;
-      let weeklyResetRequired = false;
-      const streakLimit = 28;
 
       if (user.lastDailyClaimed) {
         const lastClaimed = new Date(user.lastDailyClaimed);
@@ -984,36 +982,6 @@ export class ProfileService {
         // If claimed yesterday, continue streak
         if (lastClaimedUTC.getTime() === yesterday.getTime()) {
           updatedStreak = user.dailyStreak + 1;
-
-          // Check if we've completed a 6-day streak (this would be day 7)
-          if (updatedStreak > streakLimit) {
-            // Reset streak after completing a full week
-            updatedStreak = 1;
-            weeklyResetRequired = true;
-          } else {
-            // Get the last claimed reward ID
-            if (user.claimedDailyRewardIds.length > 0) {
-              const lastClaimedRewardId =
-                user.claimedDailyRewardIds[
-                  user.claimedDailyRewardIds.length - 1
-                ];
-
-              // Get all daily rewards ordered by ID
-              const allRewards = await this.prisma.dailyReward.findMany({
-                orderBy: { id: 'asc' },
-              });
-
-              // Find index of last claimed reward
-              const lastIndex = allRewards.findIndex(
-                (r) => r.id === lastClaimedRewardId,
-              );
-
-              if (lastIndex !== -1) {
-                // Get next reward (loop back to 0 if at the end)
-                nextRewardIndex = (lastIndex + 1) % allRewards.length;
-              }
-            }
-          }
         } else {
           // Streak broken, start from first reward
           updatedStreak = 1;
@@ -1030,15 +998,28 @@ export class ProfileService {
         throw new BadRequestException('No daily rewards available');
       }
 
+      // Decide which reward index we are at based on previous claim sequence
+      if (!streakBroken && user.claimedDailyRewardIds.length > 0) {
+        const lastClaimedRewardId =
+          user.claimedDailyRewardIds[user.claimedDailyRewardIds.length - 1];
+        const allRewards = dailyRewards;
+        const lastIndex = allRewards.findIndex((r) => r.id === lastClaimedRewardId);
+        if (lastIndex !== -1) {
+          nextRewardIndex = (lastIndex + 1) % allRewards.length;
+        }
+      } else {
+        nextRewardIndex = 0;
+      }
+
       const dailyReward = dailyRewards[nextRewardIndex];
 
       // Apply the reward
       switch (dailyReward.type) {
         case DailyRewardType.STARS:
+          // Award 2 * streak stars, capped at 56
           await this.rewardStars(
             walletAddress,
-            dailyReward.totalAmount,
-            // dailyReward.amount * updatedStreak,
+            Math.min(updatedStreak * 2, 56),
           );
           break;
         case DailyRewardType.XP:
@@ -1059,7 +1040,7 @@ export class ProfileService {
       }
 
       // Handle the update in a transaction to ensure consistency
-      if (streakBroken || weeklyResetRequired) {
+      if (streakBroken) {
         // Reset the streak - clear all rewards and add the new one
         await this.prisma.$transaction([
           // First clear all existing relationships
@@ -1106,8 +1087,8 @@ export class ProfileService {
         message: 'Reward claimed',
         rewardDetails: dailyReward,
         streak: updatedStreak,
-        streakReset: streakBroken || weeklyResetRequired,
-        weeklyResetCompleted: weeklyResetRequired,
+        streakReset: streakBroken,
+        weeklyResetCompleted: false,
       };
     } catch (error) {
       return {
