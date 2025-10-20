@@ -104,7 +104,7 @@ export async function seed(prisma: PrismaClient) {
       name: 'Pile of STARS',
       description: '500 STARS',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack1.png',
-      price: 3.99,
+      price: 6.99,
       isActive: true,
       type: PackType.STARS,
       rewards: {
@@ -117,10 +117,26 @@ export async function seed(prisma: PrismaClient) {
       },
     },
     {
+      name: 'Big Pile of STARS',
+      description: '1000 STARS',
+      image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack1.png',
+      price: 10.99,
+      isActive: true,
+      type: PackType.STARS,
+      rewards: {
+        create: [
+          {
+            type: PackRewardType.STARS,
+            amount: 1000,
+          },
+        ],
+      },
+    },
+    {
       name: 'Bag of STARS',
       description: '2500 STARS',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack2.png',
-      price: 8.99,
+      price: 24.99,
       isActive: true,
       type: PackType.STARS,
       rewards: {
@@ -136,7 +152,7 @@ export async function seed(prisma: PrismaClient) {
       name: 'Three bag of STARS',
       description: '5000 STARS',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack3.png',
-      price: 10.99,
+      price: 39.99,
       isActive: true,
       type: PackType.STARS,
       rewards: {
@@ -150,9 +166,9 @@ export async function seed(prisma: PrismaClient) {
     },
     {
       name: 'Case of STARS',
-      description: '1000 STARS',
+      description: '10000 STARS',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack4.png',
-      price: 15.99,
+      price: 74.99,
       isActive: true,
       type: PackType.STARS,
       rewards: {
@@ -166,16 +182,16 @@ export async function seed(prisma: PrismaClient) {
     },
     {
       name: 'Box of STARS',
-      description: '15000 STARS',
+      description: '25000 STARS',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack5.png',
-      price: 20.99,
+      price: 144.99,
       isActive: true,
       type: PackType.STARS,
       rewards: {
         create: [
           {
             type: PackRewardType.STARS,
-            amount: 15000,
+            amount: 25000,
           },
         ],
       },
