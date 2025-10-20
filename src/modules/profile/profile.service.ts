@@ -701,7 +701,7 @@ export class ProfileService {
     }
   }
 
-  public async getDailyRewards(walletAddress: string) {
+  public async getDailyRewardsOld(walletAddress: string) {
     try {
       let user = await this.prisma.user.findUnique({
         where: { walletAddress },
@@ -762,6 +762,117 @@ export class ProfileService {
         }
       }
 
+      const dailyRewards = await this.prisma.dailyReward.findMany({
+        orderBy: {
+          id: 'asc',
+        },
+      });
+
+      return {
+        success: true,
+        dailyRewards,
+        dailyStreak: user.dailyStreak,
+        lastDailyClaimed: user.lastDailyClaimed,
+        claimedDailyRewards: user.claimedDailyRewards,
+        claimedDailyRewardIds: user.claimedDailyRewardIds,
+        streakReset: streakReset,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error,
+      };
+    }
+  }
+
+  public async getDailyRewards(walletAddress: string) {
+    try {
+      let user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+        include: {
+          claimedDailyRewards: true,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      // Check if streak should be reset due to missed days or completing 28-day cycle
+      let streakReset = false;
+      const consecutiveDaysClaimed = user.claimedDailyRewardIds?.length || 0;
+
+      // Reset if user has completed all 28 days
+      if (consecutiveDaysClaimed >= 28) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            dailyStreak: 1,
+            claimedDailyRewards: {
+              set: [], // Clear all connections
+            },
+            claimedDailyRewardIds: [], // Reset the array
+          },
+        });
+
+        // Refetch user with updated data
+        const updatedUser = await this.prisma.user.findUnique({
+          where: { id: user.id },
+          include: {
+            claimedDailyRewards: true,
+          },
+        });
+
+        user = updatedUser;
+        streakReset = true;
+      } else if (user.lastDailyClaimed) {
+        // Check if streak should be reset due to missed days
+        const lastClaimed = new Date(user.lastDailyClaimed);
+        const lastClaimedUTC = new Date(
+          Date.UTC(
+            lastClaimed.getUTCFullYear(),
+            lastClaimed.getUTCMonth(),
+            lastClaimed.getUTCDate(),
+          ),
+        );
+
+        const now = new Date();
+        const today = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+        );
+
+        const yesterday = new Date(today);
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+        // If last claimed is before yesterday, streak is broken
+        if (lastClaimedUTC.getTime() < yesterday.getTime()) {
+          // Reset streak
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              dailyStreak: 1,
+              claimedDailyRewards: {
+                set: [], // Clear all connections
+              },
+              claimedDailyRewardIds: [], // Reset the array
+            },
+          });
+
+          // Refetch user with updated data
+          const updatedUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: {
+              claimedDailyRewards: true,
+            },
+          });
+
+          // Update user reference for the return value
+          user = updatedUser;
+          streakReset = true;
+        }
+      }
+
+      // Get all daily rewards - keep ordering by 'id' for backward compatibility
       const dailyRewards = await this.prisma.dailyReward.findMany({
         orderBy: {
           id: 'asc',
@@ -1003,7 +1114,9 @@ export class ProfileService {
         const lastClaimedRewardId =
           user.claimedDailyRewardIds[user.claimedDailyRewardIds.length - 1];
         const allRewards = dailyRewards;
-        const lastIndex = allRewards.findIndex((r) => r.id === lastClaimedRewardId);
+        const lastIndex = allRewards.findIndex(
+          (r) => r.id === lastClaimedRewardId,
+        );
         if (lastIndex !== -1) {
           nextRewardIndex = (lastIndex + 1) % allRewards.length;
         }
