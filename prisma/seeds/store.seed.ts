@@ -28,6 +28,11 @@ export async function seed(prisma: PrismaClient) {
       const curveFactor = factors[1];
       const initialPriceFactor = factors[2];
 
+      // Skipping old test wearables
+      if (name === 'Zone Cap' || name === "Akairo's Lands") {
+        continue;
+      }
+
       let metadataUrl = metadata;
       // Fix the metadata URL if it doesn't include the API version (first token has wrong URL)
       if (!metadataUrl.includes('/api/v1/')) {
