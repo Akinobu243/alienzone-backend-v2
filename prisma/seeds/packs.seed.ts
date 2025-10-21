@@ -101,7 +101,7 @@ export async function seed(prisma: PrismaClient) {
 
   const starsPacks = [
     {
-      name: 'Pile of STARS',
+      name: 'STARS',
       description: '500 STARS',
       image: 'https://alienzone-v2.s3.amazonaws.com/packs/star-pack1.png',
       price: 6.99,
