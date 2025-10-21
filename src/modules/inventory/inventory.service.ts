@@ -100,6 +100,28 @@ export class InventoryService {
         },
       });
 
+      const userRunes = Object.values(
+        user.runes
+          .filter((rune) => rune.toLowerCase() !== 'legendary') // remove 'legendary'
+          .reduce((acc, rune) => {
+            if (!acc[rune]) {
+              acc[rune] = {
+                id: Object.keys(acc).length,
+                name: rune,
+                quantity: 1,
+                image: '',
+                description: '',
+                type: 'RUNE',
+              };
+            } else {
+              acc[rune].quantity += 1;
+            }
+            return acc;
+          }, {}),
+      );
+
+      console.log('user Runes ', userRunes);
+
       // Get user items
       const userItems = await this.prisma.userItem.findMany({
         where: {
@@ -182,6 +204,7 @@ export class InventoryService {
         ...formattedElements,
         ...formattedAlienParts,
         ...formattedGearItems,
+        ...userRunes,
       ];
     } catch (error) {
       return {
