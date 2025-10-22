@@ -28,7 +28,7 @@ async function main() {
     // await seedHunts(prisma);
     // await seedStore(prisma);
     // await updateAvailability(prisma);
-    await updateDailyRewards(prisma);
+    // await updateDailyRewards(prisma);
 
     console.log('Seed completed successfully');
   } catch (error) {
