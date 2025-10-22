@@ -1037,6 +1037,198 @@ export class ProfileService {
     });
   }
 
+  public async claimDailyReward(walletAddress: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+        include: {
+          claimedDailyRewards: true, // Make sure to include this relation
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      // Create today's date in UTC
+      const now = new Date();
+      const today = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
+
+      // Check if user already claimed today
+      if (user.lastDailyClaimed) {
+        const lastClaimed = new Date(user.lastDailyClaimed);
+        const lastClaimedUTC = new Date(
+          Date.UTC(
+            lastClaimed.getUTCFullYear(),
+            lastClaimed.getUTCMonth(),
+            lastClaimed.getUTCDate(),
+          ),
+        );
+
+        if (lastClaimedUTC.getTime() === today.getTime()) {
+          throw new BadRequestException('Daily reward already claimed today');
+        }
+      }
+
+      // Determine which reward to give
+      let nextRewardIndex = 0;
+      let updatedStreak = 1;
+      let streakBroken = false;
+      let weeklyResetRequired = false;
+      const streakLimit = 28;
+
+      if (user.lastDailyClaimed) {
+        const lastClaimed = new Date(user.lastDailyClaimed);
+        const lastClaimedUTC = new Date(
+          Date.UTC(
+            lastClaimed.getUTCFullYear(),
+            lastClaimed.getUTCMonth(),
+            lastClaimed.getUTCDate(),
+          ),
+        );
+
+        const yesterday = new Date(today);
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+        // If claimed yesterday, continue streak
+        if (lastClaimedUTC.getTime() === yesterday.getTime()) {
+          updatedStreak = user.dailyStreak + 1;
+
+          // Check if we've completed a 6-day streak (this would be day 7)
+          if (updatedStreak > streakLimit) {
+            // Reset streak after completing a full week
+            updatedStreak = 1;
+            weeklyResetRequired = true;
+          } else {
+            // Get the last claimed reward ID
+            if (user.claimedDailyRewardIds.length > 0) {
+              const lastClaimedRewardId =
+                user.claimedDailyRewardIds[
+                  user.claimedDailyRewardIds.length - 1
+                ];
+
+              // Get all daily rewards ordered by ID
+              const allRewards = await this.prisma.dailyReward.findMany({
+                orderBy: { id: 'asc' },
+              });
+
+              // Find index of last claimed reward
+              const lastIndex = allRewards.findIndex(
+                (r) => r.id === lastClaimedRewardId,
+              );
+
+              if (lastIndex !== -1) {
+                // Get next reward (loop back to 0 if at the end)
+                nextRewardIndex = (lastIndex + 1) % allRewards.length;
+              }
+            }
+          }
+        } else {
+          // Streak broken, start from first reward
+          updatedStreak = 1;
+          streakBroken = true;
+        }
+      }
+
+      // Get the reward to claim (either first or next in sequence)
+      const dailyRewards = await this.prisma.dailyReward.findMany({
+        orderBy: { id: 'asc' },
+      });
+
+      if (dailyRewards.length === 0) {
+        throw new BadRequestException('No daily rewards available');
+      }
+
+      const dailyReward = dailyRewards[nextRewardIndex];
+
+      // Apply the reward
+      switch (dailyReward.type) {
+        case DailyRewardType.STARS:
+          await this.rewardStars(
+            walletAddress,
+            dailyReward.amount,
+            // dailyReward.totalAmount,
+            // dailyReward.amount * updatedStreak,
+          );
+          break;
+        case DailyRewardType.XP:
+          await this.rewardXp(
+            walletAddress,
+            dailyReward.amount * updatedStreak,
+          );
+          break;
+        case DailyRewardType.ITEM:
+          await this.rewardItem(walletAddress, dailyReward.itemId);
+          break;
+        case DailyRewardType.PARTS:
+          await this.rewardAlienPart(walletAddress, dailyReward.alienPartId);
+          break;
+        case DailyRewardType.GEAR:
+          await this.rewardGearItem(walletAddress, dailyReward.gearItemId);
+          break;
+      }
+
+      // Handle the update in a transaction to ensure consistency
+      if (streakBroken || weeklyResetRequired) {
+        // Reset the streak - clear all rewards and add the new one
+        await this.prisma.$transaction([
+          // First clear all existing relationships
+          this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              claimedDailyRewards: {
+                set: [], // Clear all connections
+              },
+            },
+          }),
+          // Then update with the new data
+          this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              lastDailyClaimed: new Date(),
+              dailyStreak: updatedStreak,
+              claimedDailyRewards: {
+                connect: { id: dailyReward.id },
+              },
+              claimedDailyRewardIds: [dailyReward.id],
+            },
+          }),
+        ]);
+      } else {
+        // Continue the streak - just add the new reward
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastDailyClaimed: new Date(),
+            dailyStreak: updatedStreak,
+            claimedDailyRewards: {
+              connect: { id: dailyReward.id },
+            },
+            claimedDailyRewardIds: {
+              push: dailyReward.id,
+            },
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Reward claimed',
+        rewardDetails: dailyReward,
+        streak: updatedStreak,
+        streakReset: streakBroken || weeklyResetRequired,
+        weeklyResetCompleted: weeklyResetRequired,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || error,
+      };
+    }
+  }
+
   public async claimDailyRewardOld(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
