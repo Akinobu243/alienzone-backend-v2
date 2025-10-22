@@ -1037,7 +1037,7 @@ export class ProfileService {
     });
   }
 
-  public async claimDailyReward(walletAddress: string) {
+  public async claimDailyRewardOld(walletAddress: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { walletAddress },
