@@ -1,0 +1,24 @@
+{
+  "name": "Nikola",
+  "description": "Nikola is a character in Alienzone. Rarity: SR. Element: GAMMA. Tier: 1. Base power: 232. Token ID: 58.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+2/Cards/Stage+1/NIKOLA.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "SR"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 232
+    },
+    {
+      "trait_type": "Element",
+      "value": "GAMMA"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 1
+    }
+  ]
+}

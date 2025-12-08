@@ -1,0 +1,62 @@
+{
+    "1": {
+        "type": "BACKGROUND",
+        "description": "Akairo's Lands",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Akairo's+Lands.png",
+        "power": 200
+    },
+    "2": {
+        "type": "HAIR",
+        "description": "Zone Cap",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Zone+Cap.png",
+        "power": 100
+    },
+    "3": {
+        "type": "MOUTH",
+        "description": "Smoking cigarette",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/smoking_cigarette.png",
+        "power": 120
+    },
+    "4": {
+        "type": "POWERS",
+        "description": "Black Flames",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/black_flames.png",
+        "power": 180
+    },
+    "5": {
+        "type": "POWERS",
+        "description": "Murasaki Aura",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/murasaki_aura.png",
+        "power": 120
+    },
+    "6": {
+        "type": "POWERS",
+        "description": "Aoi Aura",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/aoi_aura.png",
+        "power": 120
+    },
+    "7": {
+        "type": "POWERS",
+        "description": "ゴゴゴ",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/gogogo.png",
+        "power": 250
+    },
+    "8": {
+        "type": "BODY",
+        "description": "King Curse",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/king_curse.png",
+        "power": 160
+    },
+    "9": {
+        "type": "HAIR",
+        "description": "Arrancar's Hair",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/arrancar's_hair.png",
+        "power": 60
+    },
+    "10": {
+        "type": "BACKGROUND",
+        "description": "Peaceful Torii",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/peaceful_torii.png",
+        "power": 70
+    }
+}

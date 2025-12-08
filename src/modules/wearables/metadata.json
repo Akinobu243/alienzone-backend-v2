@@ -1,62 +1,206 @@
 {
     "1": {
-        "type": "BACKGROUND",
-        "description": "Akairo's Lands",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Akairo's+Lands.png",
-        "power": 200
+        "type": "HAIR",
+        "description": "Pepe Hood",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Pepe+Hood.png",
+        "power": 60
     },
     "2": {
-        "type": "HAIR",
-        "description": "Zone Cap",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Zone+Cap.png",
-        "power": 100
+        "type": "BODY",
+        "description": "Pepe Wear",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Pepe+Wear.png",
+        "power": 60
     },
     "3": {
-        "type": "MOUTH",
-        "description": "Smoking cigarette",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/smoking_cigarette.png",
-        "power": 120
+        "type": "EYES",
+        "description": "Dante's Glasses",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Dante's+Glasses.png",
+        "power": 55
     },
     "4": {
-        "type": "POWERS",
-        "description": "Black Flames",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/black_flames.png",
-        "power": 180
+        "type": "EYES",
+        "description": "The Strongest",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/The+Strongest.png",
+        "power": 170
     },
     "5": {
-        "type": "POWERS",
-        "description": "Murasaki Aura",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/murasaki_aura.png",
-        "power": 120
+        "type": "BODY",
+        "description": "Smoking black",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Smoking+black.png",
+        "power": 160
     },
     "6": {
         "type": "POWERS",
-        "description": "Aoi Aura",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/aoi_aura.png",
-        "power": 120
+        "description": "Black Flames",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Black+Flames.png",
+        "power": 100
     },
     "7": {
-        "type": "POWERS",
-        "description": "ゴゴゴ",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/gogogo.png",
-        "power": 250
-    },
-    "8": {
         "type": "BODY",
         "description": "King Curse",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/king_curse.png",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/King+Curse.png",
         "power": 160
+    },
+    "8": {
+        "type": "POWERS",
+        "description": "ゴゴゴ",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/ゴゴゴ.png",
+        "power": 250
     },
     "9": {
         "type": "HAIR",
         "description": "Arrancar's Hair",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/arrancar's_hair.png",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Arrancar's+Hair.png",
         "power": 60
     },
     "10": {
         "type": "BACKGROUND",
         "description": "Peaceful Torii",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/peaceful_torii.png",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Peaceful+Torii.png",
         "power": 70
+    },
+    "11": {
+        "type": "EYES",
+        "description": "Blind",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Blind.png",
+        "power": 65
+    },
+    "12": {
+        "type": "HAIR",
+        "description": "Blue Cap",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Blue+Cap.png",
+        "power": 50
+    },
+    "13": {
+        "type": "BODY",
+        "description": "Murasaki Armor",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Murasaki+Armor.png",
+        "power": 240
+    },
+    "14": {
+        "type": "BODY",
+        "description": "Aoi Armor",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Aoi+Armor.png",
+        "power": 240
+    },
+    "15": {
+        "type": "POWERS",
+        "description": "Murasaki Aura",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Murasaki+Aura.png",
+        "power": 120
+    },
+    "16": {
+        "type": "POWERS",
+        "description": "Aoi Aura",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Aoi+Aura.png",
+        "power": 120
+    },
+    "17": {
+        "type": "MOUTH",
+        "description": "Golden Grillz",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Golden+Grillz.png",
+        "power": 100
+    },
+    "18": {
+        "type": "HAIR",
+        "description": "Alienzone Cap",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Alienzone+Cap.png",
+        "power": 100
+    },
+    "19": {
+        "type": "BODY",
+        "description": "Olympian's Wear",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Olympian's+Wear.png",
+        "power": 50
+    },
+    "20": {
+        "type": "MOUTH",
+        "description": "Smoking Cigarette",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Smoking+Cigarette.png",
+        "power": 70
+    },
+    "21": {
+        "type": "BODY",
+        "description": "Armor Bushidō",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Armor+Bushidō.png",
+        "power": 180
+    },
+    "22": {
+        "type": "HAIR",
+        "description": "Helmet Bushidō",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Helmet+Bushidō.png",
+        "power": 170
+    },
+    "23": {
+        "type": "ACCESSORIES",
+        "description": "Patch",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Patch.png",
+        "power": 40
+    },
+    "24": {
+        "type": "HAIR",
+        "description": "Straw Hat",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Straw+Hat.png",
+        "power": 70
+    },
+    "25": {
+        "type": "BODY",
+        "description": "Selfmade",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Selfmade.png",
+        "power": 150
+    },
+    "26": {
+        "type": "BODY",
+        "description": "Seito",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Seito.png",
+        "power": 60
+    },
+    "27": {
+        "type": "HAIR",
+        "description": "The Dark Knight Helmet",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/The+Dark+Knight+Helmet.png",
+        "power": 200
+    },
+    "28": {
+        "type": "HAIR",
+        "description": "The White Knight Helmet",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/The+White+Knight+Helmet.png",
+        "power": 200
+    },
+    "29": {
+        "type": "HAIR",
+        "description": "Metallic Helmet",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Metallic+Helmet.png",
+        "power": 170
+    },
+    "30": {
+        "type": "BODY",
+        "description": "The White Knight Armor",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/The+White+Knight+Armor.png",
+        "power": 200
+    },
+    "31": {
+        "type": "BODY",
+        "description": "The Dark Knight Armor",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/The+Dark+Knight+Armor.png",
+        "power": 200
+    },
+    "32": {
+        "type": "BODY",
+        "description": "Metallic Armor",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Metallic+Armor.png",
+        "power": 180
+    },
+    "33": {
+        "type": "ACCESSORIES",
+        "description": "Pain",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Pain.png",
+        "power": 90
+    },
+    "34": {
+        "type": "ACCESSORIES",
+        "description": "Malevolent Marks",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Malevolent+Marks.png",
+        "power": 90
     }
 }

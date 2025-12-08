@@ -1,0 +1,24 @@
+{
+  "name": "Shishi Cat Form",
+  "description": "Shishi Cat Form is a character in Alienzone. Rarity: R. Element: LIFE. Tier: 2. Base power: 296. Token ID: 62.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+2/Cards/Stage+2/SHISHI+CAT+FORM+2.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "R"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 296
+    },
+    {
+      "trait_type": "Element",
+      "value": "LIFE"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 2
+    }
+  ]
+}

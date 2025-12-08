@@ -1,0 +1,24 @@
+{
+  "name": "Yagi",
+  "description": "Yagi is a character in Alienzone. Rarity: SSR. Element: GRAVITY. Tier: 2. Base power: 607. Token ID: 50.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+1/Cards/Stage+2/YAGI+2.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "SSR"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 607
+    },
+    {
+      "trait_type": "Element",
+      "value": "GRAVITY"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 2
+    }
+  ]
+}

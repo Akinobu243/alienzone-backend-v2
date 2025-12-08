@@ -1,0 +1,24 @@
+{
+  "name": "Tembin Prime of Life",
+  "description": "Tembin Prime of Life is a character in Alienzone. Rarity: SR. Element: LOVE. Tier: 3. Base power: 550. Token ID: 66.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+2/Cards/Stage+3/TEMBIN+PRIME+OF+LIFE+3.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "SR"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 550
+    },
+    {
+      "trait_type": "Element",
+      "value": "LOVE"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 3
+    }
+  ]
+}

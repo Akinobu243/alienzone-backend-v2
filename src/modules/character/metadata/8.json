@@ -1,0 +1,24 @@
+{
+  "name": "Futago",
+  "description": "Futago is a character in Alienzone. Rarity: R. Element: FIRE. Tier: 2. Base power: 370. Token ID: 8.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+1/Cards/Stage+2/FUTAGO+2.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "R"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 370
+    },
+    {
+      "trait_type": "Element",
+      "value": "FIRE"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 2
+    }
+  ]
+}

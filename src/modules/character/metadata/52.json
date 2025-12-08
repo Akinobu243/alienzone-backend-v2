@@ -1,0 +1,24 @@
+{
+  "name": "Dante",
+  "description": "Dante is a character in Alienzone. Rarity: SR. Element: WATER. Tier: 1. Base power: 300. Token ID: 52.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+2/Cards/Stage+1/DANTE.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "SR"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 300
+    },
+    {
+      "trait_type": "Element",
+      "value": "WATER"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 1
+    }
+  ]
+}

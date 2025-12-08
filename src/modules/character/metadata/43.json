@@ -1,0 +1,24 @@
+{
+  "name": "Tembin",
+  "description": "Tembin is a character in Alienzone. Rarity: SSR. Element: LOVE. Tier: 1. Base power: 315. Token ID: 43.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+1/Cards/Stage+1/TEMBIN.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "SSR"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 315
+    },
+    {
+      "trait_type": "Element",
+      "value": "LOVE"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 1
+    }
+  ]
+}

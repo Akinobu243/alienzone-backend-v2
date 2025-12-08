@@ -1,0 +1,24 @@
+{
+  "name": "Ohitsuji",
+  "description": "Ohitsuji is a character in Alienzone. Rarity: SSR. Element: GRAVITY. Tier: 1. Base power: 324. Token ID: 22.",
+  "image": "https://alienzone-v2.s3.us-west-1.amazonaws.com/characters/Portal+1/Cards/Stage+1/OHITSUJI.png",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "SSR"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Power",
+      "value": 324
+    },
+    {
+      "trait_type": "Element",
+      "value": "GRAVITY"
+    },
+    {
+      "trait_type": "Tier",
+      "value": 1
+    }
+  ]
+}
