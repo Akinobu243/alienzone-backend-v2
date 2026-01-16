@@ -25,8 +25,8 @@
     },
     "5": {
         "type": "BODY",
-        "description": "Smoking black",
-        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Smoking+black.png",
+        "description": "Smoking Black",
+        "image": "https://alienzone-v2.s3.dualstack.us-west-1.amazonaws.com/store-items/Smoking+Black.png",
         "power": 160
     },
     "6": {
