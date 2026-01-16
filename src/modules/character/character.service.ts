@@ -487,8 +487,6 @@ export class CharacterService {
         },
       });
 
-      const ownedCharacters = [];
-
       const contract = new ethers.Contract(
         this.contractAddress,
         CharacterContractABI,
@@ -508,52 +506,43 @@ export class CharacterService {
         allTokenIds,
       );
 
-      for (const tokenId of allTokenIds) {
-        const tokenBalance = Number(tokenBalances[tokenId - 1]);
-
-        if (tokenBalance > 0) {
-          const character = await this.prisma.character.findFirst({
-            where: {
-              tokenId,
-            },
-            include: {
-              element: true,
-            },
-          });
-          ownedCharacters.push({
-            ...character,
-            quantity: Number(tokenBalance),
-          });
+      const ownedTokenIds: number[] = [];
+      const balanceMap = new Map<number, number>();
+      for (let i = 0; i < allTokenIds.length; i++) {
+        const tokenId = allTokenIds[i];
+        const balance = Number(tokenBalances[i]);
+        if (balance > 0) {
+          ownedTokenIds.push(tokenId);
+          balanceMap.set(tokenId, balance);
         }
       }
+
+      const characters = await this.prisma.character.findMany({
+        where: { tokenId: { in: ownedTokenIds } },
+        include: { element: true },
+      });
 
       const userCharactersMap = new Map<
         number,
         { character: any; quantity: number }
       >();
 
-      for (const char of ownedCharacters) {
-        const character = await this.prisma.character.findUnique({
-          where: {
-            id: char.id,
-          },
-          include: {
-            element: true,
-          },
-        });
+      for (const character of characters) {
+        const quantity = balanceMap.get(character.tokenId);
+        if (quantity !== undefined) {
+          const inRaid = user.raidCharacterIds.includes(character.id);
+          const onTeam = user.teamCharacterIds.includes(character.id);
 
-        const inRaid = user.raidCharacterIds.includes(char.id);
-        const onTeam = user.teamCharacterIds.includes(char.id);
-
-        userCharactersMap.set(character.tokenId, {
-          character: {
-            ...character,
-            teamImage: character.teamImage,
-            inRaid,
-            onTeam,
-          },
-          quantity: char.quantity,
-        });
+          userCharactersMap.set(character.tokenId, {
+            character: {
+              ...character,
+              teamImage: character.teamImage,
+              inRaid,
+              onTeam,
+            },
+            quantity,
+          });
+        }
       }
 
       const userCharacters = Array.from(userCharactersMap.values()).map(
