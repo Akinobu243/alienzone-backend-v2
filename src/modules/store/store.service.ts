@@ -151,6 +151,13 @@ export class StoreService {
     return wearables;
   }
 
+  async getWearablesOptimized() {
+    const wearables = await this.prisma.wearable.findMany({
+      include: { alienPart: true },
+    });
+    return wearables;
+  }
+
   async getWearableDetails(subject: string, walletAddress: string) {
     const wearable = await this.prisma.wearable.findUnique({
       where: { subject },

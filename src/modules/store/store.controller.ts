@@ -47,6 +47,12 @@ export class StoreController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('/wearables-optimized')
+  async getWearablesOptimized(@Request() req) {
+    return this.storeService.getWearablesOptimized();
+  }
+
+  @UseGuards(AuthGuard)
   @Get('/wearables/:subject')
   async getWearableDetails(@Param('subject') subject: string, @Request() req) {
     return this.storeService.getWearableDetails(
