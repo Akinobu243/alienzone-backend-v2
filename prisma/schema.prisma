@@ -605,6 +605,27 @@ model Wearable {
   @@index([alienPartId])
 }
 
+model WearableTrade {
+  traderWallet      String
+  subject           String
+  isBuy             Boolean
+  wearableAmount    String
+  zoneAmountSummary String
+  transactionHash   String  @db.VarChar(66)
+  blockNumber       Int
+  logIndex          Int
+
+  @@id([transactionHash, logIndex])
+  @@index([subject])
+  @@index([traderWallet, blockNumber, logIndex])
+  @@index([traderWallet, subject, blockNumber, logIndex])
+}
+
+model WearableTradeTrackerState {
+  id                 String @id @default("default")
+  lastProcessedBlock Int    @default(0)
+}
+
 model WeeklyReputationHistory {
   id           Int      @id @default(autoincrement())
   userId       Int
