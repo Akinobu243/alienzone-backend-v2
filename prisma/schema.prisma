@@ -617,3 +617,12 @@ model WeeklyReputationHistory {
   @@index([userId])
   @@index([weekStarting, weekEnding])
 }
+
+
+model DummyTestTable {
+  id        Int      @id @default(autoincrement())
+  name      String
+  value     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
