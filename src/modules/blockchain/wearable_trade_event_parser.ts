@@ -12,8 +12,8 @@ interface TradeEvent {
   isBuy: boolean,
   wearableAmount: string,
   zoneAmountSummary: string,
-  blockNumber: number,
   transactionHash: string,
+  blockNumber: number,
   logIndex: number
 }
 
@@ -35,7 +35,6 @@ export class WearableTradeEventParser {
 
   async onModuleInit() {
     this.processing_now = true;
-
     this.provider = await this.providers_service.get_arbitrum_http();
     this.wearables_contract = new ethers.Contract(
       WEARABLES_ARBITRUM,
@@ -54,43 +53,44 @@ export class WearableTradeEventParser {
     if (this.processing_now == true) {
       return;
     }
-
     this.processing_now = true;
 
     const block_from = this.last_processed_block + 1;
     const block_to = await this.provider.getBlockNumber();
 
-    const events = await this.wearables_contract.queryFilter(
-      "Trade",
-      block_from,
-      block_to
-    );
-
-    const parsed_events: TradeEvent[] = [];
-
-    for (let _event of events) {
-      let parsed = this.parseEventLog(_event);
-      parsed_events.push(parsed);
-    }
-
-    await this.saveEvents(parsed_events, block_to)
+    const events = await this.fetchEvents(block_from, block_to)
+    await this.saveEvents(events, block_to)
 
     this.last_processed_block = block_to;
     this.processing_now = false;
   }
 
+  private async fetchEvents(block_from: number, block_to: number) {
+    const events =  await this.wearables_contract.queryFilter(
+      "Trade",
+      block_from,
+      block_to
+    )
+
+    const parsed_events: TradeEvent[] = [];
+    for (let _event of events) {
+      let parsed = this.parseEventLog(_event);
+      parsed_events.push(parsed);
+    }
+
+    return parsed_events
+  }
+
   private async saveEvents(events: TradeEvent[], new_last_processed_block: number) {
     let tx = this.prisma.$transaction(async (prisma) => {
-      const newTrades = prisma.wearableTrade.createMany({
+      await prisma.wearableTrade.createMany({
         data: events
-      })
+      });
 
-      const updatedTracker = await prisma.wearableTradeTrackerState.update({
+       await prisma.wearableTradeTrackerState.update({
         where: { id: 'default' },
         data: { lastProcessedBlock: new_last_processed_block }
       });
-
-      return { newTrades, updatedTracker };
     })
 
     await tx
@@ -119,11 +119,11 @@ export class WearableTradeEventParser {
   ): TradeEvent {
     if (log instanceof EventLog) {
       return {
-        traderWallet: log.args.trader,
+        traderWallet: log.args.trader.toLowerCase(),
         subject: log.args.subject,
         isBuy: log.args.isBuy,
-        wearableAmount: log.args.wearableAmount,
-        zoneAmountSummary: log.args.zoneAmount + log.args.protocolZoneAmount + log.args.creatorZoneAmount,
+        wearableAmount: log.args.wearableAmount.toString(),
+        zoneAmountSummary: (log.args.zoneAmount + log.args.protocolZoneAmount + log.args.creatorZoneAmount).toString(),
         blockNumber: log.blockNumber,
         transactionHash: log.transactionHash,
         logIndex: log.index
@@ -140,15 +140,28 @@ export class WearableTradeEventParser {
     }
 
     return {
-      traderWallet: parsed.args.trader,
+      traderWallet: parsed.args.trader.toLowerCase(),
       subject: parsed.args.subject,
       isBuy: parsed.args.isBuy,
-      wearableAmount: parsed.args.wearableAmount,
-      zoneAmountSummary: parsed.args.zoneAmount + parsed.args.protocolZoneAmount + parsed.args.creatorZoneAmount,
+      wearableAmount: parsed.args.wearableAmount.toString(),
+      zoneAmountSummary: (parsed.args.zoneAmount + parsed.args.protocolZoneAmount + parsed.args.creatorZoneAmount).toString(),
       blockNumber: log.blockNumber,
       transactionHash: log.transactionHash,
       logIndex: log.index
     };
+  }
+
+  private async reset_tracking(new_start_block: number) {
+    let tx = this.prisma.$transaction(async (prisma) => {
+      await prisma.wearableTradeTrackerState.update({
+        where: { id: 'default' },
+        data: { lastProcessedBlock: new_start_block }
+      });
+
+      await this.prisma.wearableTrade.deleteMany({});
+    })
+
+    await tx
   }
 
 }
