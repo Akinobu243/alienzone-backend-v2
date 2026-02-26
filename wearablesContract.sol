@@ -8,28 +8,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-
 // Errors
-error InvalidFeePercent();
-error InvalidSignature();
-error InvalidOperator();
-error InsufficientBaseUnit();
-error AmountNotMultipleOfBaseUnit();
-error InvalidTotalSupply();
-error InvalidCurveFactor();
-error InvalidInitialPriceFactor();
-error WearableAlreadyCreated();
-error WearableNotCreated();
-error InvalidSaleState();
-error TotalSupplyExceeded();
-error InsufficientPayment();
-error ExcessivePayment();
-error SendFundsFailed();
-error InsufficientHoldings();
-error TransferToZeroAddress();
-error IncorrectSender();
-error InsufficientAllowance();
-error ZoneTokenNotSet();
+    error InvalidFeePercent();
+    error InvalidSignature();
+    error InvalidOperator();
+    error InsufficientBaseUnit();
+    error AmountNotMultipleOfBaseUnit();
+    error InvalidTotalSupply();
+    error InvalidCurveFactor();
+    error InvalidInitialPriceFactor();
+    error WearableAlreadyCreated();
+    error WearableNotCreated();
+    error InvalidSaleState();
+    error TotalSupplyExceeded();
+    error InsufficientPayment();
+    error ExcessivePayment();
+    error SendFundsFailed();
+    error InsufficientHoldings();
+    error TransferToZeroAddress();
+    error IncorrectSender();
+    error InsufficientAllowance();
+    error ZoneTokenNotSet();
 
 /**
  * @title AlienzoneWearables
@@ -89,7 +88,7 @@ contract AlienzoneWearables is Initializable, Ownable {
     );
 
     event Trade(
-        address trader,
+        address indexed trader,
         bytes32 subject,
         bool isBuy,
         bool isPublic,
@@ -248,9 +247,9 @@ contract AlienzoneWearables is Initializable, Ownable {
 
         // Update wearables mapping
         WearableFactors memory factors =
-            WearableFactors(params.supplyFactor, params.curveFactor, params.initialPriceFactor);
+                        WearableFactors(params.supplyFactor, params.curveFactor, params.initialPriceFactor);
         wearables[wearablesSubject] =
-            Wearable(params.creator, params.name, params.metadata, factors, state);
+                        Wearable(params.creator, params.name, params.metadata, factors, state);
 
         emit WearableCreated(
             params.creator, wearablesSubject, params.name, params.metadata, factors, state
@@ -260,7 +259,7 @@ contract AlienzoneWearables is Initializable, Ownable {
     // =========================================================================
     //                          Wearables Settings
     // =========================================================================
-    
+
     /// @dev Sets the sale state of a wearable. operator only.
     /// Emits a {WearableSaleStateUpdated} event.
     function setWearableSalesState(bytes32 wearablesSubject, SaleStates saleState) external {
@@ -288,7 +287,7 @@ contract AlienzoneWearables is Initializable, Ownable {
     // =========================================================================
     //                          Trade Wearable Logic
     // =========================================================================
-    
+
     /// @dev Returns the curve of `x`
     // function _curve(uint256 x, uint256 totalSupply, uint256 curveFactor, uint256 initialPriceFactor)
     //     private
@@ -306,14 +305,13 @@ contract AlienzoneWearables is Initializable, Ownable {
         uint256 initialPriceFactor  // interpreted as price per full wearable in wei
     ) internal pure returns (uint256) {
         uint256 curvePrice = ((totalSupply * curveFactor * 1e18) / (totalSupply - x))
-                            - (curveFactor * 1e18);
+            - (curveFactor * 1e18);
 
         // Scale so "initialPriceFactor" = price per 1 full wearable (1 ether supply)
         uint256 basePrice = (initialPriceFactor * x) / 1 ether;
 
         return curvePrice + basePrice;
     }
-
 
     /// @dev Returns the price based on `supply` and `amount`.
     function getPrice(
@@ -505,7 +503,7 @@ contract AlienzoneWearables is Initializable, Ownable {
         uint256 newSupply = supply + amount;
 
         emit Trade(
-            msg.sender, wearablesSubject, true, isPublic, amount, price, protocolFee, creatorFee, newSupply 
+            msg.sender, wearablesSubject, true, isPublic, amount, price, protocolFee, creatorFee, newSupply
         );
 
         require(protocolFeeDestination != address(0), "Protocol fee destination is not set");

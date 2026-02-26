@@ -25,12 +25,14 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAlienDTO } from './dto/profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaService } from '../prisma/prisma.service';
+import { PortfolioService } from "./portfolio/portfolio.service";
 
 @ApiTags('profile')
 @Controller('/profile')
 export class ProfileController {
   constructor(
     private profileService: ProfileService,
+    private portfolioService: PortfolioService,
     private reputationService: ReputationService,
     private prisma: PrismaService,
   ) {}
@@ -400,6 +402,14 @@ export class ProfileController {
       req.walletAddress.toLowerCase(),
       alienPartId,
     );
+  }
+
+  // @ts-ignore
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Get user portfolio stats' })
+  @Get('/portfolio')
+  async getPortfolio(@Request() req) {
+    return this.portfolioService.getPortfolio(req.walletAddress.toLowerCase());
   }
 
   @UseGuards(AuthGuard)

@@ -79,63 +79,63 @@ enum ItemQuality {
 }
 
 model User {
-  id                    Int                    @id @default(autoincrement())
-  walletAddress         String                 @unique
-  email                 String                 @unique
+  id                    Int                       @id @default(autoincrement())
+  walletAddress         String                    @unique
+  email                 String                    @unique
   privyId               String?
   name                  String
   country               String
   twitterId             String?
   enterprise            String
-  referralCode          String                 @unique
+  referralCode          String                    @unique
   referrerId            Int?
   image                 String
-  level                 Int                    @default(1)
+  level                 Int                       @default(1)
   experience            Int
   reputation            Int
   stars                 Int
   RaidHistory           RaidHistory[]
   aliens                Alien[]
-  characterIds          Int[]                  @default([])
-  teamCharacterIds      Int[]                  @default([])
-  teamAlienIds          Int[]                  @default([])
-  raidAlienIds          Int[]                  @default([])
-  raidCharacterIds      Int[]                  @default([])
+  characterIds          Int[]                     @default([])
+  teamCharacterIds      Int[]                     @default([])
+  teamAlienIds          Int[]                     @default([])
+  raidAlienIds          Int[]                     @default([])
+  raidCharacterIds      Int[]                     @default([])
   unmintedCharacters    UnmintedCharacter[]
   items                 UserItem[]
   runes                 RuneType[]
-  starsBoost            Int                    @default(0)
-  raidTimeBoost         Int                    @default(0)
-  xpBoost               Int                    @default(0)
+  starsBoost            Int                       @default(0)
+  raidTimeBoost         Int                       @default(0)
+  xpBoost               Int                       @default(0)
   lastStarBoost         DateTime?
   lastRaidBoost         DateTime?
   lastXpBoost           DateTime?
-  role                  Role                   @default(USER)
-  dailyStreak           Int                    @default(0)
+  role                  Role                      @default(USER)
+  dailyStreak           Int                       @default(0)
   lastDailyClaimed      DateTime?
   claimedDailyRewards   DailyReward[]
-  claimedDailyRewardIds Int[]                  @default([])
-  likedUserIds          Int[]                  @default([])
-  lastDailyLogin        DateTime               @default(now())
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  referrerRewards       ReferralReward[]       @relation("ReferrerRewards")
-  refereeRewards        ReferralReward[]       @relation("RefereeRewards")
+  claimedDailyRewardIds Int[]                     @default([])
+  likedUserIds          Int[]                     @default([])
+  lastDailyLogin        DateTime                  @default(now())
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  referrerRewards       ReferralReward[]          @relation("ReferrerRewards")
+  refereeRewards        ReferralReward[]          @relation("RefereeRewards")
   transactions          Transaction[]
   AlienParts            AlienPart[]
   AlienPartGroups       AlienPartGroup[]
-  purchasedPacks        Pack[]                 @relation("PurchasedPacks")
+  purchasedPacks        Pack[]                    @relation("PurchasedPacks")
   gearItems             UserGearItem[]
   UserElement           UserElement[]
   characterTransactions CharacterTransaction[]
   UserSpin              UserSpin[]
   userQuests            UserQuest[]
-  sentMessages          Message[]              @relation("SentMessages")
-  receivedMessages      Message[]              @relation("ReceivedMessages")
-  friendships           Friendship[]           @relation("UserFriendships")
-  friendUserFriendships Friendship[]           @relation("FriendUserFriendships")
+  sentMessages          Message[]                 @relation("SentMessages")
+  receivedMessages      Message[]                 @relation("ReceivedMessages")
+  friendships           Friendship[]              @relation("UserFriendships")
+  friendUserFriendships Friendship[]              @relation("FriendUserFriendships")
   reputationHistory     WeeklyReputationHistory[]
-  isBanned              Boolean                @default(false)
+  isBanned              Boolean                   @default(false)
 }
 
 model Raid {
@@ -577,7 +577,7 @@ model Message {
 }
 
 model Friendship {
-  id       Int @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   userId   Int
   friendId Int
   isPinned Boolean @default(false)

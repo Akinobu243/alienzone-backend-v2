@@ -13,6 +13,6 @@
     "baseUrl": "./",
     "incremental": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   }
 }
