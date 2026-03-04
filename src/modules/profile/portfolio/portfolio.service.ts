@@ -19,6 +19,8 @@ import { formatUsdtWei } from "../../../shared/utils/formatUsdtWei";
 import { formatZoneWei, formatZoneWei2, formatZoneWei3 } from "../../../shared/utils/formatZoneWei";
 import { formatNumPercentage } from "../../../shared/utils/formatNumPercentage";
 
+const one_eth = BigInt(10 ** 18)
+
 const avg_blocks_for_24h = 7250;
 
 const zone_token_amount_for_price = BigInt("10000000000000000000000"); // 10.000 zone
@@ -92,18 +94,6 @@ export class PortfolioService {
     );
 
     await this.update_prices();
-    // let data = await this.getPortfolio("0x6516862E90d9dd9C30c4c6B41bB45Ac9Ab65d04D");
-    // console.log(data.items)
-    // console.log('=== PORTFOLIO SUMMARY ===');
-    // console.table({
-    //   'Balance Summary': data.balance_summary,
-    //   'Balance USD': `$${data.balance_usd}`,
-    //   'USD Diff': data.usd_balance_diff ?
-    //     `${data.usd_balance_diff_positive ? '+' : '-'}$${data.usd_balance_diff}` : 'N/A',
-    //   'Diff %': data.usd_diff_percentage ? `${data.usd_diff_percentage}%` : 'N/A',
-    //   'Wallet Zone': data.wallet_zone_balance
-    // });
-
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -230,7 +220,7 @@ export class PortfolioService {
       if (!price) {
         return acc;
       }
-      return acc + (price * val.balance);
+      return acc + (val.balance * price) / one_eth;
     }, BIG_INT_ZERO);
 
 
@@ -239,7 +229,8 @@ export class PortfolioService {
       if (!price) {
         return acc;
       }
-      return acc + (price * val.balance);
+
+      return acc + (val.balance * price) / one_eth;
     }, BIG_INT_ZERO);
 
     zone_balance_cumulative += dojo_items_zone_volume;

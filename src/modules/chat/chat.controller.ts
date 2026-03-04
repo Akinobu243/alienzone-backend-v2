@@ -16,6 +16,8 @@ import { ApiTags } from '@nestjs/swagger';
 export class ChatController {
   constructor(private chatService: ChatService) {}
 
+
+
   @UseGuards(AuthGuard)
   @Post('/send')
   async sendMessage(
@@ -25,6 +27,8 @@ export class ChatController {
   ) {
     return this.chatService.sendMessage(req.walletAddress, receiverId, content);
   }
+
+
 
   @UseGuards(AuthGuard)
   @Get('/messages')
@@ -38,4 +42,7 @@ export class ChatController {
       ? this.chatService.getMessages(req.walletAddress, friendId, offset, limit)
       : this.chatService.getGlobalMessages(offset, limit);
   }
+
+
+
 }
