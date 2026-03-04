@@ -19,8 +19,6 @@ import { formatUsdtWei } from "../../../shared/utils/formatUsdtWei";
 import { formatZoneWei, formatZoneWei2, formatZoneWei3 } from "../../../shared/utils/formatZoneWei";
 import { formatNumPercentage } from "../../../shared/utils/formatNumPercentage";
 
-const one_eth = BigInt(10 ** 18)
-
 const avg_blocks_for_24h = 7250;
 
 const zone_token_amount_for_price = BigInt("10000000000000000000000"); // 10.000 zone
@@ -469,6 +467,7 @@ interface WalletBalances {
 const ZONE_DECIMALS: bigint = BigInt(18);
 const USDT_DECIMALS: bigint = BigInt(6);
 const PRICE_SCALE: bigint = BigInt(10) ** BigInt(6);
+const one_eth = BigInt(10 ** 18)
 
 export function calculateZonePriceInUSDT(
   zoneAmount: bigint,
