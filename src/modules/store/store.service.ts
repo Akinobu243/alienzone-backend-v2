@@ -128,11 +128,7 @@ export class StoreService {
       // console.log(
       //   `Buy price in wei for ${wearable.subject}: ${wearable.buyPriceInWei}`,
       // );
-      wearable.buyPrice = Number(
-        formatZoneWei(
-          BigInt(wearable.buyPriceInWei)
-        )
-      );
+      wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
 
       try {
         wearable.sellPriceInWei = (
@@ -191,7 +187,7 @@ export class StoreService {
       // );
       wearable.buyPriceInWei = '0';
     }
-    wearable.buyPrice = Number(formatZoneWei(BigInt(wearable.buyPriceInWei)));
+    wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
 
     try {
       wearable.sellPriceInWei = (
