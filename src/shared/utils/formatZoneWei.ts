@@ -55,18 +55,13 @@ export function formatZoneWei2(wei: bigint): string {
 export function formatZoneWei3(wei: bigint): string {
   const ether = Number(wei) / 1e18;
 
-  // Если число целое
   if (Number.isInteger(ether)) {
     return ether.toString();
   }
 
-  // Получаем целую часть
   const integerPart = Math.floor(ether);
-
-  // Получаем первую цифру дробной части
   const fractionalPart = Math.floor((ether - integerPart) * 10);
 
-  // Если дробная часть равна 0, возвращаем только целое число
   if (fractionalPart === 0) {
     return integerPart.toString();
   }

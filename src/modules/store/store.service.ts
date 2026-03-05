@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ethers } from 'ethers';
 import wearablesContractABI from './wearablesContractAbi.json';
 import { QuestService } from '../quest/quest.service';
+import { formatZoneWei } from "../../shared/utils/formatZoneWei";
 
 @Injectable()
 export class StoreService {
@@ -127,7 +128,11 @@ export class StoreService {
       // console.log(
       //   `Buy price in wei for ${wearable.subject}: ${wearable.buyPriceInWei}`,
       // );
-      wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
+      wearable.buyPrice = Number(
+        formatZoneWei(
+          BigInt(wearable.buyPriceInWei)
+        )
+      );
 
       try {
         wearable.sellPriceInWei = (
@@ -186,7 +191,7 @@ export class StoreService {
       // );
       wearable.buyPriceInWei = '0';
     }
-    wearable.buyPrice = Number(ethers.formatEther(wearable.buyPriceInWei));
+    wearable.buyPrice = Number(formatZoneWei(BigInt(wearable.buyPriceInWei)));
 
     try {
       wearable.sellPriceInWei = (
