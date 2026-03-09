@@ -33,4 +33,18 @@ export class QuestController {
       questId,
     );
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/progress-volume')
+  @ApiOperation({ summary: 'Update volume quest progress for a user' })
+  @ApiResponse({ status: 200, description: 'Volume quest progress updated' })
+  async progressVolumeQuest(
+    @Request() req,
+    @Body('zoneVolume') zoneVolume: number,
+  ) {
+    return this.questService.progressVolumeQuest(
+      req.walletAddress.toLowerCase(),
+      zoneVolume,
+    );
+  }
 }

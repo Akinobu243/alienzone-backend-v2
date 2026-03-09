@@ -57,6 +57,22 @@ export class QuestService {
               },
             });
           }
+          // For monthly quests, get only this month's userQuest
+          else if (quest.frequency === 'monthly') {
+            const currentMonthStartUTC = this.getCurrentMonthStartUTC();
+            userQuest = await this.prisma.userQuest.findFirst({
+              where: {
+                userId: user.id,
+                questId: quest.id,
+                createdAt: {
+                  gte: currentMonthStartUTC,
+                },
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            });
+          }
           // For other quest types, get the most recent userQuest
           else {
             userQuest = await this.prisma.userQuest.findFirst({
@@ -89,6 +105,7 @@ export class QuestService {
         quests: processedQuests,
         dailyResetTime: this.getDailyResetTimeUTC().toISOString(),
         weeklyResetTime: this.getWeeklyResetTimeUTC().toISOString(),
+        monthlyResetTime: this.getMonthlyResetTimeUTC().toISOString(),
       };
     } catch (error) {
       return { success: false, error };
@@ -133,6 +150,10 @@ export class QuestService {
       // For weekly quests, only consider this week's quest
       else if (quest.frequency === 'weekly') {
         userQuestQuery.createdAt = { gte: currentWeekStartUTC };
+      }
+      // For monthly quests, only consider this month's quest
+      else if (quest.frequency === 'monthly') {
+        userQuestQuery.createdAt = { gte: this.getCurrentMonthStartUTC() };
       }
 
       const userQuest = await this.prisma.userQuest.findFirst({
@@ -1946,5 +1967,130 @@ export class QuestService {
     const nextMonday = new Date(today);
     nextMonday.setUTCDate(nextMonday.getUTCDate() + daysUntilNextMonday);
     return nextMonday;
+  }
+
+  /**
+   * Gets the start of the current month in UTC
+   */
+  private getCurrentMonthStartUTC(): Date {
+    const now = new Date();
+    return new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+  }
+
+  /**
+   * Gets the start of the next month in UTC
+   */
+  private getMonthlyResetTimeUTC(): Date {
+    const now = new Date();
+    return new Date(
+      Date.UTC(
+        now.getUTCMonth() === 11
+          ? now.getUTCFullYear() + 1
+          : now.getUTCFullYear(),
+        (now.getUTCMonth() + 1) % 12,
+        1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+  }
+
+  /**
+   * Progress volume-based quests based on the user's total ZONE trading volume
+   * for the current month. Called after each buy/sell transaction.
+   * 
+   * Volume quest tiers:
+   * 10,000 ZONE = 100 Stars
+   * 20,000 ZONE = 200 Stars
+   * 30,000 ZONE = 300 Stars
+   * 40,000 ZONE = 400 Stars
+   * 50,000 ZONE = 500 Stars
+   * 60,000 ZONE = 600 Stars
+   * 70,000 ZONE = 700 Stars
+   * 80,000 ZONE = 800 Stars
+   * 90,000 ZONE = 900 Stars
+   * 100,000 ZONE = 2,000 Stars
+   */
+  public async progressVolumeQuest(walletAddress: string, zoneVolume: number) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { walletAddress },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const currentMonthStartUTC = this.getCurrentMonthStartUTC();
+
+      // Get all volume quests
+      const volumeQuests = await this.prisma.quest.findMany({
+        where: { type: 'volume' },
+        orderBy: { requiredNumber: 'asc' },
+      });
+
+      if (volumeQuests.length === 0) {
+        return { success: true, message: 'No volume quests found' };
+      }
+
+      const results = [];
+
+      for (const quest of volumeQuests) {
+        // Check for existing monthly userQuest
+        let userQuest = await this.prisma.userQuest.findFirst({
+          where: {
+            userId: user.id,
+            questId: quest.id,
+            createdAt: { gte: currentMonthStartUTC },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (!userQuest) {
+          // Create new monthly user quest
+          userQuest = await this.prisma.userQuest.create({
+            data: {
+              userId: user.id,
+              questId: quest.id,
+              currentProgress: Math.floor(zoneVolume),
+              isCompleted: zoneVolume >= quest.requiredNumber,
+            },
+          });
+        } else if (!userQuest.isClaimed) {
+          // Update progress
+          userQuest = await this.prisma.userQuest.update({
+            where: { id: userQuest.id },
+            data: {
+              currentProgress: Math.floor(zoneVolume),
+              isCompleted: zoneVolume >= quest.requiredNumber,
+            },
+          });
+        }
+
+        results.push({
+          questId: quest.id,
+          progress: Math.floor(zoneVolume),
+          required: quest.requiredNumber,
+          isCompleted: userQuest.isCompleted,
+          isClaimed: userQuest.isClaimed,
+        });
+      }
+
+      return { success: true, quests: results };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 }

@@ -626,6 +626,19 @@ model WearableTradeTrackerState {
   lastProcessedBlock Int    @default(0)
 }
 
+model WearableUnlock {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  subject         String   // Wearable subject identifier
+  starsPaid       Int      // Stars spent to unlock
+  rarity          String   // Rarity level at time of unlock
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, subject]) // Each user can only unlock each wearable once
+  @@index([userId])
+  @@index([subject])
+}
+
 model WeeklyReputationHistory {
   id           Int      @id @default(autoincrement())
   userId       Int

@@ -4,18 +4,23 @@ import {
   Param,
   Post,
   Body,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('store')
 @Controller('/store')
 export class StoreController {
-  constructor(private readonly storeService: StoreService) {}
+  constructor(
+    private readonly storeService: StoreService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @UseGuards(AdminGuard)
   @Post('/update-wearables')
@@ -42,7 +47,20 @@ export class StoreController {
 
   @UseGuards(AuthGuard)
   @Get('/wearables')
-  async getWearables(@Request() req) {
+  @ApiQuery({ name: 'sort', required: false, type: String, description: 'Sort order: all, trending, newest' })
+  @ApiQuery({ name: 'rarity', required: false, type: String, description: 'Filter by rarity: COMMON, UNCOMMON, RARE, EPIC, LEGENDARY' })
+  async getWearables(
+    @Request() req,
+    @Query('sort') sort?: string,
+    @Query('rarity') rarity?: string,
+  ) {
+    if (sort || rarity) {
+      return this.storeService.getWearablesWithFilters(
+        sort,
+        rarity,
+        req.walletAddress?.toLowerCase(),
+      );
+    }
     return this.storeService.getWearables();
   }
 
@@ -52,6 +70,37 @@ export class StoreController {
     return this.storeService.getWearablesOptimized();
   }
 
+  // Static paths MUST come before :subject to avoid NestJS matching them as params
+  @UseGuards(AuthGuard)
+  @Get('/wearables/unlocked')
+  async getUserUnlockedWearables(@Request() req) {
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress: req.walletAddress.toLowerCase() },
+    });
+    if (!user) return [];
+    return this.storeService.getUserUnlockedWearables(user.id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/wearables/unlock-with-stars')
+  @ApiBody({
+    description: 'Unlock a non-Common wearable for trading using Stars',
+    schema: {
+      type: 'object',
+      properties: {
+        subject: { type: 'string', description: 'The wearable subject identifier' },
+      },
+      required: ['subject'],
+    },
+  })
+  async unlockWithStars(@Body('subject') subject: string, @Request() req) {
+    return this.storeService.unlockWithStars(
+      subject,
+      req.walletAddress.toLowerCase(),
+    );
+  }
+
+  // Dynamic :subject routes below
   @UseGuards(AuthGuard)
   @Get('/wearables/:subject')
   async getWearableDetails(@Param('subject') subject: string, @Request() req) {
@@ -59,6 +108,22 @@ export class StoreController {
       subject,
       req.walletAddress.toLowerCase(),
     );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/wearables/:subject/activity')
+  async getWearableActivity(
+    @Param('subject') subject: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.storeService.getWearableActivity(subject, limit ? Number(limit) : 20);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/wearables/:subject/volume')
+  async getWearableVolume(@Param('subject') subject: string) {
+    const volume = await this.storeService.get7DayVolume(subject);
+    return { subject, volume7d: volume };
   }
 
   @UseGuards(AuthGuard)

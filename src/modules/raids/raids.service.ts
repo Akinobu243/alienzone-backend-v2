@@ -68,6 +68,7 @@ export class RaidsService {
           aliens,
           teamCharacters,
           user,
+          raid, // Pass existing raid data to avoid N+1 queries
         );
         const newRaidData = {
           ...raid,
@@ -244,6 +245,7 @@ export class RaidsService {
         aliens,
         teamCharacters,
         user,
+        raid, // Pass existing raid to avoid re-fetching from DB
       );
 
       console.log('raidDuration ===>', raidDuration);
@@ -314,12 +316,19 @@ export class RaidsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  // PERF: Changed from EVERY_10_SECONDS to EVERY_30_SECONDS
+  // Raids take minutes/hours so 30s checks are more than sufficient
+  // This reduces DB queries by ~3x
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async processRaidRewards() {
     try {
+      // PERF: Only fetch raids that are actually finished (filter at DB level)
       const raids = await this.prisma.raidHistory.findMany({
         where: {
           inProgress: true,
+          raidFinishTime: {
+            lte: new Date(), // Only get raids whose finish time has passed
+          },
         },
         include: {
           aliens: {
@@ -327,15 +336,6 @@ export class RaidsService {
               element: true,
             },
           },
-          // characters: {
-          //   include: {
-          //     character: {
-          //       include: {
-          //         element: true,
-          //       },
-          //     },
-          //   },
-          // },
           raid: {
             include: {
               rewards: true,
@@ -345,41 +345,39 @@ export class RaidsService {
           user: true,
         },
       });
-      // console.log('Raids found:', raids.length);
+
+      // Early exit if no completed raids
+      if (raids.length === 0) return;
+
+      // PERF: Batch fetch ALL characters needed for all finished raids in one query
+      // instead of N+1 (one query per raid)
+      const allCharacterIds = raids.flatMap((raid) => raid.characterIds);
+      const allCharacters =
+        allCharacterIds.length > 0
+          ? await this.prisma.character.findMany({
+              where: { id: { in: [...new Set(allCharacterIds)] } },
+              include: { element: true },
+            })
+          : [];
 
       for (const raid of raids) {
-        const raidCharacters = await this.prisma.character.findMany({
-          where: {
-            id: { in: raid.characterIds },
-          },
-          include: {
-            element: true,
-          },
-        });
+        // Filter from pre-fetched batch instead of separate DB query per raid
+        const raidCharacters = allCharacters.filter((c) =>
+          raid.characterIds.includes(c.id),
+        );
         const raidAliens = raid.aliens;
         const raidRewards = raid.raid.rewards;
         const raidUserId = raid.userId;
-        const raidDuration = await this.calculateRaidDuration(
-          raid.raidId,
-          raidAliens,
-          raidCharacters,
-          raid.user,
-        );
 
-        if (!raidDuration) {
-          throw new BadRequestException('Error calculating raid duration');
-        }
+        console.log('Raid completed:', raid.id);
+        await this.prisma.raidHistory.update({
+          where: { id: raid.id },
+          data: {
+            inProgress: false,
+          },
+        });
 
-        if (raid.raidFinishTime.getTime() < Date.now()) {
-          console.log('Raid completed:', raid.id);
-          await this.prisma.raidHistory.update({
-            where: { id: raid.id },
-            data: {
-              inProgress: false,
-            },
-          });
-
-          for (const reward of raidRewards) {
+        for (const reward of raidRewards) {
             let rewardAmount = reward.amount;
             let rewardType: string;
 
@@ -505,6 +503,7 @@ export class RaidsService {
             raidAliens,
             raidCharacters,
             raid.user,
+            raid.raid, // Pass existing raid data to avoid redundant DB fetch
           );
           console.log('Reputation points rewarded:', reputationPoints);
 
@@ -550,16 +549,16 @@ export class RaidsService {
     return null;
   }
 
+  // PERF: Accept optional raid object to avoid re-fetching from DB
   private async calculateRaidDuration(
     raidId: number,
     raidAliens: any[],
     raidCharacters: any[],
     user: User,
+    existingRaid?: { elementId: number; duration: number } | null,
   ) {
     try {
-      // console.log(`Calculating raid duration for raidId: ${raidId}`);
-
-      const raid = await this.prisma.raid.findUnique({
+      const raid = existingRaid ?? await this.prisma.raid.findUnique({
         where: { id: raidId },
       });
 
@@ -632,13 +631,15 @@ export class RaidsService {
     }
   }
 
+  // PERF: Accept optional raid object to avoid redundant DB fetch
   private async calculateRaidReputation(
     raidId: number,
     raidAliens: Alien[],
     raidCharacters: any[],
     raidUser: User,
+    existingRaid?: { elementId: number; duration: number } | null,
   ): Promise<number> {
-    const raid = await this.prisma.raid.findUnique({
+    const raid = existingRaid ?? await this.prisma.raid.findUnique({
       where: { id: raidId },
     });
 
@@ -651,6 +652,7 @@ export class RaidsService {
       raidAliens,
       raidCharacters,
       raidUser,
+      raid, // Pass the already-fetched raid to avoid another DB query
     );
 
     const teamStrength =

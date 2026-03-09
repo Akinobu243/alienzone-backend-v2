@@ -27,44 +27,31 @@ export class ForgeService {
         },
       });
 
+      // PERF: Collect all user IDs that have expired forges, then batch-fetch users
+      const expiredPartForges: { userId: number; alienPartId: number }[] = [];
+      const expiredElementForges: { userId: number; elementId: number }[] = [];
+      const allUserIds = new Set<number>();
+
       for (const alienPart of alienParts) {
         const userForgeTime = ((alienPart as any).userForgeTime || []) as {
           userId: number;
           timer: string;
         }[];
 
-        // Process each user's forge
         for (const forge of userForgeTime) {
           const timeLeft = Math.max(
             0,
             new Date(forge.timer).getTime() - new Date().getTime(),
           );
-
           if (timeLeft <= 0) {
-            // Get user's wallet address
-            const user = await this.prisma.user.findUnique({
-              where: { id: forge.userId },
-            });
-
-            if (user) {
-              // Complete the forge
-              await this.profileService.forgeParts(
-                user.walletAddress,
-                alienPart.id,
-                null,
-              );
-              this.logger.log(
-                `Completed forge for user ${user.walletAddress} and part ${alienPart.id}`,
-              );
-            }
+            expiredPartForges.push({ userId: forge.userId, alienPartId: alienPart.id });
+            allUserIds.add(forge.userId);
           }
         }
       }
 
       const elements = await this.prisma.element.findMany({
-        where: {
-          isForgeable: true,
-        },
+        where: { isForgeable: true },
       });
 
       for (const element of elements) {
@@ -78,25 +65,49 @@ export class ForgeService {
             0,
             new Date(forge.timer).getTime() - new Date().getTime(),
           );
-
           if (timeLeft <= 0) {
-            // Get user's wallet address
-            const user = await this.prisma.user.findUnique({
-              where: { id: forge.userId },
-            });
-
-            if (user) {
-              // Complete the forge
-              await this.profileService.forgeParts(
-                user.walletAddress,
-                null,
-                element.id,
-              );
-              this.logger.log(
-                `Completed forge for user ${user.walletAddress} and element ${element.id} ${element.name}`,
-              );
-            }
+            expiredElementForges.push({ userId: forge.userId, elementId: element.id });
+            allUserIds.add(forge.userId);
           }
+        }
+      }
+
+      // Early exit if no expired forges
+      if (allUserIds.size === 0) return;
+
+      // PERF: Single batch query for all users instead of one per expired forge
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: [...allUserIds] } },
+      });
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      // Process expired part forges
+      for (const forge of expiredPartForges) {
+        const user = userMap.get(forge.userId);
+        if (user) {
+          await this.profileService.forgeParts(
+            user.walletAddress,
+            forge.alienPartId,
+            null,
+          );
+          this.logger.log(
+            `Completed forge for user ${user.walletAddress} and part ${forge.alienPartId}`,
+          );
+        }
+      }
+
+      // Process expired element forges
+      for (const forge of expiredElementForges) {
+        const user = userMap.get(forge.userId);
+        if (user) {
+          await this.profileService.forgeParts(
+            user.walletAddress,
+            null,
+            forge.elementId,
+          );
+          this.logger.log(
+            `Completed forge for user ${user.walletAddress} and element ${forge.elementId}`,
+          );
         }
       }
 
