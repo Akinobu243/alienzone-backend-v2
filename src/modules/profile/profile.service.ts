@@ -2305,11 +2305,13 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      if (user.stars < 150) {
+      // Cost is 20 Stars per item being changed
+      const starsCost = parts.length * 20;
+      if (user.stars < starsCost) {
         return {
           success: false,
           message:
-            "You don't have enough stars. 150 stars required to equip parts.",
+            `You don't have enough stars. ${starsCost} stars required to equip ${parts.length} part(s) (20 stars each).`,
         };
       }
 
@@ -2552,37 +2554,28 @@ export class ProfileService {
             },
           });
 
-          // Update user with boost changes and deduct stars
+          // Update user with boost changes and deduct stars (20 per item)
           await prisma.user.update({
             where: { id: user.id },
             data: {
               stars: {
-                decrement: 150,
+                decrement: starsCost,
               },
-              // starsBoost: {
-              //   increment: boostChanges.starBoost,
-              // },
-              // xpBoost: {
-              //   increment: boostChanges.xpBoost,
-              // },
-              // raidTimeBoost: {
-              //   increment: boostChanges.raidTimeBoost,
-              // },
             },
           });
 
           return updatedAlien;
         },
         {
-          timeout: 30000, // Increased timeout to 30 seconds
-          maxWait: 35000, // Maximum time to wait for transaction to start
-          isolationLevel: 'Serializable', // Highest isolation level for consistency
+          timeout: 30000,
+          maxWait: 35000,
+          isolationLevel: 'Serializable',
         },
       );
 
       return {
         success: true,
-        message: `${parts.length} parts equipped successfully`,
+        message: `${parts.length} parts equipped successfully (${starsCost} Stars spent)`,
         alien: result,
         boostChanges,
       };
@@ -2610,11 +2603,13 @@ export class ProfileService {
         throw new BadRequestException('User not found');
       }
 
-      if (user.stars < 150) {
+      // Cost is 20 Stars per item being changed
+      const starsCostOld = partIds.length * 20;
+      if (user.stars < starsCostOld) {
         return {
           success: false,
           message:
-            "You don't have enough stars. 150 stars required to equip parts.",
+            `You don't have enough stars. ${starsCostOld} stars required to equip ${partIds.length} part(s) (20 stars each).`,
         };
       }
 
@@ -2738,7 +2733,7 @@ export class ProfileService {
         where: { id: user.id },
         data: {
           stars: {
-            decrement: 150,
+            decrement: starsCostOld,
           },
         },
       });
